@@ -1,3 +1,11 @@
+---
+title: "Visão Geral — Sistema Lumos"
+description: "Bem-vindo à plataforma de gestão operacional completa para iluminação pública."
+section: "Introdução"
+order: 1
+draft: false
+---
+
 # 💡 Visão Geral — Sistema Lumos
 
 Bem-vindo ao **Lumos**, a plataforma de **gestão operacional completa para iluminação pública**.

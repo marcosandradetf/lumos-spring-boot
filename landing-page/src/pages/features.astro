@@ -13,44 +13,78 @@ import { siteConfig } from '@/config';
 
 const highlightedFeatures = [
   {
-    title: 'Gestão de Execuções em Tempo Real',
+    title: 'Mapa Operacional em Tempo Real',
     description:
-      'Acompanhe cada instalação ou manutenção assim que ela é finalizada no campo. Elimine o papelório e tenha uma visão clara da produção diária da sua equipe com fotos e geolocalização.',
-    image: '/images/features/field-operation.webp',
+      'Visualize tudo o que está acontecendo no campo em um único mapa inteligente. Acompanhe execuções em andamento e finalizadas com precisão geográfica, incluindo instalações e manutenções, com acesso imediato a fotos, etiquetas e dados de cada ponto.',
+    image: '/images/features/field-map.webp',
     badge: 'Operacional',
     highlights: [
-      'Sincronização instantânea com a equipe de campo',
-      'Registro fotográfico e coordenadas GPS por ponto',
-      'Status de execução atualizado em tempo real',
-      'Histórico completo de intervenções por poste',
+      'Visualização em tempo real das execuções no mapa',
+      'Pontos georreferenciados com alta precisão',
+      'Identificação por número de etiqueta de cada ativo',
+      'Acesso a fotos e detalhes diretamente no mapa',
+      'Monitoramento de instalações e manutenções em andamento e concluídas',
     ],
-    // cta: { label: 'Ver gestão de campo', href: '/solucoes/campo' },
+    // cta: { label: 'Explorar mapa', href: '/solucoes/mapa' },
   },
   {
     title: 'Vínculo Contratual Inteligente',
     description:
-      'O maior gargalo da iluminação pública resolvido. Vincule execuções prontas aos itens do contrato automaticamente para gerar medições precisas e acelerar o faturamento.',
+      'Mesmo quando a execução em campo acontece sem Ordem de Serviço, seu faturamento continua seguro. O sistema permite vincular posteriormente os serviços e materiais executados aos itens contratuais, garantindo rastreabilidade, conformidade e precisão na medição.',
     icon: 'lucide:link-2',
     badge: 'Financeiro',
     highlights: [
-      'Associação direta com itens da planilha orçamentária',
-      'Validação de conformidade antes do fechamento',
-      'Redução drástica de glosas em medições',
-      'Cálculo automático de valores contratuais',
+      'Execução em campo sem O.S., sem perder controle contratual',
+      'Vinculação posterior de materiais e serviços ao contrato',
+      'Rastreabilidade completa entre execução e faturamento',
+      'Redução de glosas com validação baseada em contrato',
+      'Cálculo automático dos valores conforme itens contratuais',
     ],
     // cta: { label: 'Entenda o faturamento', href: '/solucoes/contratos' },
   },
   {
+    title: 'Relatórios de Execução e Faturamento',
+    description:
+      'Transforme as execuções de campo em relatórios completos e prontos para faturamento e prestação de contas. Tenha controle total das atividades realizadas, com dados organizados para auditorias, medições contratuais e transparência junto às prefeituras.',
+    image: '/images/features/reports.webp',
+    badge: 'Gestão & Financeiro',
+    highlights: [
+      'Relatórios detalhados de instalações e manutenções',
+      'Base confiável para faturamento e medições',
+      'Prestação de contas clara para prefeituras',
+      'Histórico completo e auditável das execuções',
+      'Padronização e organização das informações operacionais',
+    ],
+    // cta: { label: 'Ver relatórios', href: '/solucoes/relatorios' },
+  },
+  {
+    title: 'Gestão de Estoque Inteligente',
+    description:
+      'Controle total dos seus materiais com agilidade e precisão. Gerencie entradas, saídas e movimentações com leitura de código de barras, mantenha seu catálogo organizado e tenha rastreabilidade completa para evitar perdas e garantir eficiência operacional.',
+    image: '/images/features/inventory.webp',
+    badge: 'Estoque',
+    highlights: [
+      'Cadastro e movimentação via leitura de código de barras',
+      'Entrada de materiais integrada com notas fiscais',
+      'Impressão de etiquetas para identificação e rastreio',
+      'Relatórios completos de estoque em tempo real',
+      'Catálogo organizado e de fácil consulta',
+      'Rastreabilidade de materiais do recebimento até a aplicação',
+    ],
+    // cta: { label: 'Gerenciar estoque', href: '/solucoes/estoque' },
+  },
+  {
     title: 'Dashboard de Indicadores (KPIs)',
     description:
-      'Tome decisões baseadas em dados. Visualize o desempenho da sua PPP ou contrato de manutenção através de painéis intuitivos que mostram desde o tempo médio de reparo até a economia de energia.',
+      'Tenha uma visão clara da produtividade e da saúde dos seus contratos em tempo real. Acompanhe o desempenho por equipe ou colaborador, monitore saldos contratuais e tome decisões rápidas com base em dados confiáveis.',
     icon: 'lucide:bar-chart-3',
     badge: 'Estratégico',
     highlights: [
-      'Relatórios automáticos para prefeituras e consórcios',
-      'Acompanhamento de metas contratuais (SLAs)',
-      'Mapa de calor de falhas e manutenções',
-      'Exportação de dados para auditorias',
+      'Produtividade detalhada por equipe e por colaborador',
+      'Acompanhamento de metas operacionais em tempo real',
+      'Visão de saldo e consumo por contrato',
+      'Identificação rápida de gargalos e baixa performance',
+      'Indicadores atualizados automaticamente com base nas execuções',
     ],
     // cta: { label: 'Explorar dashboards', href: '/funcionalidades/dashboards' },
   },
@@ -58,7 +92,7 @@ const highlightedFeatures = [
 
 const bentoFeatures = [
   {
-    title: 'Pendente de Vínculo',
+    title: 'Execuções sem Ordem de Serviço',
     description:
       'Receba notificações e Identifique rapidamente instalações que ainda não foram vinculadas ao contrato para não perder prazos de cobrança.',
     icon: 'lucide:alert-circle',
