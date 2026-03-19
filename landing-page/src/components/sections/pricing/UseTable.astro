@@ -80,7 +80,7 @@ function renderValue(value: boolean | string) {
 }
 ---
 
-<section class:list={['py-section', bgClass]}>
+<section class:list={['py-section', bgClass]} id="tabela-chamados">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     {
       hasHeading && (
@@ -93,15 +93,10 @@ function renderValue(value: boolean | string) {
 
     {/* Desktop Table */}
     <div class="hidden lg:block overflow-x-auto">
-      <table class="w-full border-collapse">
+      <table class="w-full border-collapse" >
         {/* Header */}
         <thead>
           <tr>
-            <th
-              class="text-left py-4 px-6 bg-surface border-b border-border font-semibold text-text w-1/4"
-            >
-              Descrição
-            </th>
             {
               plans.map((plan, index) => (
                 <th

@@ -1,0 +1,226 @@
+<div class="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+
+  <div class="mx-auto max-w-7xl px-4 py-4">
+
+    <!-- ========================= -->
+    <!-- 🔝 HEADER INSTITUCIONAL -->
+    <!-- ========================= -->
+    <div class="mb-4 border-b border-slate-200 dark:border-slate-800 pb-3">
+      <h1 class="text-xl font-semibold">
+        Registro de ocorrência – Iluminação Pública
+      </h1>
+
+      <p class="text-sm text-slate-600 dark:text-slate-400">
+        Município: <span class="font-medium">{{ selectedCity || '—' }}</span>
+      </p>
+    </div>
+
+    <!-- ========================= -->
+    <!-- 🔵 CHECKING (GPS + INIT) -->
+    <!-- ========================= -->
+    @if (state() === 'checking') {
+      <div class="flex flex-col items-center justify-center h-[60vh] gap-4">
+
+        <p-progressSpinner />
+
+        <div class="text-center">
+          <p class="text-base font-semibold">
+            Identificando sua localização...
+          </p>
+
+          <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Aguarde enquanto verificamos automaticamente
+          </p>
+        </div>
+
+      </div>
+    }
+
+    <!-- ========================= -->
+    <!-- 🔴 GPS NEGADO -->
+    <!-- ========================= -->
+    @if (state() === 'denied') {
+      <div class="max-w-xl mx-auto mt-10">
+
+        <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 space-y-5">
+
+          <div class="flex items-start gap-3">
+            <i class="pi pi-map-marker text-red-500 text-xl"></i>
+
+            <div>
+              <h2 class="font-semibold text-lg">
+                Não foi possível acessar sua localização
+              </h2>
+
+              <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                Informe o endereço ou um ponto de referência para localizar o problema.
+              </p>
+            </div>
+          </div>
+
+          <!-- INPUT -->
+          <p-inputgroup>
+            <p-inputgroup-addon>
+              <i class="pi pi-map"></i>
+            </p-inputgroup-addon>
+
+            <input
+              pInputText
+              [(ngModel)]="address"
+              placeholder="Ex: Rua Afonso Pena, 1000"
+            />
+          </p-inputgroup>
+
+          <!-- AÇÕES -->
+          <div class="flex flex-col gap-2">
+
+            <p-button
+              label="Localizar no mapa"
+              icon="pi pi-search"
+              [disabled]="!address"
+              (onClick)="startFromAddress()"
+              styleClass="w-full">
+            </p-button>
+
+            <p-button
+              label="Tentar novamente usar localização"
+              severity="secondary"
+              styleClass="w-full"
+              (onClick)="retryLocation()">
+            </p-button>
+
+          </div>
+
+        </div>
+
+      </div>
+    }
+
+    <!-- ========================= -->
+    <!-- 🟡 BUSCANDO ENDEREÇO -->
+    <!-- ========================= -->
+    @if (state() === 'manual') {
+      <div class="flex flex-col items-center justify-center h-[60vh] gap-4">
+
+        <p-progressSpinner />
+
+        <p class="text-sm text-slate-500">
+          Localizando endereço informado...
+        </p>
+
+      </div>
+    }
+
+    <!-- ========================= -->
+    <!-- 🔴 MAPA -->
+    <!-- ========================= -->
+    @if (state() === 'map') {
+
+      <div class="grid gap-4 lg:grid-cols-[1fr_320px]">
+
+        <!-- 🗺️ MAPA -->
+        <div class="relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
+
+          <!-- TOOLBAR -->
+          <div class="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-3 py-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-800">
+
+            <div class="text-xs text-slate-600 dark:text-slate-300">
+              Posicione o mapa sobre o local do problema
+            </div>
+
+            <div class="text-xs font-medium">
+              {{ visiblePostsCount() }} pontos na área
+            </div>
+
+          </div>
+
+          <!-- MAPA -->
+          <div #mapContainer class="h-[70vh] w-full"></div>
+
+          <!-- PIN CENTRAL -->
+          <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+
+            <div class="flex flex-col items-center">
+
+              <div class="w-2 h-2 bg-black/30 rounded-full mb-1"></div>
+
+              <div class="w-5 h-5 bg-red-600 rounded-full border-2 border-white shadow"></div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- 📋 PAINEL -->
+        <div class="flex flex-col gap-4">
+
+          <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+
+            <h2 class="text-sm font-semibold mb-3">
+              Local selecionado
+            </h2>
+
+            @if (selectedPosition()) {
+              <div class="text-sm space-y-1">
+                <div class="text-slate-600 dark:text-slate-400">
+                  Latitude: {{ selectedPosition()?.lat }}
+                </div>
+                <div class="text-slate-600 dark:text-slate-400">
+                  Longitude: {{ selectedPosition()?.lng }}
+                </div>
+              </div>
+            } @else {
+              <div class="text-sm text-slate-500">
+                Movimente o mapa para definir o local
+              </div>
+            }
+
+            @if (nearestPost()) {
+              <div class="mt-3 p-3 rounded-lg bg-slate-100 dark:bg-slate-800 text-sm">
+                Poste identificado: <strong>#{{ nearestPost()?.id }}</strong>
+              </div>
+            }
+
+          </div>
+
+          <!-- AÇÃO -->
+          <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+
+            <h2 class="text-sm font-semibold mb-2">
+              Registrar ocorrência
+            </h2>
+
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
+              Confirme o local antes de prosseguir.
+            </p>
+
+            <div class="flex flex-col gap-2">
+
+              <p-button
+                label="Confirmar localização"
+                icon="pi pi-check"
+                [disabled]="!selectedPosition()"
+                (onClick)="submitServiceRequest()"
+                styleClass="w-full">
+              </p-button>
+
+              <p-button
+                label="Voltar"
+                severity="secondary"
+                styleClass="w-full"
+                (onClick)="state.set('checking')">
+              </p-button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    }
+
+  </div>
+</div>

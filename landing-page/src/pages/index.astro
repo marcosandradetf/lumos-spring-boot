@@ -135,7 +135,7 @@ const features = [
 const pricingPlans = [
   {
     name: 'Essencial',
-    monthlyPrice: 167,
+    monthlyPrice: 105 * 5,
     description: 'Até 5 usuários',
     features: [
       'Gestão completa de contratos e saldos',
@@ -153,14 +153,15 @@ const pricingPlans = [
   },
   {
     name: 'Profissional',
-    monthlyPrice: 329,
-    description: 'Até 10 usuários',
+    monthlyPrice: 140 * 7,
+    description: 'Até 7 usuários internos',
     features: [
       'Todos os recursos do plano Essencial',
       'Coleta de coordenadas geográficas',
       'Relatórios fotográficos',
       'Assinatura digital em campo',
-      'Coleta de coordenadas geográficas',
+      'Aberturas de chamados de manutenção pela prefeitura',
+      'Mapas internos de postes para gestão de manutenção',
     ],
     highlighted: true,
     cta: {
@@ -170,14 +171,17 @@ const pricingPlans = [
   },
   {
     name: 'Enterprise',
-    monthlyPrice: 410,
-    description: 'Até 10 usuários',
+    monthlyPrice: 170.41 * 7,
+    description: 'Até 7 usuários internos + até 500 chamados /mês',
+    href: "/precos/#tabela-chamados",
     features: [
       'Todos os recursos do plano Profissional',
-      'Dashboard gerencial',
+      'Portal cidadão e integração com a prefeitura para abertura de chamados de manutenção',
+      'Validação visual de postes via Street View',
+      'Mapa de execuçoes em tempo real',
+      'Uso offline no aplicativo',
       'Suporte dedicado',
       'Customizações sob demanda',
-      'Uso offline no aplicativo',
     ],
     highlighted: false,
     cta: {

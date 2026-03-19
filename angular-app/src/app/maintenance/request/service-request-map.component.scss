@@ -1,0 +1,16 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.map {
+  flex: 1;
+}
+
+.panel {
+  background: #fff;
+  padding: 12px;
+  border-top: 1px solid #ddd;
+  font-size: 14px;
+}

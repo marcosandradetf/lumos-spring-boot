@@ -6,8 +6,25 @@ import TrustBadges from '@sections/pricing/TrustBadges.astro';
 import FAQSection from '@sections/content/FAQSection.astro';
 import CTA from '@sections/marketing/CTA.astro';
 import { siteConfig } from '@/config';
+import UseTable from '@sections/pricing/UseTable.astro';
 
 const planNames = ['Essencial', 'Profissional', 'Enterprise'];
+
+const calledNames = ['População aproximada', 'Estimativa de postes', 'Chamados mensais de LED (~1% de falha)', 'Valor Adicional'];
+
+const comparisonUses = [
+  {
+    name: '',
+    features: [
+      { name: 'Até 30.000', values: ['7.500', '75', 'R$ 2,00 por chamado'] },
+      { name: '30.001 – 100.000', values: ['25.000', '250', 'R$ 1,50 por chamado'] },
+      { name: '100.001 – 300.000', values: ['75.000', '750','R$ 1,00 por chamado'] },
+      { name: '300.001 – 1.000.000', values: ['250.000', '2.500', 'R$ 0,85 por chamado'] },
+      { name: '1.000.001 – 5.000.000', values: ['1.250.000', '12.500', 'R$ 0,60 por chamado'] },
+      { name: '5.000.001 – 12.500.000', values: ['3.125.000', '31.250', 'R$ 0,40 por chamado'] },
+    ],
+  },
+];
 
 const plans = [
   {
@@ -25,36 +42,40 @@ const plans = [
     highlighted: false,
     cta: {
       label: 'Iniciar teste grátis',
-      href: '/register',
+      href: '/contato',
     },
   },
   {
     name: 'Profissional',
     monthlyPrice: 140 * 7,
-    description: 'Até 7 usuários',
+    description: 'Até 7 usuários internos',
     features: [
       'Todos os recursos do plano Essencial',
       'Coleta de coordenadas geográficas',
       'Relatórios fotográficos',
       'Assinatura digital em campo',
-      'Coleta de coordenadas geográficas',
+      'Aberturas de chamados de manutenção pela prefeitura',
+      'Mapas internos de postes para gestão de manutenção',
     ],
     highlighted: true,
     cta: {
       label: 'Iniciar teste grátis',
-      href: '/register',
+      href: '/contato',
     },
   },
   {
     name: 'Enterprise',
     monthlyPrice: 170.41 * 7,
-    description: 'Até 7 usuários',
+    description: 'Até 7 usuários internos + até 500 chamados /mês',
+    href: "#tabela-chamados",
     features: [
       'Todos os recursos do plano Profissional',
-      'Dashboard gerencial',
+      'Portal cidadão e integração com a prefeitura para abertura de chamados de manutenção',
+      'Validação visual de postes via Street View',
+      'Mapa de execuçoes em tempo real',
+      'Uso offline no aplicativo',
       'Suporte dedicado',
       'Customizações sob demanda',
-      'Uso offline no aplicativo',
     ],
     highlighted: false,
     cta: {
@@ -115,8 +136,14 @@ const comparisonCategories = [
       { name: 'Relatórios fotográficos', values: [false, true, true] },
       { name: 'Assinatura digital em campo', values: [false, true, true] },
       { name: 'Coleta de coordenadas geográficas', values: [false, true, true] },
+      { name:'Aberturas de chamados de manutenção pela prefeitura',values: [false, true, true] },
+      { name:'Mapas internos de postes para gestão de manutenção',values: [false, true, true] },
 
-      { name: 'Dashboard gerencial', values: [false, false, true] },
+      { name: 'Mapa de execução em tempo real', values: [false, false, true] },
+
+      { name:'Portal cidadão e integração com a prefeitura para abertura de chamados de manutenção',values: [false, false, true] },
+      { name:'Validação visual de postes via Street View',values: [false, false, true] },
+
       { name: 'Suporte dedicado', values: [false, false, true] },
       { name: 'Customizações sob demanda', values: [false, false, true] },
       { name: 'Uso offline no aplicativo', values: [false, false, true] },
@@ -131,6 +158,9 @@ const comparisonCategories = [
     ],
   },
 ];
+
+
+
 ---
 
 <MarketingLayout
@@ -159,6 +189,14 @@ const comparisonCategories = [
     plans={planNames}
     categories={comparisonCategories}
     highlightedPlan={1}
+    background="default"
+  />
+
+  <UseTable
+    title="Estimativa de chamados por população"
+    subtitle="Veja uma estimativa de limite de chamados por cidade."
+    plans={calledNames}
+    categories={comparisonUses}
     background="default"
   />
 

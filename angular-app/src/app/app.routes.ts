@@ -2,6 +2,7 @@
 import {Routes} from '@angular/router';
 import {AuthGuard} from './core/auth/auth.guard';
 import {TruckDepositComponent} from './stock/truck-deposits/deposits.component';
+import {ServiceRequestMapComponent} from './maintenance/request/service-request-map.component';
 
 
 export const routes: Routes = [
@@ -327,6 +328,11 @@ export const routes: Routes = [
         loadComponent: () => import('./dashboard/team/team-operational-dashboard.component').then(d => d.TeamOperationalDashboardComponent),
         canActivate: [AuthGuard],
         data: {role: ['ADMIN', 'ANALISTA', 'SUPPORT'], path: 'dashboard'},
+    },
+
+    {
+        path: 'abrir-chamado',
+        component: ServiceRequestMapComponent
     },
 
     //
