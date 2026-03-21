@@ -44,7 +44,10 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(
                 "https://lumos.thryon.com.br",
-                "http://localhost:4200"
+                "https://lumosip.com.br",
+                "https://app.lumosip.com.br",
+                "http://localhost:4200",
+                "http://192.168.1.103:4200"
         ));
         configuration.setAllowCredentials(true);
         configuration.setAllowedMethods(List.of(
@@ -68,7 +71,8 @@ public class SecurityConfig {
                         "/api/mobile/auth/**",
                         "/api/remote-config/get-config",
                         "/api/ping",
-                        "/ping"
+                        "/ping",
+                        "/public/**"
                 )
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())

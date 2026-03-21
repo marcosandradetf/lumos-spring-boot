@@ -58,14 +58,21 @@ export class GoogleMapsLoaderService {
     async importMapsLibraries() {
         await this.load();
 
-        const mapsLib = await google.maps.importLibrary('maps') as google.maps.MapsLibrary;
-        const markerLib = await google.maps.importLibrary('marker') as google.maps.MarkerLibrary;
+        const { Map, InfoWindow } =
+            await google.maps.importLibrary('maps') as google.maps.MapsLibrary;
+
+        const { AdvancedMarkerElement, PinElement } =
+            await google.maps.importLibrary('marker') as google.maps.MarkerLibrary;
+
+        const { StreetViewPanorama } =
+            await google.maps.importLibrary('streetView') as google.maps.StreetViewLibrary;
 
         return {
-            Map: mapsLib.Map,
-            InfoWindow: mapsLib.InfoWindow,
-            StreetViewPanorama: google.maps.StreetViewPanorama,
-            AdvancedMarkerElement: markerLib.AdvancedMarkerElement
+            Map,
+            InfoWindow,
+            StreetViewPanorama,
+            AdvancedMarkerElement,
+            PinElement
         };
     }
 

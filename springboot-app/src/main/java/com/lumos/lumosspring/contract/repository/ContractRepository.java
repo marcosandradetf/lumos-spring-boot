@@ -11,10 +11,7 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Repository
 public interface ContractRepository extends CrudRepository<Contract, Long> {
@@ -58,6 +55,9 @@ public interface ContractRepository extends CrudRepository<Contract, Long> {
             @Param("end") Instant end,
             @Param("contractor") String contractor
     );
+
+    List<Contract> findContractByIbgeCodeAndContractTypeInAndDueDateAfter(String ibgeCode, Collection<String> contractTypes, Instant dueDateAfter);
+
     record ContractResponseDTO (
             long contractId,
             String number,

@@ -9,7 +9,9 @@ import {environment} from '../../environments/environment';
 export class RequestService {
     private baseUrl = environment.springboot + "/api";
 
-    constructor(private http: HttpClient) {
+    constructor(
+        private http: HttpClient,
+    ) {
     }
 
     getReservation(depositId: number, status: string) {

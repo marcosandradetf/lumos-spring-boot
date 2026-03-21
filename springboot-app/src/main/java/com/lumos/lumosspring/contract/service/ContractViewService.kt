@@ -8,6 +8,7 @@ import com.lumos.lumosspring.util.Utils
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
+import java.time.Instant
 
 @Service
 class ContractViewService(
@@ -38,5 +39,23 @@ class ContractViewService(
         }
 
         return ResponseEntity.ok().body(referenceItemsResponse)
+    }
+
+    fun hasContractActive(ibgeCode: String, appClient: String, appVersion: String): ResponseEntity<Any> {
+        if(appClient != "lumos-web" || appVersion != "1.0.0") {
+            throw Utils.BusinessException("Client not allowed or API version not supported")
+        }
+
+        val contracts = contractRepository.findContractByIbgeCodeAndContractTypeInAndDueDateAfter(
+            ibgeCode,
+            listOf("ALL", "MAINTENANCE"),
+            Instant.now()
+        )
+
+        return ResponseEntity.ok(
+            mapOf(
+                "hasValidContract" to contracts.isNotEmpty(),
+            )
+        )
     }
 }

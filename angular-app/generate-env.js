@@ -22,7 +22,7 @@ const googleMapsKey = isProd
 const content = `
 export const environment = {
     production: ${isProd},
-    springboot: ${isProd ? '"https://api.lumosip.com.br/spring"' : '"http://localhost:8080"'},
+    springboot: ${isProd ? '"https://api.thryon.com.br/spring"' : '"http://192.168.1.103:8080"'},
     minio: "https://api.lumosip.com.br/minio",
 
     firebase: {

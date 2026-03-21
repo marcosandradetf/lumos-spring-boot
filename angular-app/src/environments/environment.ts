@@ -1,7 +1,7 @@
 
 export const environment = {
     production: false,
-    springboot: "http://localhost:8080",
+    springboot: "http://192.168.1.103:8080",
     minio: "https://api.lumosip.com.br/minio",
 
     firebase: {

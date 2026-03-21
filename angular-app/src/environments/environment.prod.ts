@@ -1,7 +1,8 @@
+
 export const environment = {
     production: true,
     springboot: "https://api.thryon.com.br/spring",
-    minio: "https://api.thryon.com.br/minio",
+    minio: "https://api.lumosip.com.br/minio",
 
     firebase: {
         apiKey: "AIzaSyAxDhw4uOmEoq-Yew4G-Zbe6K-5GDMzsCE",
@@ -12,5 +13,6 @@ export const environment = {
         appId: "1:37243759038:web:47343c71f1c322ef7a31ef",
         measurementId: "G-WVZZ5PRZKY"
     },
-    googleMapsApiKey: 'MAPS_PROD_KEY'
+
+    googleMapsApiKey: 'AIzaSyDQHowWl_vuqhhH3OzKvd6Kuh2ffztDhtg'
 };

@@ -29,6 +29,10 @@ class Contract : TenantEntity() {
     var status : String = ContractStatus.ACTIVE
     var companyId: Long = -1L
     var lastUpdatedBy: UUID? = null
+    var ibgeCode: String = ""
+    var contractionDate: Instant = Instant.now()
+    var dueDate: Instant = Instant.now()
+    var contractType: String = "ALL"
 
     @Transient
     var items: List<ContractItem> = emptyList()

@@ -332,7 +332,14 @@ export const routes: Routes = [
 
     {
         path: 'abrir-chamado',
-        component: ServiceRequestMapComponent
+        component: ServiceRequestMapComponent,
+        data: { mode: 'manual' }
+    },
+
+    {
+        path: 'modo-ronda',
+        component: ServiceRequestMapComponent,
+        data: { mode: 'round' }
     },
 
     //

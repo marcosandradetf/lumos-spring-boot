@@ -1,9 +1,10 @@
 export interface citiesRequest {
-  nome: string;
-  microrregiao: {
+    id: string;
     nome: string;
-    mesorregiao: {
-      nome: string;
+    microrregiao: {
+        nome: string;
+        mesorregiao: {
+            nome: string;
+        }
     }
-  }
 }

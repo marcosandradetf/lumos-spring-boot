@@ -235,6 +235,11 @@ class ContractService(
         contract.contractFile = if ((contractDTO.contractFile?.length ?: 0) > 0) contractDTO.contractFile else null
         contract.companyId = contractDTO.companyId
 
+        contract.ibgeCode = contractDTO.ibgeCode
+        contract.contractType = contractDTO.contractType
+        contract.contractionDate = contractDTO.contractionDate
+        contract.dueDate = contractDTO.dueDate
+
         contract = contractRepository.save(contract)
 
         contractDTO.items.forEach { item ->
