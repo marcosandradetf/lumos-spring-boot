@@ -42,14 +42,23 @@ type LocationState =
 type PlatformType = 'ios' | 'android' | 'windows' | 'mac' | 'other';
 type BrowserType = 'safari' | 'chrome' | 'edge' | 'firefox' | 'other';
 
-type SelectedPoint = {
+export interface SelectedPoint {
     id: string;
     lat: number;
     lng: number;
     pointId?: string;
-    comments?: string;
-    marker?: google.maps.marker.AdvancedMarkerElement;
-};
+    issue: string | null;
+    notes?: string;
+}
+
+interface MaintenanceFormModel {
+    pointId: string;
+    issue: string | null;
+    typeOption: string | null;
+    notes: string;
+    lat: number | null;
+    lng: number | null;
+}
 
 @Component({
     selector: 'app-service-request-map',
@@ -57,7 +66,7 @@ type SelectedPoint = {
     imports: [CommonModule, ButtonModule, CardModule, ProgressSpinnerModule, InputGroup, InputGroupAddon, InputText, FormsModule, LoadingOverlayComponent, Select],
     templateUrl: './service-request-map.component.html'
 })
-export class ServiceRequestMapComponent implements AfterViewInit, OnInit, OnDestroy {
+export class ServiceRequestMapComponent implements OnInit, OnDestroy {
     @ViewChild('mapContainer') mapRef?: ElementRef<HTMLDivElement>;
 
     private map?: google.maps.Map;
@@ -65,6 +74,9 @@ export class ServiceRequestMapComponent implements AfterViewInit, OnInit, OnDest
     private debounceTimer?: ReturnType<typeof setTimeout>;
     private lastLoadedBounds?: google.maps.LatLngBounds;
     private watchId?: number;
+    maintenanceSheetOpen = signal(false);
+    maintenanceFormError = signal<string | null>(null);
+    temporaryMarker?: google.maps.marker.AdvancedMarkerElement;
 
     // Estado visual da tela
     state = signal<LocationState>('idle');
@@ -76,7 +88,8 @@ export class ServiceRequestMapComponent implements AfterViewInit, OnInit, OnDest
     nearestPost = signal<LightPost | null>(null);
     visiblePostsCount = signal(0);
 
-    selectedCity= signal<citiesRequest | null>(null);
+    selectedIbgeCode= signal<string | null>(null);
+    selectedCity= signal<string | null>(null);
     mode = signal<'manual' | 'auto' | 'round'>('auto');
 
     platform = signal<PlatformType>('other');
@@ -84,6 +97,31 @@ export class ServiceRequestMapComponent implements AfterViewInit, OnInit, OnDest
 
     // Mock local para protótipo
     private allPosts: LightPost[] = this.generateMockPosts();
+
+    typeOptions = [
+        { value: 'LED' },
+        { value: 'Lâmpada' },
+        { value: 'Não identificado' },
+        { value: 'Outros' },
+    ] as const;
+
+    issueOptions = [
+        { value: 'Apagado' },
+        { value: 'Aceso de dia' },
+        { value: 'Piscando' },
+        { value: 'Danificado' },
+        { value: 'Acesso prejudicado' },
+        { value: 'Outros' }
+    ] as const;
+
+    maintenanceForm: MaintenanceFormModel = {
+        pointId: '',
+        typeOption: null,
+        issue: null,
+        notes: '',
+        lat: null,
+        lng: null
+    };
 
     constructor(
         private mapsLoader: GoogleMapsLoaderService,
@@ -93,9 +131,6 @@ export class ServiceRequestMapComponent implements AfterViewInit, OnInit, OnDest
     ) {
     }
 
-    async ngAfterViewInit(): Promise<void> {
-        // Não carregar o mapa automaticamente
-    }
 
     ibgeStateError = signal(false);
     ibgeCitiesError = signal(false);
@@ -405,203 +440,36 @@ export class ServiceRequestMapComponent implements AfterViewInit, OnInit, OnDest
         }
     }
 
+    coords: { lat: number, lng: number } | null = null;
     async captureCurrentPosition() {
         if (!this.map) return;
 
         const center = this.map.getCenter();
         if (!center) return;
 
-        const coords = {
+        this.coords = {
             lat: center.lat(),
             lng: center.lng()
         };
 
-        const nearest = this.findNearestPost(coords.lat, coords.lng);
+        const nearest = this.findNearestPost();
 
-        await this.openPointFormAt(coords, nearest?.id);
-    }
-
-    private selectedMarkers = new Map<string, google.maps.marker.AdvancedMarkerElement>();
-    private activeInfoWindow?: google.maps.InfoWindow;
-
-    private async openPointFormAt(
-        coords: { lat: number; lng: number },
-        suggestedPointId?: string
-    ): Promise<void> {
         if (!this.map) return;
 
         const {AdvancedMarkerElement} =
             await google.maps.importLibrary('marker') as google.maps.MarkerLibrary;
 
-        const {InfoWindow} =
-            await google.maps.importLibrary('maps') as google.maps.MapsLibrary;
-
-        if (this.activeInfoWindow) {
-            this.activeInfoWindow.close();
-            this.activeInfoWindow = undefined;
-        }
-
-        const tempMarker = new AdvancedMarkerElement({
+        this.temporaryMarker = new AdvancedMarkerElement({
             map: this.map,
-            position: coords,
+            position: this.coords,
             title: 'Novo ponto'
         });
 
-        const container = document.createElement('div');
-        container.style.minWidth = '260px';
-        container.style.maxWidth = '280px';
-        container.style.background = '#ffffff';
-        container.style.color = '#111827';
-        container.style.padding = '8px';
-        container.style.borderRadius = '12px';
-        container.style.fontFamily = 'Arial, sans-serif';
-        container.innerHTML = `
-  <div style="display:flex;flex-direction:column;gap:10px;">
-    <strong style="font-size:16px;color:#111827;">Novo registro</strong>
-
-    <label style="display:flex;flex-direction:column;gap:4px;color:#111827;">
-      <span style="font-size:13px;">ID do ponto (opcional)</span>
-      <input
-        id="point-id-input"
-        type="text"
-        value="${suggestedPointId ?? ''}"
-        style="
-          padding:10px;
-          border:1px solid #d1d5db;
-          border-radius:8px;
-          background:#ffffff;
-          color:#111827;
-          font-size:14px;
-          outline:none;
-        "
-      />
-    </label>
-
-    <label style="display:flex;flex-direction:column;gap:4px;color:#111827;">
-      <span style="font-size:13px;">Comentário *</span>
-      <textarea
-        id="point-comments-input"
-        rows="3"
-        style="
-          padding:10px;
-          border:1px solid #d1d5db;
-          border-radius:8px;
-          background:#ffffff;
-          color:#111827;
-          font-size:14px;
-          resize:vertical;
-          outline:none;
-        "
-      ></textarea>
-    </label>
-
-    <div
-      id="point-form-error"
-      style="color:#dc2626;font-size:12px;display:none;"
-    >
-      O comentário é obrigatório.
-    </div>
-
-    <div style="display:flex;gap:8px;justify-content:flex-end;">
-      <button
-        id="cancel-point-btn"
-        type="button"
-        style="
-          padding:10px 12px;
-          border:1px solid #d1d5db;
-          border-radius:8px;
-          background:#f3f4f6;
-          color:#111827;
-          cursor:pointer;
-          font-size:14px;
-        "
-      >
-        Cancelar
-      </button>
-
-      <button
-        id="save-point-btn"
-        type="button"
-        style="
-          padding:10px 12px;
-          border:none;
-          border-radius:8px;
-          background:#2563eb;
-          color:#ffffff;
-          cursor:pointer;
-          font-size:14px;
-          font-weight:600;
-        "
-      >
-        Salvar
-      </button>
-    </div>
-  </div>
-`;
-
-        const infoWindow = new InfoWindow({
-            content: container
-        });
-
-        this.activeInfoWindow = infoWindow;
-
-        infoWindow.open({
-            map: this.map,
-            anchor: tempMarker
-        });
-
-        const pointIdInput = container.querySelector('#point-id-input') as HTMLInputElement;
-        const commentsInput = container.querySelector('#point-comments-input') as HTMLTextAreaElement;
-        const errorEl = container.querySelector('#point-form-error') as HTMLDivElement;
-        const cancelBtn = container.querySelector('#cancel-point-btn') as HTMLButtonElement;
-        const saveBtn = container.querySelector('#save-point-btn') as HTMLButtonElement;
-
-        cancelBtn.addEventListener('click', () => {
-            tempMarker.map = null;
-            infoWindow.close();
-            if (this.activeInfoWindow === infoWindow) {
-                this.activeInfoWindow = undefined;
-            }
-        });
-
-        saveBtn.addEventListener('click', () => {
-            const comments = commentsInput.value.trim();
-            const pointId = pointIdInput.value.trim();
-
-            if (!comments) {
-                errorEl.style.display = 'block';
-                commentsInput.focus();
-                return;
-            }
-
-            const point: SelectedPoint = {
-                id: crypto.randomUUID(),
-                lat: coords.lat,
-                lng: coords.lng,
-                pointId: pointId || undefined,
-                comments
-            };
-
-            this.selectedPositions.set([
-                ...this.selectedPositions(),
-                point
-            ]);
-
-            this.selectedMarkers.set(point.id, tempMarker);
-            tempMarker.title = point.pointId
-                ? `Ponto ${point.pointId}`
-                : 'Ponto marcado';
-
-            infoWindow.close();
-            if (this.activeInfoWindow === infoWindow) {
-                this.activeInfoWindow = undefined;
-            }
-
-            tempMarker.addListener('click', () => {
-                this.openReadOnlyPointInfo(point.id);
-            });
-        });
+        this.openMaintenanceSheet(nearest?.id);
     }
+
+    private selectedMarkers = new Map<string, google.maps.marker.AdvancedMarkerElement>();
+    private activeInfoWindow?: google.maps.InfoWindow;
 
     private async openReadOnlyPointInfo(pointId: string): Promise<void> {
         if (!this.map) return;
@@ -624,7 +492,7 @@ export class ServiceRequestMapComponent implements AfterViewInit, OnInit, OnDest
         <div style="display:flex;flex-direction:column;gap:6px;">
             <strong>Ponto marcado</strong>
             <div><b>ID do ponto:</b> ${point.pointId ?? 'Não informado'}</div>
-            <div><b>Comentário:</b> ${point.comments}</div>
+            <div><b>Comentário:</b> ${point.notes}</div>
             <div><b>Lat:</b> ${point.lat.toFixed(6)}</div>
             <div><b>Lng:</b> ${point.lng.toFixed(6)}</div>
         </div>
@@ -650,16 +518,16 @@ export class ServiceRequestMapComponent implements AfterViewInit, OnInit, OnDest
         this.map.panTo(position);
     }
 
-    findNearestPost(lat: number, lng: number): LightPost | null {
-        if (!this.allPosts.length) return null;
+    findNearestPost(): LightPost | null {
+        if (!this.allPosts.length || !this.coords) return null;
 
         let minDist = Infinity;
         let closest: LightPost | null = null;
 
         for (const post of this.allPosts) {
             const dist = Math.sqrt(
-                Math.pow(post.latitude - lat, 2) +
-                Math.pow(post.longitude - lng, 2)
+                Math.pow(post.latitude - this.coords.lat, 2) +
+                Math.pow(post.longitude - this.coords.lng, 2)
             );
 
             if (dist < minDist) {
@@ -859,39 +727,114 @@ export class ServiceRequestMapComponent implements AfterViewInit, OnInit, OnDest
         panorama.setVisible(true);
     }
 
-    checkContractMessage = signal<string | null>(null)
+    checkContractMessage = signal<string | null>(null);
+    contractId = signal<number | null>(null);
     verifyContracts() {
-        if (!this.selectedCity()) return;
+        if (!this.selectedIbgeCode()) return;
+
+        console.log(this.selectedIbgeCode());
+        this.selectedCity.set(this.citiesData().find(c => c.id === this.selectedIbgeCode())?.nome ?? '');
+        console.log(this.selectedCity());
 
         this.loadingContracts.set(true);
         this.service.hasContractActive(
-            this.selectedCity()!.id
+            this.selectedIbgeCode()!
         ).subscribe({
             next: data => {
                 if(data.hasValidContract) {
                     this.checkContractMessage.set(null);
-                    this.state.set('checking');
+                    this.contractId.set(data.contractId);
+                    this.initOperation();
                 } else {
                     this.checkContractMessage.set(
                         'No momento, este município não possui atendimento ativo de iluminação pública no sistema. Para mais informações, verifique diretamente com o órgão público responsável.'
                     );
-
-                    this.checkContractMessage.set(null);
-                    this.state.set('checking');
                 }
                 this.loadingContracts.set(false);
             },
             error: err => {
                 this.checkContractMessage.set(
-                    err.error.message ?? err.error.error
+                    "Algo deu errado! Tente novamente mais tarde."
                 );
                 this.loadingContracts.set(false);
 
-                this.checkContractMessage.set(null);
-
-                void this.initOperation();
+                this.contractId.set(1); // apagar
+                this.initOperation(); // debug
             }
         });
+    }
+
+    openMaintenanceSheet(
+        suggestedPointId?: string
+    ): void {
+        if(!this.coords) return;
+
+        this.maintenanceFormError.set(null);
+        this.maintenanceForm = {
+            pointId: suggestedPointId ?? '',
+            typeOption: null,
+            issue: null,
+            notes: '',
+            lat: this.coords.lat,
+            lng: this.coords.lng
+        };
+        this.maintenanceSheetOpen.set(true);
+    }
+
+    closeMaintenanceSheet(): void {
+        this.maintenanceSheetOpen.set(false);
+        this.maintenanceFormError.set(null);
+
+        if (this.temporaryMarker) {
+            this.temporaryMarker.map = null;
+            this.temporaryMarker = undefined;
+        }
+    }
+
+    canSaveMaintenanceForm(): boolean {
+        return !!this.maintenanceForm.issue;
+    }
+
+    saveMaintenancePoint(): void {
+        if (!this.maintenanceForm.issue) {
+            this.maintenanceFormError.set('Selecione a situação.');
+            return;
+        }
+
+        if (this.maintenanceForm.issue === 'outros' && !this.maintenanceForm.notes.trim()) {
+            this.maintenanceFormError.set('Descreva rapidamente a situação em observação.');
+            return;
+        }
+
+        const point: SelectedPoint = {
+            id: crypto.randomUUID(),
+            lat: this.maintenanceForm.lat!,
+            lng: this.maintenanceForm.lng!,
+            pointId: this.maintenanceForm.pointId.trim() || undefined,
+            issue: this.maintenanceForm.issue,
+            notes: this.maintenanceForm.notes.trim() || undefined,
+        };
+
+        this.selectedPositions.set([
+            ...this.selectedPositions(),
+            point
+        ]);
+
+        if (this.temporaryMarker) {
+            this.selectedMarkers.set(point.id, this.temporaryMarker);
+            this.temporaryMarker.title = point.pointId
+                ? `Ponto ${point.pointId}`
+                : 'Ponto marcado';
+
+            this.temporaryMarker.addListener('click', () => {
+                this.openReadOnlyPointInfo(point.id);
+            });
+
+            this.temporaryMarker = undefined;
+        }
+
+        this.maintenanceSheetOpen.set(false);
+        this.maintenanceFormError.set(null);
     }
 
 

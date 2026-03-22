@@ -61,7 +61,7 @@
                 [loading]="loadingCities()"
                 [disabled]="!uf"
                 [options]="citiesData()"
-                [(ngModel)]="selectedCity"
+                [(ngModel)]="selectedIbgeCode"
                 optionValue="id"
                 optionLabel="nome"
                 placeholder="Selecione seu município"
@@ -113,7 +113,7 @@
         </h1>
 
         <p class="text-sm text-slate-600 dark:text-slate-400">
-          Município: <span class="font-medium">{{ selectedCity()?.nome || '—' }}</span>
+          Município: <span class="font-medium">{{ selectedCity() || '—' }}</span>
         </p>
       </div>
     }
@@ -396,5 +396,143 @@
 
     }
 
+  </div>
+
+
+  <div
+    *ngIf="maintenanceSheetOpen()"
+    class="fixed inset-0 z-[1200]"
+  >
+    <div
+      class="absolute inset-0 bg-black/40"
+      (click)="closeMaintenanceSheet()"
+    ></div>
+
+    <section
+      class="absolute bottom-0 left-0 right-0 mx-auto w-full max-w-md rounded-t-3xl
+           bg-white p-4 shadow-2xl dark:bg-zinc-900
+           h-[78vh] flex flex-col"
+    >
+      <div class="mx-auto mb-3 h-1.5 w-12 rounded-full bg-zinc-300 dark:bg-zinc-700"></div>
+
+      <div class="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <h2 class="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+            Registrar manutenção
+          </h2>
+          <p class="text-xs text-zinc-500 dark:text-zinc-400">
+            {{ coords?.lat ?? 0 }}, {{coords?.lng ?? 0}}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          class="rounded-full p-2 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+          (click)="closeMaintenanceSheet()"
+        >
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto space-y-5 pb-4">
+        <div>
+          <label class="mb-2 block text-sm font-medium text-zinc-800 dark:text-zinc-200">
+            ID do ponto
+          </label>
+          <input
+            pInputText
+            [(ngModel)]="maintenanceForm.pointId"
+            placeholder="Opcional"
+            class="w-full"
+          />
+        </div>
+
+        <div>
+          <label class="mb-2 block text-sm font-medium text-zinc-800 dark:text-zinc-200">
+            Tipo do ponto
+          </label>
+
+          <div class="flex flex-wrap gap-2">
+            <button
+              *ngFor="let item of typeOptions"
+              type="button"
+              (click)="maintenanceForm.typeOption = item.value"
+              class="rounded-full border px-3 py-2 text-sm transition"
+              [ngClass]="maintenanceForm.typeOption === item.value
+              ? 'border-blue-600 bg-blue-600 text-white dark:border-blue-500 dark:bg-blue-500'
+              : 'border-zinc-300 bg-white text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200'"
+            >
+              {{ item.value }}
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="mb-2 block text-sm font-medium text-zinc-800 dark:text-zinc-200">
+            Situação
+          </label>
+
+          <div class="flex flex-wrap gap-2">
+            <button
+              *ngFor="let item of issueOptions"
+              type="button"
+              (click)="maintenanceForm.issue = item.value"
+              class="rounded-full border px-3 py-2 text-sm transition"
+              [ngClass]="maintenanceForm.issue === item.value
+              ? 'border-blue-600 bg-blue-600 text-white dark:border-blue-500 dark:bg-blue-500'
+              : 'border-zinc-300 bg-white text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200'"
+            >
+              {{ item.value }}
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="mb-2 block text-sm font-medium text-zinc-800 dark:text-zinc-200">
+            Observação
+          </label>
+
+          <textarea
+            pInputTextarea
+            rows="3"
+            maxlength="120"
+            [(ngModel)]="maintenanceForm.notes"
+            placeholder="Opcional"
+            class="w-full rounded p-2"
+          ></textarea>
+
+          <div class="mt-1 text-right text-xs text-zinc-500 dark:text-zinc-400">
+            {{ maintenanceForm.notes.length }}/120
+          </div>
+        </div>
+
+        <p
+          *ngIf="maintenanceFormError()"
+          class="text-sm text-red-600 dark:text-red-400"
+        >
+          {{ maintenanceFormError() }}
+        </p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 pt-3 border-t border-zinc-200 dark:border-zinc-800">
+        <button
+          pButton
+          type="button"
+          label="Cancelar"
+          severity="secondary"
+          class="w-full"
+          (click)="closeMaintenanceSheet()"
+        ></button>
+
+        <button
+          pButton
+          type="button"
+          label="Salvar"
+          class="w-full"
+          [disabled]="!canSaveMaintenanceForm()"
+          (click)="saveMaintenancePoint()"
+        ></button>
+      </div>
+    </section>
   </div>
 </div>

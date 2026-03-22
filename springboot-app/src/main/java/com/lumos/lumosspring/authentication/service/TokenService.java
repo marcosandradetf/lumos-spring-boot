@@ -187,57 +187,6 @@ public class TokenService {
         }
     }
 
-    // -> depreciated
-    public ResponseEntity<?> login(LoginRequest loginRequest, HttpServletResponse response, boolean isMobile) {
-        var user = userRepository.findByUsernameOrCpfIgnoreCase(loginRequest.username(), loginRequest.username());
-        if (user.isEmpty() || !user.get().isLoginCorrect(loginRequest, passwordEncoder)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("Usuário/CPF ou senha incorretos"));
-        }
-
-        if (!user.get().getStatus()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("O Usuário informado não possuí permissão de acesso."));
-        }
-
-        if (isMobile) {
-            var allowedRoles = new HashSet<>(Set.of(
-                    Role.Values.MOTORISTA.name(),
-                    Role.Values.ELETRICISTA.name(),
-                    Role.Values.ANALISTA.name(),
-                    Role.Values.ADMIN.name(),
-                    Role.Values.RESPONSAVEL_TECNICO.name()
-            ));
-
-            // Busca direto as roles do usuário sem precisar buscar UserRole e Role separadamente
-            var rolesNames = roleRepository.findRolesByUserId(user.get().getUserId());
-
-            // Verificar se o usuário tem acesso
-            boolean hasAccess = rolesNames.stream().anyMatch(allowedRoles::contains);
-
-            if (!hasAccess) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("Usuário sem acesso ao aplicativo"));
-            }
-        }
-
-
-        this.generateToken(user.get().getUserId());
-
-        // Configura o refreshToken como um cookie HTTP-Only
-        if (!isMobile) {
-            String cookieValue = "refreshToken=" + refreshToken +
-                    "; Max-Age=" + refreshExpiresIn +
-                    "; Path=/" +
-                    "; HttpOnly; Secure; SameSite=Strict";
-            response.setHeader(HttpHeaders.SET_COOKIE, cookieValue);
-
-            return ResponseEntity.ok(new LoginResponse(accessToken));
-        } else {
-            var responseBody = new LoginResponseMobile(accessToken, expiresIn, getRoles(user.get().getUserId()), getTeams(user.get()), refreshToken, user.get().getUserId().toString());
-
-            return ResponseEntity.ok(responseBody);
-        }
-
-    }
-
     public ResponseEntity<?> newLogin(LoginRequest loginRequest, HttpServletResponse response, boolean isMobile) {
         var user = userRepository.findByUsernameOrCpfIgnoreCase(loginRequest.username(), loginRequest.username());
         if (user.isEmpty() || !user.get().isLoginCorrect(loginRequest, passwordEncoder)) {

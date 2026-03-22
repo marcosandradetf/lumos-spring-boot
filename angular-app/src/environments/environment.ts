@@ -1,8 +1,7 @@
 
 export const environment = {
     production: false,
-    springboot: "http://192.168.1.103:8080",
-    minio: "https://api.lumosip.com.br/minio",
+    springboot: 'http://192.168.1.101:8080',
 
     firebase: {
         apiKey: "AIzaSyAxDhw4uOmEoq-Yew4G-Zbe6K-5GDMzsCE",

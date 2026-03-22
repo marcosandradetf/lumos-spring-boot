@@ -16,12 +16,6 @@ public class TokenControllerMobile {
     }
 
 
-    @PostMapping("/login")
-    public ResponseEntity<?> loginMobile(@RequestBody LoginRequest loginRequest) {
-        return tokenService.login(loginRequest, null, true);
-    }
-
-
     @PostMapping("/v2/login")
     public ResponseEntity<?> newLoginMobile(@RequestBody LoginRequest loginRequest) {
         return tokenService.newLogin(loginRequest, null, true);

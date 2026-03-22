@@ -46,15 +46,15 @@ class ContractViewService(
             throw Utils.BusinessException("Client not allowed or API version not supported")
         }
 
-        val contracts = contractRepository.findContractByIbgeCodeAndContractTypeInAndDueDateAfter(
+        val contract = contractRepository.findContractByIbgeCodeAndContractTypeInAndDueDateAfter(
             ibgeCode,
             listOf("ALL", "MAINTENANCE"),
             Instant.now()
-        )
+        ).orElse(null)
 
         return ResponseEntity.ok(
             mapOf(
-                "hasValidContract" to contracts.isNotEmpty(),
+                "hasValidContract" to contract != null,
             )
         )
     }

@@ -1,8 +1,7 @@
 
 export const environment = {
     production: true,
-    springboot: "https://api.thryon.com.br/spring",
-    minio: "https://api.lumosip.com.br/minio",
+    springboot: "",
 
     firebase: {
         apiKey: "AIzaSyAxDhw4uOmEoq-Yew4G-Zbe6K-5GDMzsCE",

@@ -56,7 +56,11 @@ public interface ContractRepository extends CrudRepository<Contract, Long> {
             @Param("contractor") String contractor
     );
 
-    List<Contract> findContractByIbgeCodeAndContractTypeInAndDueDateAfter(String ibgeCode, Collection<String> contractTypes, Instant dueDateAfter);
+    Optional<Contract> findContractByIbgeCodeAndContractTypeInAndDueDateAfter(String ibgeCode, Collection<String> contractTypes, Instant dueDateAfter);
+
+    boolean existsByTenantId(UUID tenantId);
+
+    List<Contract> findAllByIbgeCode(String ibgeCode);
 
     record ContractResponseDTO (
             long contractId,

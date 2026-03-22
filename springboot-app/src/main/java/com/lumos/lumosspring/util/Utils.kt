@@ -26,6 +26,14 @@ object Utils {
     }
 
     @JvmStatic
+    fun getCurrentScope(): String? {
+        return when (val authentication = SecurityContextHolder.getContext().authentication) {
+            is JwtAuthenticationToken -> authentication.token.getClaimAsString("scope")
+            else -> null
+        }
+    }
+
+    @JvmStatic
     fun getCurrentTenantId(): UUID {
         val authentication = SecurityContextHolder.getContext().authentication
 
@@ -149,6 +157,40 @@ object Utils {
             .replace("[^a-zA-Z0-9._-]".toRegex(), "_") // troca lixo por _
             .replace("_+".toRegex(), "_") // evita ___
             .lowercase()
+    }
+
+
+    fun isValidCnpj(cnpj: String?): Boolean {
+        if (cnpj.isNullOrBlank()) return false
+
+        val digits = cnpj.filter { it.isDigit() }
+
+        if (digits.length != 14) return false
+
+        if (digits.all { it == digits[0] }) return false
+
+        fun calculateDigit(base: String, weights: IntArray): Int {
+            val sum = base.mapIndexed { index, char ->
+                char.digitToInt() * weights[index]
+            }.sum()
+
+            val remainder = sum % 11
+            return if (remainder < 2) 0 else 11 - remainder
+        }
+
+        val firstWeights = intArrayOf(5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2)
+        val secondWeights = intArrayOf(6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2)
+
+        val base = digits.substring(0, 12)
+        val firstDigit = calculateDigit(base, firstWeights)
+        val secondDigit = calculateDigit(base + firstDigit, secondWeights)
+
+        return digits == base + firstDigit.toString() + secondDigit.toString()
+    }
+
+    fun normalizeCnpj(cnpj: String?): String? {
+        val digits = cnpj?.filter { it.isDigit() } ?: return null
+        return if (digits.length == 14) digits else null
     }
 
 }

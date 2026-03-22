@@ -90,13 +90,25 @@ class ContractService(
         val contract = contractRepository.findById(contractId).orElseThrow()
         val user = userRepository.findByUserId(Utils.getCurrentUserId()).orElseThrow()
 
+        val scope = Utils.getCurrentScope() ?: throw Utils.BusinessException("Scope não acessivel")
+        val roles = scope.split(" ")
+
+        val scoreResult = calculateContractScore(contractDTO, roles)
+
         contract.contractNumber = contractDTO.number
         contract.phone = contractDTO.phone
         contract.contractor = contractDTO.contractor
-        contract.cnpj = contractDTO.cnpj
+        contract.cnpj = Utils.normalizeCnpj(contractDTO.cnpj)
         contract.address = contractDTO.address
         contract.unifyServices = contractDTO.unifyServices
         contract.lastUpdatedBy = user.userId
+
+        contract.ibgeCode = contractDTO.ibgeCode
+        contract.contractType = contractDTO.contractType
+        contract.contractionDate = contractDTO.contractionDate
+        contract.dueDate = contractDTO.dueDate
+        contract.validationScore = scoreResult.score
+        contract.validationReasons = scoreResult.reasons.joinToString(" | ")
 
         if ((contractDTO.contractFile?.length ?: 0) > 0) {
             val filesToDelete = buildSet {
@@ -133,7 +145,22 @@ class ContractService(
             items = contractDTO.items
         )
 
-        return ResponseEntity.ok(DefaultResponse("Contrato atualizado com sucesso!"))
+        if(contract.status == ContractStatus.PENDING) {
+            fcmService.sendNotificationForTopic(
+                title = "Novo contrato pendente para Validação",
+                body = "Colaboradora ${user.name} atualizou o contrato de ${contract.contractor}",
+                notificationCode = "SUPPORT",
+                type = NotificationType.CONTRACT,
+                platform = FCMService.TargetPlatform.WEB,
+                uri = "/contratos/validar/${contract.contractId}"
+            )
+
+            return ResponseEntity.ok(
+                DefaultResponse("Contrato atualizado com sucesso. Nossa equipe fará a análise e você receberá um retorno em até 2 horas.")
+            )
+        } else {
+            return ResponseEntity.ok(DefaultResponse("Contrato atualizado com sucesso!"))
+        }
     }
 
     private fun changeItems(
@@ -221,47 +248,116 @@ class ContractService(
     }
 
     private fun createContract(contractDTO: ContractDTO): ResponseEntity<Any> {
-        var contract = Contract()
         val user = userRepository.findByUserId(Utils.getCurrentUserId())
-            ?: throw IllegalStateException("Usuário não encontrado")
+            .orElse(null) ?: throw IllegalStateException("Usuário não encontrado")
 
-        contract.contractNumber = contractDTO.number
-        contract.contractor = contractDTO.contractor
-        contract.cnpj = contractDTO.cnpj
-        contract.address = contractDTO.address
-        contract.phone = contractDTO.phone
-        contract.createdBy = user.get().userId
-        contract.unifyServices = contractDTO.unifyServices
-        contract.contractFile = if ((contractDTO.contractFile?.length ?: 0) > 0) contractDTO.contractFile else null
-        contract.companyId = contractDTO.companyId
+        val scope = Utils.getCurrentScope() ?: throw Utils.BusinessException("Scope não acessivel")
+        val roles = scope.split(" ")
 
-        contract.ibgeCode = contractDTO.ibgeCode
-        contract.contractType = contractDTO.contractType
-        contract.contractionDate = contractDTO.contractionDate
-        contract.dueDate = contractDTO.dueDate
+        val scoreResult = calculateContractScore(contractDTO, roles)
+
+        var contract = Contract().apply {
+            contractNumber = contractDTO.number
+            contractor = contractDTO.contractor
+            cnpj = Utils.normalizeCnpj(contractDTO.cnpj)
+            address = contractDTO.address
+            phone = contractDTO.phone
+            createdBy = user.userId
+            unifyServices = contractDTO.unifyServices
+            contractFile = if ((contractDTO.contractFile?.length ?: 0) > 0) contractDTO.contractFile else null
+            companyId = contractDTO.companyId
+            ibgeCode = contractDTO.ibgeCode
+            contractType = contractDTO.contractType
+            contractionDate = contractDTO.contractionDate
+            dueDate = contractDTO.dueDate
+            validationScore = scoreResult.score
+            validationReasons = scoreResult.reasons.joinToString(" | ")
+            status = ContractStatus.PENDING
+        }
 
         contract = contractRepository.save(contract)
 
         contractDTO.items.forEach { item ->
-            val ci = ContractItem()
-            ci.referenceItemId = item.contractReferenceItemId
-            ci.contractId = contract.contractId
-            ci.contractedQuantity = item.quantity!!
-            ci.setPrices(item.price)
+            val ci = ContractItem().apply {
+                referenceItemId = item.contractReferenceItemId
+                contractId = contract.contractId
+                contractedQuantity = item.quantity ?: BigDecimal.ZERO
+                setPrices(item.price)
+            }
             contractItemsQuantitativeRepository.save(ci)
         }
 
-        for (notificationCode in userRepository.getResponsibleTechUsers(Utils.getCurrentTenantId())) {
-            fcmService.sendNotificationForTopic(
-                title = "Novo contrato pendente para Pré-Medição",
-                body = "Colaboradora ${user.get().name} criou o contrato de ${contract.contractor}",
-                action = Routes.CONTRACT_SCREEN,
-                notificationCode = notificationCode.toString(),
-                type = NotificationType.CONTRACT
-            )
+
+        fcmService.sendNotificationForTopic(
+            title = "Novo contrato pendente para Validação",
+            body = "Colaboradora ${user.name} criou o contrato de ${contract.contractor}",
+            notificationCode = "SUPPORT",
+            type = NotificationType.CONTRACT,
+            platform = FCMService.TargetPlatform.WEB,
+            uri = "/contratos/validar/${contract.contractId}"
+        )
+
+//        fcmService.sendNotificationForTopic(
+//            title = "Novo contrato pendente para Pré-Medição",
+//            body = "Colaboradora ${user.name} criou o contrato de ${contract.contractor}",
+//            action = Routes.CONTRACT_SCREEN,
+//            notificationCode = "RESPONSAVEL_TECNICO_${Utils.getCurrentTenantId()}",
+//            type = NotificationType.CONTRACT
+//        )
+
+        return ResponseEntity.ok(
+            DefaultResponse("Contrato registrado com sucesso. Nossa equipe fará a análise e você receberá um retorno em até 2 horas.")
+        )
+    }
+
+    data class ContractScoreResult(
+        val score: Int,
+        val reasons: List<String>
+    )
+    private fun calculateContractScore(
+        contractDTO: ContractDTO,
+        roles: List<String>
+    ): ContractScoreResult {
+        var score = 0
+        val reasons = mutableListOf<String>()
+
+        if (contractDTO.number.isNotBlank()) {
+            score += 1
+            reasons += "Número do contrato informado"
+        } else {
+            reasons += "Número do contrato não informado"
         }
 
-        return ResponseEntity.ok(DefaultResponse("Contrato salvo com sucesso!"))
+        if (contractDTO.cnpj.isNotBlank() && Utils.isValidCnpj(Utils.normalizeCnpj(contractDTO.cnpj))) {
+            score += 1
+            reasons += "CNPJ válido"
+        } else {
+            reasons += "CNPJ inválido"
+        }
+
+        if (contractDTO.phone.isNotBlank()) {
+            score += 1
+            reasons += "Telefone informado"
+        } else {
+            reasons += "Telefone não informado"
+        }
+
+        if (roles.contains("ADMIN")) {
+            score += 3
+            reasons += "Cadastro feito por administrador"
+        } else if (roles.contains("ANALISTA")) {
+            score += 2
+            reasons += "Cadastro feito por analista"
+        }
+
+        if (contractRepository.existsByTenantId(Utils.getCurrentTenantId())) {
+            score += 2
+            reasons += "Empresa já possui histórico no sistema"
+        } else {
+            reasons += "Empresa não possui histórico no sistema"
+        }
+
+        return ContractScoreResult(score, reasons)
     }
 
     fun getContract(contractId: Long): ResponseEntity<Any> {

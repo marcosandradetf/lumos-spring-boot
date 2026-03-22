@@ -34,6 +34,10 @@ class Contract : TenantEntity() {
     var dueDate: Instant = Instant.now()
     var contractType: String = "ALL"
 
+    var validationScore: Int = 0
+    var validationReasons: String = ""
+    var rejectedReason: String? = null
+
     @Transient
     var items: List<ContractItem> = emptyList()
 

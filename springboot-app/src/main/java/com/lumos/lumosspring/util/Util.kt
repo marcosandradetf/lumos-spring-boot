@@ -182,6 +182,12 @@ object ContractStatus {
     const val ACTIVE = "ACTIVE"
     const val INACTIVE = "INACTIVE"
     const val ARCHIVED = "ARCHIVED"
+
+    const val VALIDATED = "VALIDATED"
+    const val IN_REVIEW = "IN_REVIEW"
+    const val PENDING = "PENDING"
+    const val EXPIRED = "EXPIRED"
+
 }
 
 object ContractType {

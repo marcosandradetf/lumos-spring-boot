@@ -5,6 +5,8 @@ import com.lumos.lumosspring.contract.dto.ContractReferenceItemDTO
 import com.lumos.lumosspring.contract.dto.PContractReferenceItemDTO
 import com.lumos.lumosspring.contract.service.ContractService
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.authorization.AuthorityAuthorizationManager.hasAuthority
 import org.springframework.web.bind.annotation.*
 import java.time.Instant
 
@@ -17,6 +19,7 @@ class ContractController(
 
 
     @PostMapping("/contracts/insert-contract")
+    @PreAuthorize("hasAuthority('SCOPE_ANALISTA') or hasAuthority('SCOPE_ADMIN')")
     fun insertContract(@RequestBody contractDTO: ContractDTO) : ResponseEntity<Any> =
         contractService.saveContract(contractDTO)
 

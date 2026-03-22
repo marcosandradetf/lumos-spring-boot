@@ -26,6 +26,12 @@ class FCMController(
             FirebaseMessaging.getInstance().subscribeToTopic(listOf(token), topic)
             println("✅ Token inscrito no tópico: $topic")
         }
+
+        if(roles.contains("SUPPORT")) {
+            FirebaseMessaging.getInstance().subscribeToTopic(listOf(token), "SUPPORT")
+            println("✅ Token inscrito no tópico: SUPPORT")
+        }
+
     }
 
     @PostMapping("/unsubscribe")

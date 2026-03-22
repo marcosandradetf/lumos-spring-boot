@@ -19,11 +19,13 @@ const googleMapsKey = isProd
   ? getEnvOrThrow('GOOGLE_MAPS_KEY_PROD')
   : getEnvOrThrow('GOOGLE_MAPS_KEY_DEV');
 
+const localhost = getEnvOrThrow('LOCALHOST');
+const api = getEnvOrThrow('API_HOST');
+
 const content = `
 export const environment = {
     production: ${isProd},
-    springboot: ${isProd ? '"https://api.thryon.com.br/spring"' : '"http://192.168.1.103:8080"'},
-    minio: "https://api.lumosip.com.br/minio",
+    springboot: ${isProd ? "'" + api + "'" : "'" + localhost + "'"},
 
     firebase: {
         apiKey: "AIzaSyAxDhw4uOmEoq-Yew4G-Zbe6K-5GDMzsCE",
