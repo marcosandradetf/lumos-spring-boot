@@ -137,7 +137,7 @@ class DirectExecutionReportService(
                     <td style="text-align: left;">$lastPower</td>
                     $quantityCells
                     <td style="text-align: right;">$date</td>
-                    <td style="text-align: left;">$supplier</td>
+                    <td style="text-align: left;">${supplier.uppercase()}</td>
                 </tr>
             """.trimIndent()
         }.joinToString("\n")
@@ -187,7 +187,7 @@ class DirectExecutionReportService(
                   <tr>
                       <td colspan="2">
                           <p class="label">Responsável:</p>
-                          <p class="cell-text">${execution["responsible"]?.asText() ?: ""}</p>
+                          <p class="cell-text">${execution["responsible"]?.asText()?.uppercase() ?: ""}</p>
                       </td>
                   </tr>
               </tbody>
