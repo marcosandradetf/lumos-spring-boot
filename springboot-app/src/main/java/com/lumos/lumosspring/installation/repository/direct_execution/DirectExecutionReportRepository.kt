@@ -157,7 +157,7 @@ class DirectExecutionReportRepository(
                      'responsible', de.responsible,
                      'started_at', de.started_at,
                      'signature_uri', de.signature_uri,
-                     'finished_at', de.finished_at,
+                     'finished_at', de.finished_at
              ) AS execution
         
         FROM installation_view de

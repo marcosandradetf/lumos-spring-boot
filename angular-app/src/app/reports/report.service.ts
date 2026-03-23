@@ -24,9 +24,9 @@ export class ReportService {
     }
 
 
-    public getInstallationPdf(executionId: number, type: string) {
+    public getInstallationPdf(execution: any, type: string) {
         return this.http.post(
-            `${this.endpoint}/api/execution/generate-report/${type}/${executionId}`,
+            `${this.endpoint}/api/execution/generate-report/${type}/${execution.installation_id}/${execution.installation_type}`,
             null,
             {
                 responseType: 'blob',

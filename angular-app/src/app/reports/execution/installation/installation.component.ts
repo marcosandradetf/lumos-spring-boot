@@ -40,10 +40,10 @@ export class InstallationComponent implements OnInit {
             contractor: string;
         },
         steps: {
-            direct_execution_id: number;
+            installation_id: number;
+            installation_type: string;
             step: string;
             description: string;
-            type: string;
             team: {
                 name: string;
                 last_name: string;
@@ -58,10 +58,10 @@ export class InstallationComponent implements OnInit {
             contractor: string;
         },
         steps: {
-            direct_execution_id: number;
+            installation_id: number;
+            installation_type: string;
             step: string;
             description: string;
-            type: string;
             team: {
                 name: string;
                 last_name: string;
@@ -106,11 +106,11 @@ export class InstallationComponent implements OnInit {
 
     // Métodos para as ações do menu
     actionDataReport() {
-        this.loadPdf(this.selectedStep.direct_execution_id, 'data');
+        this.loadPdf(this.selectedStep, 'data');
     }
 
     actionPhotoReport() {
-        this.loadPdf(this.selectedStep.direct_execution_id, 'photos');
+        this.loadPdf(this.selectedStep, 'photos');
     }
 
     actionArchive() {
@@ -149,12 +149,12 @@ export class InstallationComponent implements OnInit {
     pdfBlob: Blob | null = null;
     fileName: string | null = null;
     descTitle: string | null = null;
-    public loadPdf(executionId: number, type: string) {
+    public loadPdf(execution: any, type: string) {
         const desc = type === 'data' ? 'led' : 'fotografico';
         this.descTitle = type === 'data' ? 'Relatório de Instalação de LEDs' : 'Relatório Fotográfico';
 
         this.loading = true;
-        this.reportService.getInstallationPdf(executionId, type).subscribe({
+        this.reportService.getInstallationPdf(execution, type).subscribe({
             next: (resp) => {
                 // limpa URL antiga
                 if (this.pdfUrl) {

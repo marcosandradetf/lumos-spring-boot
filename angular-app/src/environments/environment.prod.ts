@@ -1,7 +1,7 @@
 
 export const environment = {
     production: true,
-    springboot: "",
+    springboot: 'https://api.lumosip.com.br/spring',
 
     firebase: {
         apiKey: "AIzaSyAxDhw4uOmEoq-Yew4G-Zbe6K-5GDMzsCE",
