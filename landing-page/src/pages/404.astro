@@ -3,10 +3,10 @@ import ErrorLayout from '@/layouts/ErrorLayout.astro';
 import ErrorPage from '@components/error/ErrorPage.astro';
 ---
 
-<ErrorLayout title="Página Não Encontrada" description="The page you're looking for doesn't exist.">
+<ErrorLayout title="Página Não Encontrada" description="A página que você está procurando não existe.">
   <ErrorPage
     code={404}
     title="Página Não Encontrada"
-    message="Sorry, we couldn't find the page you're looking for. It might have been moved, deleted, or never existed."
+    message="Desculpe, não conseguimos encontrar a página que você está procurando. Ela pode ter sido movida, excluída ou nunca ter existido."
   />
 </ErrorLayout>

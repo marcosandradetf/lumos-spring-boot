@@ -1,7 +1,9 @@
 package com.lumos.lumosspring.contract.service
 
+import com.google.api.client.util.Data.mapOf
 import com.lumos.lumosspring.contract.dto.ContractItemBalance
 import com.lumos.lumosspring.contract.dto.ContractReferenceItemDTO
+import com.lumos.lumosspring.contract.entities.Contract
 import com.lumos.lumosspring.contract.repository.ContractReferenceItemRepository
 import com.lumos.lumosspring.contract.repository.ContractRepository
 import com.lumos.lumosspring.util.Utils
@@ -42,11 +44,11 @@ class ContractViewService(
     }
 
     fun hasContractActive(ibgeCode: String, appClient: String, appVersion: String): ResponseEntity<Any> {
-        if(appClient != "lumos-web" || appVersion != "1.0.0") {
+        if (appClient != "lumos-web" || appVersion != "1.0.0") {
             throw Utils.BusinessException("Client not allowed or API version not supported")
         }
 
-        val contract = contractRepository.findContractByIbgeCodeAndContractTypeInAndDueDateAfter(
+        val contract: Contract? = contractRepository.findContractByIbgeCodeAndContractTypeInAndDueDateAfter(
             ibgeCode,
             listOf("ALL", "MAINTENANCE"),
             Instant.now()
@@ -54,7 +56,8 @@ class ContractViewService(
 
         return ResponseEntity.ok(
             mapOf(
-                "hasValidContract" to contract != null,
+                "hasValidContract" to (contract != null),
+                "contractId" to contract?.contractId
             )
         )
     }

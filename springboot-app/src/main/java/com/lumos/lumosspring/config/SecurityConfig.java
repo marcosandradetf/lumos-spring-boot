@@ -47,6 +47,7 @@ public class SecurityConfig {
                 "https://lumosip.com.br",
                 "https://app.lumosip.com.br",
                 "http://localhost:4200",
+                "http://localhost:4321",
                 "http://192.168.1.103:4200"
         ));
         configuration.setAllowCredentials(true);

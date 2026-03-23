@@ -9,9 +9,8 @@ import BentoGrid from '@sections/marketing/BentoGrid.astro';
 import PricingTable from '@sections/pricing/PricingTable.astro';
 import TestimonialsSection from '@sections/social-proof/TestimonialsSection.astro';
 import CTA from '@sections/marketing/CTA.astro';
-import Newsletter from '@sections/marketing/Newsletter.astro';
 import { siteConfig } from '@/config';
-import IntegrationsGrid from '@sections/marketing/IntegrationsGrid.astro';
+import FeatureMarquee from '@/components/sections/marketing/FeatureMarquee.astro';
 
 type TestimonialEntry = CollectionEntry<'testimonials'>;
 
@@ -148,7 +147,7 @@ const pricingPlans = [
     highlighted: false,
     cta: {
       label: 'Iniciar teste grátis',
-      href: '/contato',
+      href: '/teste-gratis',
     },
   },
   {
@@ -166,7 +165,7 @@ const pricingPlans = [
     highlighted: true,
     cta: {
       label: 'Iniciar teste grátis',
-      href: '/contato',
+      href: '/teste-gratis',
     },
   },
   {
@@ -186,14 +185,14 @@ const pricingPlans = [
     highlighted: false,
     cta: {
       label: 'Iniciar Teste Grátis',
-      href: '/contato',
+      href: '/teste-gratis',
     },
   },
 ];
 ---
 
 <MarketingLayout
-  title={`${siteConfig.name} - ${siteConfig.description}`}
+  title={`${siteConfig.name}`}
   description={siteConfig.description}
 >
 
@@ -209,14 +208,32 @@ const pricingPlans = [
     overlayOpacity={60}
   />
 
-  <LogoCloud
-    title="Nossos parceiros:"
+  <!--<LogoCloud-->
+  <!--  title="Nossos parceiros:"-->
+  <!--  logos={[-->
+  <!--    { name: 'Solutions Engenharia', src: '/images/logos/logo_solutions.svg', href: 'https://solutionscl.com.br/' },-->
+  <!--    ]}-->
+  <!--  grayscale={false}-->
+  <!--  logoSize="lg"-->
+  <!--/>-->
+
+  <FeatureMarquee
+    title="Tecnologia de ponta para sua operação"
+    speed="normal"
     logos={[
-      { name: 'Solutions Engenharia', src: '/images/logos/logo_solutions.svg', href: 'https://solutionscl.com.br/' },
-      ]}
-    grayscale={false}
-    logoSize="lg"
+      { name: '', src: 'Controle de contratos e saldos' },
+      { name: '', src: 'Chamados em Tempo Real' },
+      { name: '', src: 'Modo Ronda de Manutenção' },
+      { name: '', src: 'Controle de instalações de LEDs' },
+      { name: '', src: 'Vínculo Direto Campo-Contrato' },
+      { name: '', src: 'Mapa de Ocorrências' },
+      { name: '', src: 'Estoque de Veículos' },
+      { name: '', src: 'Geolocalização Precisa' },
+      { name: '', src: 'Rastreio de Ativos' },
+      { name: '', src: 'Relatórios de Execuções para NFSe' },
+    ]}
   />
+
 
   <HowItWorks
     title="Implantação em três etapas"

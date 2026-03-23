@@ -1,9 +1,16 @@
 package com.lumos.lumosspring.notifications.service;
 
 import com.lumos.lumosspring.notifications.entities.EmailConfig;
+import com.lumos.lumosspring.notifications.model.EmailQueue;
 import com.lumos.lumosspring.notifications.repository.EmailConfigRepository;
 import com.lumos.lumosspring.config.SystemMailConfig;
+import com.lumos.lumosspring.notifications.repository.EmailQueueRepository;
+import com.lumos.lumosspring.util.Utils;
+import com.resend.Resend;
+import com.resend.services.emails.model.CreateEmailOptions;
+import com.resend.services.emails.model.CreateEmailResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -16,82 +23,43 @@ import java.util.Properties;
 public class EmailService {
 
     @Autowired
-    private EmailConfigRepository emailConfigRepository;
+    private Resend resend;
 
     @Autowired
-    private SystemMailConfig systemMailConfig;
+    private EmailQueueRepository emailQueueRepository;
 
-    public JavaMailSender getJavaMailSender() {
-        Optional<EmailConfig> configOptional = emailConfigRepository.findById(1L); // Suponha que ID 1 seja o padrão.
-        if (configOptional.isEmpty()) {
-            throw new RuntimeException("Configuração de e-mail não encontrada");
+    @Value("${resend.from.email}")
+    private String from;
+
+
+    public CreateEmailResponse sendEmail(String to, String subject, String message) {
+        if (to == null || subject == null || message == null) {
+            throw new Utils.BusinessException("Missing required fields: to, subject, message");
         }
 
-        EmailConfig config = configOptional.get();
-        JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
-        mailSender.setHost(config.getHost());
-        mailSender.setPort(config.getPort());
-        mailSender.setUsername(config.getUsername());
-        mailSender.setPassword(config.getPassword());
-
-        Properties props = mailSender.getJavaMailProperties();
-        props.put("mail.smtp.auth", config.isAuth());
-        props.put("mail.smtp.starttls.enable", config.isStarttls());
-
-        return mailSender;
-    }
-
-    public void sendEmail(String to, String subject, String body) {
         try {
-            JavaMailSender mailSender = getJavaMailSender();
-            var message = mailSender.createMimeMessage();
-            var helper = new MimeMessageHelper(message, true);
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(body, true); // `true` permite HTML no corpo do e-mail.
-            mailSender.send(message);
+            var params = CreateEmailOptions.builder()
+                    .from(from)
+                    .to(to)
+                    .subject(subject)
+                    .html(message)
+                    .build();
+
+            return resend.emails().send(params);
+
         } catch (Exception e) {
+            if (e.getMessage().contains("429") || e.toString().contains("Too Many Requests")) {
+                System.out.println("⚠️ Limite do Resend atingido. Agendando para amanhã: " + to);
+
+                // 1. Salva no banco com status PENDENTE
+                emailQueueRepository.save(new EmailQueue(to, subject, message, "MANY_REQUESTS"));
+
+                // 2. Avisa você via FCM (opcional, mas recomendado)
+                // fcmService.sendNotification("Limite Atingido", "E-mail para " + to + " foi para a fila.");
+
+                return null; // Ou retorne um objeto indicando que foi agendado
+            }
             throw new RuntimeException("Erro ao enviar e-mail", e);
-        }
-    }
-
-    public void sendNewPasswordForEmail(String toNome, String toEmail, String password) {
-        String body = String.format("Olá, %s<br><br>" +
-                        "Sua senha foi redefinida com sucesso no sistema Lumos. Para acessar sua conta, utilize a seguinte senha temporária:<br><br>" +
-                        "<b>Nova Senha:</b> %s<br><br>" +
-                        "Importante: Por questões de segurança, recomendamos que você altere sua senha assim que fizer login no sistema. Você pode fazer isso acessando a seção \"Alterar Senha\" nas configurações do seu usuário.<br><br>" +
-                        "Se você tiver qualquer dúvida ou precisar de assistência, nossa equipe de suporte está à disposição para ajudá-lo.<br><br>" +
-                        "Atenciosamente,<br>" +
-                        "Equipe Thryon System<br>"
-                ,toNome, password);
-        sendSystemMailConfig(toEmail, body, "Lumos Thryon System - Nova Senha");
-    }
-
-    public void sendPasswordForEmail(String toNome, String toEmail, String password) {
-        String body = String.format("Olá, %s,<br><br>" +
-                "Sua conta foi criada com sucesso no sistema Lumos. Para acessar sua conta, utilize a seguinte senha temporária:<br><br>" +
-                "<b>Senha:</b> %s<br><br>" +
-                "Importante: Por questões de segurança, recomendamos que você altere sua senha assim que fizer login no sistema. Você pode fazer isso acessando a seção \"Alterar Senha\" nas configurações do seu usuário.<br><br>" +
-                "Se você tiver qualquer dúvida ou precisar de assistência, nossa equipe de suporte está à disposição para ajudá-lo.<br><br>" +
-                "Atenciosamente,<br>" +
-                "Equipe Sistema Thryon<br>"
-                ,toNome, password);
-        sendSystemMailConfig(toEmail, body, "Lumos - Thryon System");
-    }
-
-    private void sendSystemMailConfig(String toEmail, String body, String subject) {
-        try {
-            JavaMailSender mailSender = systemMailConfig.getJavaMailSender();
-            var message = mailSender.createMimeMessage();
-            var helper = new MimeMessageHelper(message, true);
-            helper.setFrom("no-reply@thryon.com.br");
-            helper.setTo(toEmail);
-            helper.setSubject(subject);
-            helper.setText(body, true);
-            message.setContent(body, "text/html; charset=UTF-8"); // `true` permite HTML no corpo do e-mail.
-            mailSender.send(message);
-        } catch (Exception e) {
-            throw new RuntimeException("Erro ao enviar e-mails", e);
         }
     }
 

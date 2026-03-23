@@ -27,8 +27,8 @@ export const navigation: Navigation = {
       { label: 'Sobre', href: '/sobre' },
     ],
     cta: [
-      { label: 'Entrar', href: 'https://lumos.thryon.com.br', variant: 'ghost' },
-      { label: 'Teste Grátis', href: '/contato', variant: 'primary' },
+      { label: 'Entrar', href: 'https://app.lumosip.com.br', variant: 'ghost' },
+      { label: 'Teste Grátis', href: '/teste-gratis', variant: 'primary' },
     ],
   },
 
@@ -50,20 +50,20 @@ export const navigation: Navigation = {
       { label: 'Status', href: '/status' },
     ],
     resources: [
-      { label: 'Documentation', href: '/docs', feature: 'docs' },
+      { label: 'Documentação', href: '/como-usar', feature: 'docs' },
       { label: 'Blog', href: '/blog', feature: 'blog' },
       { label: 'Changelog', href: '/changelog', feature: 'changelog' },
       { label: 'Roadmap', href: '/roadmap', feature: 'roadmap' },
     ],
     company: [
-      { label: 'About', href: '/about' },
-      { label: 'Careers', href: '/careers' },
-      { label: 'Contact', href: '/contact' },
+      { label: 'Sobre', href: '/sobre' },
+      { label: 'Carreira', href: '/carreira' },
+      { label: 'Contato', href: '/contato' },
       { label: 'Testimonials', href: '/testimonials', feature: 'testimonials' },
     ],
     legal: [
-      { label: 'Privacy', href: '/privacy' },
-      { label: 'Terms', href: '/terms' },
+      { label: 'Privacidade', href: '/privacidade' },
+      { label: 'Termos', href: '/termos' },
     ],
   },
 };

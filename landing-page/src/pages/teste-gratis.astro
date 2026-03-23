@@ -1,0 +1,188 @@
+---
+import MarketingLayout from '@/layouts/MarketingLayout.astro';
+import DemoRequestForm from '@forms/DemoRequestForm.astro';
+import { Icon } from 'astro-icon/components';
+import { siteConfig } from '@/config';
+
+const benefits = [
+  {
+    icon: 'lucide:zap',
+    title: 'Acesso imediato ao Lumos',
+    description: 'Crie sua conta e comece a mapear sua operação hoje mesmo. Sem burocracia.',
+  },
+  {
+    icon: 'lucide:map-pin',
+    title: 'Teste o Modo Ronda em campo',
+    description:
+      'Coloque o Lumos no carro, marque pontos no mapa e crie chamados de manutenção com agilidade e em tempo real.',
+  },
+  {
+    icon: 'lucide:file-spreadsheet',
+    title: 'Vincule um contrato real',
+    description:
+      'Suba seus itens contratuais e veja como cada lâmpada trocada já vira valor de medição.',
+  },
+  {
+    icon: 'lucide:shield-check',
+    title: 'Sua operação, seus dados',
+    description:
+      'Durante o teste, você usa o sistema com todas as funcionalidades e suporte total.',
+  },
+];
+
+const faqs = [
+  {
+    question: 'O teste grátis tem alguma limitação?',
+    answer:
+      'Você terá acesso a todas as funcionalidades principais, incluindo o Modo Ronda e a gestão de contratos.',
+  },
+  {
+    question: 'Preciso cadastrar cartão de crédito?',
+    answer: 'Não. O teste é 100% gratuito e não exige nenhum dado de pagamento para começar.',
+  },
+  {
+    question: 'O que acontece após o período de teste?',
+    answer: 'Nossa equipe entrará em contato. Se decidir não continuar, você não paga nada.',
+  },
+  {
+    question: 'Consigo importar meus dados atuais?',
+    answer: 'Sim. Podemos te ajudar a importar sua planilha de itens contratuais durante o teste.',
+  },
+];
+---
+
+<MarketingLayout
+  title="Teste Grátis"
+  description="Comece seu teste grátis no Lumos e veja como conectar execução em campo ao contrato."
+>
+  <section class="py-16 sm:py-24 bg-[var(--color-background)] transition-colors duration-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
+        {/* Lado Esquerdo: Conteúdo */}
+        <div>
+          <span
+            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[var(--color-primary)]/10 text-[var(--color-primary)] mb-6"
+          >
+            Teste Grátis por 14 dias
+          </span>
+
+          <h1
+            class="text-4xl sm:text-5xl font-bold text-[var(--color-text)] mb-6 tracking-tight leading-[1.1]"
+          >
+            Pare de perder dinheiro por falta de controle em campo
+          </h1>
+
+          <p class="text-xl text-[var(--color-text-muted)] mb-10 leading-relaxed">
+            Assuma o controle total. Vincule a execução das equipes diretamente aos itens do
+            contrato e gere relatórios de medição prontos para faturamento e NFS-e.
+          </p>
+
+          {/* Benefícios com ícones */}
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-12">
+            {
+              benefits.map((benefit) => (
+                <div class="flex gap-4 group">
+                  <div class="shrink-0 w-12 h-12 rounded-xl bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 flex items-center justify-center transition-transform group-hover:scale-105">
+                    <Icon name={benefit.icon} class="w-6 h-6 text-[var(--color-primary)]" />
+                  </div>
+                  <div>
+                    <h3 class="font-bold text-[var(--color-text)] mb-1">{benefit.title}</h3>
+                    <p class="text-sm text-[var(--color-text-muted)] leading-snug">
+                      {benefit.description}
+                    </p>
+                  </div>
+                </div>
+              ))
+            }
+          </div>
+
+          {/* Social Proof / Trust Bar */}
+          <div
+            class="flex items-center gap-4 p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] shadow-sm"
+          >
+            <div class="flex -space-x-2">
+              <div
+                class="w-8 h-8 rounded-full bg-[var(--color-primary)]/20 border-2 border-[var(--color-background)] flex items-center justify-center text-[10px] font-bold text-[var(--color-text)] uppercase"
+              >
+                IP
+              </div>
+              <div
+                class="w-8 h-8 rounded-full bg-[var(--color-primary)] border-2 border-[var(--color-background)] flex items-center justify-center text-[10px] font-bold text-white uppercase"
+              >
+                MT
+              </div>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-[var(--color-text)]">
+                Focado na Operação e em Contratos de Iluminação Pública
+              </p>
+              <p class="text-xs text-[var(--color-text-muted)] italic">
+                A ponte entre o campo, o contrato e seu faturamento.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Lado Direito: Formulário */}
+        <div class="lg:pl-8">
+          <div
+            class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-3xl p-8 shadow-xl relative overflow-hidden"
+          >
+            <div
+              class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[var(--color-primary)] to-transparent opacity-50"
+            >
+            </div>
+
+            <div class="mb-8 text-center lg:text-left">
+              <h2 class="text-2xl font-bold text-[var(--color-text)]">Comece agora</h2>
+              <p class="text-sm text-[var(--color-text-muted)] mt-1">
+                Configure sua operação em minutos.
+              </p>
+            </div>
+
+            <DemoRequestForm action="http://localhost:8080/public/free-test" />
+
+            <div class="mt-6 flex flex-col items-center gap-2">
+              <p
+                class="text-[10px] text-[var(--color-text-muted)] uppercase tracking-widest font-medium"
+              >
+                Não requer cartão de crédito
+              </p>
+              <div class="flex gap-2">
+                <Icon name="lucide:shield-check" class="w-3 h-3 text-green-500" />
+                <span class="text-[10px] text-[var(--color-text-muted)]">Ambiente 100% Seguro</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {/* FAQ Section */}
+  <section class="py-20 border-t border-[var(--color-border)] bg-[var(--color-surface)]">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl font-bold text-[var(--color-text)] tracking-tight">
+          Perguntas Frequentes
+        </h2>
+        <p class="text-[var(--color-text-muted)] mt-4 text-lg font-medium">
+          Esclareça suas dúvidas antes de começar o teste.
+        </p>
+      </div>
+
+      <div class="space-y-4">
+        {
+          faqs.map((faq) => (
+            <div class="p-6 rounded-2xl bg-[var(--color-background)] border border-[var(--color-border)] hover:border-[var(--color-primary)]/40 transition-all duration-300">
+              <h3 class="font-bold text-[var(--color-text)] mb-2 text-lg">{faq.question}</h3>
+              <p class="text-[var(--color-text-muted)] text-sm leading-relaxed font-medium">
+                {faq.answer}
+              </p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+</MarketingLayout>

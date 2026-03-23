@@ -12,24 +12,27 @@ class DirectExecutionReportRepository(
     private val objectMapper: ObjectMapper = jacksonObjectMapper()
 ) {
 
-    fun getDataForReport(directExecutionId: Long): List<Map<String, JsonNode>> {
+    fun getDataForReport(installationId: Long, installationType: String): List<Map<String, JsonNode>> {
         val sql = """
             WITH items_by_street AS (
               SELECT
-                des.direct_execution_street_id,
+                des.installation_street_id,
+                des.installation_type,
                 ci.contract_item_id,
                 ci.unit_price,
                 desi.executed_quantity,
                 cri.description, 
                 coalesce(cri.name_for_import, cri.description) as name_for_import
-              FROM direct_execution_street_item desi
-              JOIN direct_execution_street des 
-                ON des.direct_execution_street_id = desi.direct_execution_street_id
+              FROM installation_street_item_view desi
+              JOIN installation_street_view des 
+                ON des.installation_street_id = desi.installation_street_id
+                   AND des.installation_type = desi.installation_type
               JOIN contract_item ci 
                 ON ci.contract_item_id = desi.contract_item_id
               JOIN contract_reference_item cri 
                 ON cri.contract_reference_item_id = ci.contract_item_reference_id
-              WHERE des.direct_execution_id = :directExecutionId
+              WHERE des.installation_id = :installationId
+                   and des.installation_type = :installationType
               order by cri.description
             ),
             items_by_street_distinct as (
@@ -104,12 +107,14 @@ class DirectExecutionReportRepository(
 				            WHEN EXISTS (
 				              SELECT 1
 				              FROM items_by_street ibs
-				              WHERE ibs.direct_execution_street_id = des.direct_execution_street_id
+				              WHERE ibs.installation_street_id = des.installation_street_id
+                                AND ibs.installation_type = des.installation_type
 				                AND ibs.contract_item_id = ci.contract_item_id
 				            ) THEN (
 				              SELECT sum(ibs.executed_quantity)
 				              FROM items_by_street ibs
-				              WHERE ibs.direct_execution_street_id = des.direct_execution_street_id
+				              WHERE ibs.installation_street_id = des.installation_street_id
+                                AND ibs.installation_type = des.installation_type
 				                AND ibs.contract_item_id = ci.contract_item_id
 				            )
 				            ELSE 0
@@ -120,8 +125,9 @@ class DirectExecutionReportRepository(
 				      des.finished_at,
 				      coalesce(des.current_supply, '')
 				    ) AS street_row
-				    FROM direct_execution_street des
-				    WHERE des.direct_execution_id = :directExecutionId
+				    FROM installation_street_view des
+				    WHERE des.installation_id = :installationId
+                       and des.installation_type = :installationType
 				    ORDER BY des.finished_at
 				  ) AS ordered_rows
 			) AS streets,
@@ -142,9 +148,19 @@ class DirectExecutionReportRepository(
                     'total_price', ROUND(SUM((executed_quantity) * unit_price), 2)
                     )
                 FROM items_by_street
-            ) AS total
+            ) AS total,
+            
+            json_build_object(
+                     'installation_id', de.installation_id,
+                     'installation_type', de.installation_type,
+                     'sign_date', de.sign_date,
+                     'responsible', de.responsible,
+                     'started_at', de.started_at,
+                     'signature_uri', de.signature_uri,
+                     'finished_at', de.finished_at,
+             ) AS execution
         
-        FROM direct_execution de
+        FROM installation_view de
         JOIN contract c ON c.contract_id = de.contract_id
         JOIN company com ON com.id_company = c.company_id
         LEFT JOIN LATERAL (
@@ -160,18 +176,23 @@ class DirectExecutionReportRepository(
                            au.name,
                            au.last_name,
                            r.role_name
-                    FROM direct_execution_executor dee
+                    FROM installation_executor_view dee
                     JOIN app_user au ON au.user_id = dee.user_id
                     JOIN user_role ur ON ur.id_user = au.user_id
                     JOIN role r ON r.role_id = ur.id_role
-                    WHERE dee.direct_execution_id = de.direct_execution_id
+                    WHERE dee.installation_id = de.installation_id
+                       and dee.installation_type = de.installation_type
                     ORDER BY au.user_id, r.role_name
                 ) t
             ) execs ON TRUE
-        WHERE de.direct_execution_id = :directExecutionId;
+        WHERE de.installation_id = :installationId
+           AND de.installation_type = :installationType
         """.trimIndent()
 
-        return namedJdbc.query(sql, mapOf("directExecutionId" to directExecutionId)) { rs, _ ->
+        return namedJdbc.query(sql, mapOf(
+            "installationId" to installationId,
+            "installationType" to installationType
+        )) { rs, _ ->
             val company = objectMapper.readTree(rs.getString("company"))
             val contract = objectMapper.readTree(rs.getString("contract"))
             val values = objectMapper.readTree(rs.getString("values"))
@@ -180,6 +201,7 @@ class DirectExecutionReportRepository(
             val streetSums = objectMapper.readTree(rs.getString("street_sums"))
             val total = objectMapper.readTree(rs.getString("total"))
             val team = objectMapper.readTree(rs.getString("team"))
+            val execution = objectMapper.readTree(rs.getString("execution"))
 
             mapOf(
                 "company" to company,
@@ -190,11 +212,12 @@ class DirectExecutionReportRepository(
                 "street_sums" to streetSums,
                 "total" to total,
                 "team" to team,
+                "execution" to execution,
             )
         }
     }
 
-    fun getDataPhotoReport(directExecutionId: Long): List<Map<String, JsonNode>> {
+    fun getDataPhotoReport(installationId: Long, installationType: String): List<Map<String, JsonNode>> {
         val sql = """
             SELECT
               json_build_object(
@@ -225,19 +248,24 @@ class DirectExecutionReportRepository(
                 )
                 FROM (
                   SELECT address, finished_at, latitude, longitude, execution_photo_uri
-                  FROM direct_execution_street
-                  WHERE direct_execution_id = :directExecutionId
+                  FROM installation_street_view
+                  WHERE installation_id = :installationId
+                        AND installation_type = :installationType
                   ORDER BY finished_at
                 ) AS x
               ) AS streets
 
-            FROM direct_execution de
+            FROM installation_view de
             JOIN contract c ON c.contract_id = de.contract_id
             JOIN company com ON com.id_company = c.company_id
-            WHERE de.direct_execution_id = :directExecutionId;
+            WHERE de.installation_id = :installationId
+                AND de.installation_type = :installationType;
         """.trimIndent()
 
-        return namedJdbc.query(sql, mapOf("directExecutionId" to directExecutionId)) { rs, _ ->
+        return namedJdbc.query(sql, mapOf(
+            "installationId" to installationId,
+            "installationType" to installationType,
+        )) { rs, _ ->
             val company = objectMapper.readTree(rs.getString("company"))
             val contract = objectMapper.readTree(rs.getString("contract"))
             val streets = objectMapper.readTree(rs.getString("streets"))

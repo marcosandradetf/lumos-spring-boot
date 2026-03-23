@@ -1,0 +1,89 @@
+---
+/**
+ * LogoCloud / FeatureMarquee - Versão adaptada para o Lumos
+ * Exibe recursos em chips animados com design premium.
+ */
+
+interface Feature {
+  name?: string; // Mantido para compatibilidade, mas pode ser vazio
+  src: string; // Aqui passamos a descrição do recurso
+  href?: string;
+}
+
+interface Props {
+  title?: string;
+  logos: Feature[];
+  speed?: 'slow' | 'normal' | 'fast';
+  pauseOnHover?: boolean;
+}
+
+const { title, logos, speed = 'normal', pauseOnHover = true } = Astro.props;
+
+const speedDuration = {
+  slow: '50s',
+  normal: '30s',
+  fast: '20s',
+};
+---
+
+<section class="py-4 bg-transparent overflow-hidden">
+  <div class="max-w-7xl mx-auto px-4 mb-2">
+    {
+      title && (
+        <h2 class="text-center text-sm font-semibold tracking-widest uppercase text-zinc-500 dark:text-zinc-400">
+          {title}
+        </h2>
+      )
+    }
+  </div>
+  <div class="relative flex items-center group" data-pause-on-hover={pauseOnHover ? 'true' : 'false'}>
+
+    <div class="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-[var(--color-background)] to-transparent z-10 pointer-events-none"></div>
+    <div class="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-[var(--color-background)] to-transparent z-10 pointer-events-none"></div>
+
+    <div class="marquee-track flex gap-6 py-4 cursor-default" style={`--duration: ${speedDuration[speed]}`}>
+      {[...logos, ...logos].map((feature) => (
+        <div class="flex-shrink-0">
+          <div class="
+            px-6 py-2.5 rounded-full
+            border border-[var(--color-border)]
+            bg-[var(--color-surface)]
+            shadow-sm backdrop-blur-md
+            transition-all duration-300
+            hover:border-[var(--color-primary)]
+            hover:translate-y-[-2px]
+            group/chip
+          ">
+            <span class="text-sm font-semibold text-[var(--color-text)] group-hover/chip:text-[var(--color-primary)] transition-colors">
+              {feature.src}
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+  <div class="w-full flex justify-center">
+    <a href="/recursos" class="text-base font-semibold text-blue-500 hover:text-blue-700">Ver detalhes →</a>
+  </div>
+</section>
+
+<style>
+  @media (hover: hover) and (pointer: fine) {
+    .logo-marquee[data-pause-on-hover='true']:hover .logo-marquee-track {
+      animation-play-state: paused;
+    }
+  }
+
+  .marquee-track {
+    display: flex;
+    width: fit-content;
+    animation: marquee var(--duration) linear infinite;
+  }
+  [data-pause-on-hover='true']:hover .marquee-track {
+    animation-play-state: paused;
+  }
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+</style>

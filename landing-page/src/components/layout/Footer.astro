@@ -83,28 +83,28 @@ const legalLinks = filterByFeature(footer.legal);
             )
           }
           {
-            social.github && (
+            social.linkedin && (
               <a
-                href={social.github}
+                href={social.linkedin}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label="GitHub"
+                aria-label="Linkedin"
                 class="text-text-muted hover:text-text transition-colors"
               >
-                <Icon name="lucide:github" class="w-5 h-5" />
+                <Icon name="lucide:linkedin" class="w-5 h-5" />
               </a>
             )
           }
           {
-            social.discord && (
+            social.whatsapp && (
               <a
-                href={social.discord}
+                href={social.whatsapp}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label="Discord"
+                aria-label="Whatsapp"
                 class="text-text-muted hover:text-text transition-colors"
               >
-                <Icon name="simple-icons:discord" class="w-5 h-5" />
+                <Icon name="simple-icons:whatsapp" class="w-5 h-5" />
               </a>
             )
           }
@@ -115,7 +115,7 @@ const legalLinks = filterByFeature(footer.legal);
       {
         productLinks.length > 0 && (
           <div>
-            <h3 class="font-semibold text-sm text-text mb-4">Product</h3>
+            <h3 class="font-semibold text-sm text-text mb-4">Produto</h3>
             <ul class="space-y-3">
               {productLinks.map((link) => (
                 <li>
@@ -136,7 +136,7 @@ const legalLinks = filterByFeature(footer.legal);
       {
         solutionsLinks.length > 0 && (
           <div>
-            <h3 class="font-semibold text-sm text-text mb-4">Solutions</h3>
+            <h3 class="font-semibold text-sm text-text mb-4">Soluções</h3>
             <ul class="space-y-3">
               {solutionsLinks.map((link) => (
                 <li>
@@ -157,7 +157,7 @@ const legalLinks = filterByFeature(footer.legal);
       {
         resourcesLinks.length > 0 && (
           <div>
-            <h3 class="font-semibold text-sm text-text mb-4">Resources</h3>
+            <h3 class="font-semibold text-sm text-text mb-4">Recursos</h3>
             <ul class="space-y-3">
               {resourcesLinks.map((link) => (
                 <li>
@@ -178,7 +178,7 @@ const legalLinks = filterByFeature(footer.legal);
       {
         companyLinks.length > 0 && (
           <div>
-            <h3 class="font-semibold text-sm text-text mb-4">Company</h3>
+            <h3 class="font-semibold text-sm text-text mb-4">Empresa</h3>
             <ul class="space-y-3">
               {companyLinks.map((link) => (
                 <li>
@@ -204,7 +204,7 @@ const legalLinks = filterByFeature(footer.legal);
         <!-- Copyright -->
         <p class="text-sm text-text-muted">
           &copy; {currentYear}
-          {siteConfig.name}. All rights reserved.
+          {siteConfig.name}. Todos os direitos reservados.
         </p>
         <!-- Legal Links -->
         <div class="flex items-center gap-6">

@@ -13,12 +13,16 @@ class DirectExecutionReportController(
     private val reportService: DirectExecutionReportService
 ) {
 
-    @PostMapping("/execution/generate-report/{type}/{executionId}")
-    fun generateReport(@PathVariable type: String, @PathVariable executionId: Long): ResponseEntity<ByteArray> {
+    @PostMapping("/execution/generate-report/{type}/{executionId}/{executionType}")
+    fun generateReport(
+        @PathVariable type: String,
+        @PathVariable executionId: Long,
+        @PathVariable executionType: String
+    ): ResponseEntity<ByteArray> {
         if (type == "data") {
-            return reportService.generateDataReport(executionId)
+            return reportService.generateDataReport(executionId, executionType)
         } else if (type == "photos") {
-            return reportService.generatePhotoReport(executionId)
+            return reportService.generatePhotoReport(executionId, executionType)
         } else {
             return ResponseEntity.badRequest().body(ByteArray(0))
         }

@@ -25,7 +25,7 @@ export const author = import.meta.env.SITE_AUTHOR || 'Lumos IP';
 export const logo = '/lumos_logo.svg';
 
 /** Path to Open Graph image (relative to /public) */
-export const ogImage = '/images/og-image.png';
+export const ogImage = '/lumos_logo.svg';
 
 /** Social media links */
 export const social: SocialLinks = {

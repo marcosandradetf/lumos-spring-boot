@@ -23,12 +23,15 @@ class DirectExecutionReportService(
     private val s3Service: S3Service,
     private val directExecutionReportRepository: DirectExecutionReportRepository,
     private val objectMapper: ObjectMapper,
-)  {
+) {
 
-    fun generateDataReport(executionId: Long): ResponseEntity<ByteArray> {
+    fun generateDataReport(
+        executionId: Long,
+        executionType: String
+    ): ResponseEntity<ByteArray> {
         var templateHtml = this::class.java.getResource("/templates/installation/data.html")!!.readText()
 
-        val data = directExecutionReportRepository.getDataForReport(executionId)
+        val data = directExecutionReportRepository.getDataForReport(executionId, executionType)
         val jsonData = data.first() // Pega o único resultado
 
         val company = jsonData["company"]!!
@@ -38,9 +41,13 @@ class DirectExecutionReportService(
         val streets = jsonData["streets"]!!
         val streetSums = jsonData["street_sums"]!!
         val total = jsonData["total"]!!
+        val execution = jsonData["execution"]!!
 
         val logoUri = company["company_logo"]?.asText() ?: throw IllegalArgumentException("Logo does not exist")
-        val companyLogoUrl = s3Service.getPresignedObjectUrl( logoUri)
+        val companyLogoUrl = s3Service.getPresignedObjectUrl(logoUri)
+        val signDate = if (execution["sign_date"].asText() != "null") Utils.convertToSaoPauloLocal(
+            Instant.parse(execution["sign_date"].asText())
+        ) else null
 
         val team = jsonData["team"]!!
         val teamArray = if (team.isArray) team as ArrayNode else objectMapper.createArrayNode()
@@ -149,6 +156,48 @@ class DirectExecutionReportService(
             .replace("{{EXECUTION_DATE}}", dates ?: "")
             .replace("{{TEAM_ROWS}}", teamRows)
 
+        if (execution.has("signature_uri") && !execution["signature_uri"].isNull) {
+            val signatureImage = s3Service.getPresignedObjectUrl(
+                execution["signature_uri"]?.asText() ?: ""
+            )
+
+            val signSection = """
+            <table >
+              <thead>
+                  <tr>
+                      <th colspan="2" class="cell-title" style="text-align: center;">
+                          ASSINATURA DO RESPONSÁVEL PELO ACOMPANHAMENTO DO SERVIÇO
+                      </th>
+                  </tr>
+              </thead>
+              <tbody>
+                  <tr>
+                      <td colspan="2" style="text-align: center; padding: 10px 0;">
+                          <img src="$signatureImage" alt="Assinatura"
+                              style="max-width: 250px; height: auto;">
+                      </td>
+                  </tr>
+                  <tr>
+                      <td colspan="2" style="text-align: center; padding: 4px;">
+                          <p style="margin: 0; font-size: 10px; color: #555;">
+                              Assinado digitalmente em: <strong>${signDate?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm"))}</strong>
+                          </p>
+                      </td>
+                  </tr>
+                  <tr>
+                      <td colspan="2">
+                          <p class="label">Responsável:</p>
+                          <p class="cell-text">${execution["responsible"]?.asText() ?: ""}</p>
+                      </td>
+                  </tr>
+              </tbody>
+            </table>
+            """.trimIndent()
+            templateHtml = templateHtml.replace("{{SIGN_SECTION}}", signSection)
+        } else {
+            templateHtml = templateHtml.replace("{{SIGN_SECTION}}", "")
+        }
+
         try {
             val response = sendHtmlToPuppeteer(templateHtml, "Relatório de Instalações")
 //            val responseHeaders = HttpHeaders().apply {
@@ -181,10 +230,13 @@ class DirectExecutionReportService(
         }
     }
 
-    fun generatePhotoReport(executionId: Long): ResponseEntity<ByteArray> {
+    fun generatePhotoReport(
+        executionId: Long,
+        executionType: String
+    ): ResponseEntity<ByteArray> {
         var templateHtml = this::class.java.getResource("/templates/installation/photos.html")!!.readText()
 
-        val data = directExecutionReportRepository.getDataPhotoReport(executionId)
+        val data = directExecutionReportRepository.getDataPhotoReport(executionId, executionType)
         val jsonData = data.first() // Pega o único resultado
 
         val company = jsonData["company"]!!
@@ -192,10 +244,10 @@ class DirectExecutionReportService(
         val streets = jsonData["streets"]!!
 
         val logoUri = company["company_logo"]?.asText() ?: throw IllegalArgumentException("Logo does not exist")
-        val companyLogoUrl = s3Service.getPresignedObjectUrl( logoUri)
+        val companyLogoUrl = s3Service.getPresignedObjectUrl(logoUri)
 
         val streetLinesHtml = streets.joinToString("\n") { line ->
-            val photoUrl = s3Service.getPresignedObjectUrl( line["execution_photo_uri"].asText())
+            val photoUrl = s3Service.getPresignedObjectUrl(line["execution_photo_uri"].asText())
             """
                 <div style="
                       page-break-inside: avoid;

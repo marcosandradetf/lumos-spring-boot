@@ -110,15 +110,15 @@ class DirectExecutionViewRepository(
               ) as contract,
               json_agg(
                 json_build_object(
-                  'direct_execution_id', de.direct_execution_id,
+                  'installation_id', de.installation_id,
+                  'installation_type', de.installation_type,
                   'step', de.description,
                   'description', de.description,
-                  'type', 'direct_execution',
                   'team', execs.executors
                 )
-                ORDER BY de.direct_execution_id
+                ORDER BY de.installation_id
               ) AS steps
-            FROM direct_execution de
+            FROM installation_view de
             JOIN contract c ON c.contract_id = de.contract_id
             LEFT JOIN LATERAL (
             SELECT json_agg(
@@ -133,15 +133,16 @@ class DirectExecutionViewRepository(
                            au.name,
                            au.last_name,
                            r.role_name
-                    FROM direct_execution_executor ex
+                    FROM installation_executor_view ex
                     JOIN app_user au ON au.user_id = ex.user_id
                     JOIN user_role ur ON ur.id_user = au.user_id
                     JOIN role r ON r.role_id = ur.id_role
-                    WHERE de.direct_execution_id = ex.direct_execution_id
+                    WHERE de.installation_id = ex.installation_id
+                        AND de.installation_type = ex.installation_type
                     ORDER BY au.user_id, r.role_name ASC
                 ) t
             ) execs ON TRUE
-            WHERE de.direct_execution_status = 'FINISHED'
+            WHERE de.status = 'FINISHED'
                 AND de.tenant_id = :tenantId
                     AND de.available_at >= (now() - INTERVAL '90 day') 
                     AND de.available_at < (now() + INTERVAL '1 day')

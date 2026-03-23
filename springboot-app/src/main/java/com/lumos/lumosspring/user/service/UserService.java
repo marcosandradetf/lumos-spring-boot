@@ -411,11 +411,11 @@ public class UserService {
                     """, params);
         }
 
-        try {
-            emailService.sendPasswordForEmail(u.name(), u.email(), password);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+//        try {
+//            emailService.sendPasswordForEmail(u.name(), u.email(), password);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
 
     }
 
