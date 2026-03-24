@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api")
 public class TokenController {
     private final TokenService tokenService;
 
@@ -17,22 +17,22 @@ public class TokenController {
         this.tokenService = tokenService;
     }
 
-    @PostMapping("/login")
+    @PostMapping("/auth/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest, HttpServletResponse response) {
         return tokenService.newLogin(loginRequest, response, false);
     }
 
-    @PostMapping("/logout")
+    @PostMapping("/auth/logout")
     public ResponseEntity<Void> logout(@CookieValue("refreshToken") String refreshToken, HttpServletResponse response) {
         return tokenService.logout(refreshToken, response, false);
     }
 
-    @PostMapping("/refresh-token")
+    @PostMapping("/auth/refresh-token")
     public ResponseEntity<?> refreshToken(@CookieValue("refreshToken") String refreshToken, HttpServletResponse response) {
         return tokenService.refreshToken(refreshToken, response, false);
     }
 
-    @PostMapping("/forgot-password")
+    @PostMapping("/auth/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody LoginRequest loginRequest) {
         return tokenService.forgotPassword(loginRequest);
     }
@@ -42,7 +42,7 @@ public class TokenController {
         return tokenService.getQrcodeToken();
     }
 
-    @PostMapping("/login-with-qrcode-token")
+    @PostMapping("/auth/login-with-qrcode-token")
     public ResponseEntity<?> loginWithQrCodeToken(
             @RequestParam(value = "token") UUID token,
             HttpServletResponse response

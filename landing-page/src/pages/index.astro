@@ -199,7 +199,7 @@ const pricingPlans = [
   <Hero
     title="Lumos, Gestão de Iluminação Pública"
     subtitle="O Lumos otimiza todo o seu fluxo de trabalho, do Cadastro de Novos Contratos à Visualização de Relatórios. Gerencie o fluxo operacional e administrativo em um único lugar. Sem necessidade de uso de planilhas ou relatórios manuais."
-    primaryCTA={{ label: 'Testar Grátis', href: '/contato' }}
+    primaryCTA={{ label: 'Testar Grátis', href: '/teste-gratis' }}
     secondaryCTA={{ label: 'Acessar Demonstração', href: '/demonstracao' }}
 
     backgroundType="image"
@@ -217,22 +217,65 @@ const pricingPlans = [
   <!--  logoSize="lg"-->
   <!--/>-->
 
-  <FeatureMarquee
-    title="Tecnologia de ponta para sua operação"
-    speed="normal"
-    logos={[
-      { name: '', src: 'Controle de contratos e saldos' },
-      { name: '', src: 'Chamados em Tempo Real' },
-      { name: '', src: 'Modo Ronda de Manutenção' },
-      { name: '', src: 'Controle de instalações de LEDs' },
-      { name: '', src: 'Vínculo Direto Campo-Contrato' },
-      { name: '', src: 'Mapa de Ocorrências' },
-      { name: '', src: 'Estoque de Veículos' },
-      { name: '', src: 'Geolocalização Precisa' },
-      { name: '', src: 'Rastreio de Ativos' },
-      { name: '', src: 'Relatórios de Execuções para NFSe' },
-    ]}
-  />
+  <section class="py-16">
+    <div class="max-w-6xl mx-auto px-6 text-center">
+
+      <h2 class="text-2xl md:text-3xl font-semibold mb-4">
+        Da rua ao contrato: sua operação 100% conectada
+      </h2>
+
+      <p class="text-muted-foreground max-w-2xl mx-auto mb-10">
+        Cada ponto registrado, cada manutenção executada e cada material aplicado são automaticamente
+        organizados dentro do sistema. O Lumos elimina planilhas, reduz erros e transforma sua operação
+        em um fluxo contínuo, rápido e totalmente controlado.
+      </p>
+
+      <!-- CARROSSEL -->
+      <div class="relative">
+        <div
+          id="carousel"
+          class="flex gap-8 overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar items-center px-10"
+        >
+          {[
+            "/images/round-1.png",
+            "/images/round-2.png",
+            "/images/round-3.png",
+            "/images/round-4.png",
+            "/images/round-5.png",
+            "/images/marketing-app-sign.png",
+          ].map((src, i) => (
+            <div
+              class="snap-center flex-shrink-0 transition-all duration-500 scale-90 opacity-60"
+              data-index={i}
+            >
+              <img src={src} class="h-[420px] object-contain" />
+            </div>
+          ))}
+        </div>
+
+        <!-- DOTS -->
+        <div id="dots" class="flex justify-center gap-2 mt-6"></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!--<FeatureMarquee-->
+  <!--  title="Tecnologia de ponta para sua operação"-->
+  <!--  speed="normal"-->
+  <!--  logos={[-->
+  <!--    { name: '', src: 'Controle de contratos e saldos' },-->
+  <!--    { name: '', src: 'Chamados em Tempo Real' },-->
+  <!--    { name: '', src: 'Modo Ronda de Manutenção' },-->
+  <!--    { name: '', src: 'Controle de instalações de LEDs' },-->
+  <!--    { name: '', src: 'Vínculo Direto Campo-Contrato' },-->
+  <!--    { name: '', src: 'Mapa de Ocorrências' },-->
+  <!--    { name: '', src: 'Estoque de Veículos' },-->
+  <!--    { name: '', src: 'Geolocalização Precisa' },-->
+  <!--    { name: '', src: 'Rastreio de Ativos' },-->
+  <!--    { name: '', src: 'Relatórios de Execuções para NFSe' },-->
+  <!--  ]}-->
+  <!--/>-->
 
 
   <HowItWorks
@@ -322,3 +365,90 @@ const pricingPlans = [
 
   <!--<Newsletter />-->
 </MarketingLayout>
+
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const carousel = document.getElementById("carousel");
+    const dotsContainer = document.getElementById("dots");
+
+    if (!carousel || !dotsContainer) return;
+
+    const items = Array.from(carousel.children);
+    let index = 0;
+
+    // DOTS
+    items.forEach(() => {
+      const dot = document.createElement("div");
+      dot.className = "w-2 h-2 rounded-full bg-gray-300 transition";
+      dotsContainer.appendChild(dot);
+    });
+
+    const dots = dotsContainer.children;
+
+    function updateDots() {
+      Array.from(dots).forEach((dot, i) => {
+        dot.classList.toggle("bg-blue-500", i === index);
+        dot.classList.toggle("bg-gray-300", i !== index);
+      });
+    }
+
+    function updateActiveItem() {
+      const center = carousel.scrollLeft + carousel.offsetWidth / 2;
+
+      items.forEach((item, i) => {
+        const itemCenter = item.offsetLeft + item.offsetWidth / 2;
+
+        if (Math.abs(center - itemCenter) < item.offsetWidth / 2) {
+          item.style.transform = "scale(1)";
+          item.style.opacity = "1";
+          index = i;
+        } else {
+          item.style.transform = "scale(0.85)";
+          item.style.opacity = "0.5";
+        }
+      });
+
+      updateDots();
+    }
+
+    carousel.addEventListener("scroll", () => {
+      requestAnimationFrame(updateActiveItem);
+    });
+
+    // 👉 SCROLL PRECISO (melhor que cálculo fixo)
+    function scrollToIndex(i) {
+      const item = items[i];
+      if (!item) return;
+
+      const left =
+        item.offsetLeft -
+        carousel.offsetWidth / 2 +
+        item.offsetWidth / 2;
+
+      carousel.scrollTo({
+        left,
+        behavior: "smooth",
+      });
+    }
+
+    // AUTOPLAY
+    setInterval(() => {
+      index = (index + 1) % items.length;
+      scrollToIndex(index);
+    }, 4000);
+
+    // INIT
+    updateActiveItem();
+  });
+</script>
+
+<style>
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+</style>

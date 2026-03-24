@@ -1,0 +1,124 @@
+---
+import MarketingLayout from '@/layouts/MarketingLayout.astro';
+import CTA from '@sections/marketing/CTA.astro';
+---
+
+<MarketingLayout
+  title="Ronda em iluminação pública | Identificação e mapeamento de pontos na cidade"
+  description="Realize rondas (varreduras) pela cidade e registre pontos com falha diretamente no mapa. Capture coordenadas automaticamente e gere solicitações de manutenção com máxima agilidade."
+>
+  <section class="py-20 max-w-5xl mx-auto px-6">
+    <h1 class="text-4xl font-bold mb-6">
+      Ronda em iluminação pública: varredura da cidade com registro direto no mapa
+    </h1>
+
+    <p class="text-lg text-muted-foreground mb-6">
+      A ronda é o processo de percorrer a cidade — geralmente de veículo — identificando pontos de
+      iluminação pública que precisam de manutenção.
+    </p>
+
+    <p class="text-lg text-muted-foreground mb-10">
+      Sem um sistema adequado, esse trabalho gera erros, retrabalho e atraso na execução dos
+      serviços.
+    </p>
+
+    <h2 class="text-2xl font-bold mb-4">Problemas da ronda tradicional</h2>
+
+    <ul class="space-y-3 mb-10">
+      <li>• Anotações manuais e informações incompletas</li>
+      <li>• Dificuldade para localizar exatamente o ponto com falha</li>
+      <li>• Retrabalho na abertura de solicitações de manutenção</li>
+      <li>• Demora entre a identificação e a execução do serviço</li>
+    </ul>
+
+    <h2 class="text-2xl font-bold mb-6">Como o Lumos resolve</h2>
+
+    <ul class="space-y-3 mb-12">
+      <li>• Mapa interativo integrado ao sistema (Google Maps)</li>
+      <li>• Registro de múltiplos pontos em sequência durante a varredura</li>
+      <li>• Captura automática de coordenadas geográficas</li>
+      <li>• Coleta rápida de informações do problema com poucos toques</li>
+      <li>• Geração automática da solicitação de manutenção</li>
+    </ul>
+
+    <!-- 🔥 NOVO BLOCO: FLUXO COMPLETO -->
+    <h2 class="text-2xl font-bold mb-6">Como funciona a ronda na prática</h2>
+
+    <!-- PASSO 1 -->
+    <div class="mb-16">
+      <h3 class="text-xl font-semibold mb-4">1. Validação automática do contrato ativo</h3>
+
+      <img src="/images/round-1.png" alt="Validação automática do contrato ativo" width="700" />
+
+      <p class="text-sm text-muted-foreground mt-3">
+        O sistema valida automaticamente se há um contrato ativo, garantindo que a operação esteja
+        vinculada corretamente ao município.
+      </p>
+    </div>
+
+    <!-- PASSO 2 -->
+    <div class="mb-16">
+      <h3 class="text-xl font-semibold mb-4">2. Mapa com localização em tempo real</h3>
+
+      <div class="flex justify-center">
+        <img src="/images/round-2.png" alt="Validação automática do contrato ativo" width="700" />
+      </div>
+
+      <p class="text-sm text-muted-foreground mt-3">
+        O agente inicia a varredura com o mapa aberto, já centralizado na sua localização atual.
+      </p>
+    </div>
+
+    <!-- PASSO 3 -->
+    <div class="mb-16">
+      <h3 class="text-xl font-semibold mb-4">
+        3. Registro do ponto com coleta automática de dados
+      </h3>
+
+      <img src="/images/round-3.png" width="700" />
+
+      <p class="text-sm text-muted-foreground mt-3">
+        Ao capturar um ponto, o sistema registra automaticamente coordenadas e permite informar o
+        problema com poucos toques.
+      </p>
+    </div>
+
+    <!-- PASSO 4 -->
+    <div class="mb-16">
+      <h3 class="text-xl font-semibold mb-4">4. Marcação de múltiplos pontos em sequência</h3>
+
+      <img src="/images/round-4.png" width="700" />
+
+      <p class="text-sm text-muted-foreground mt-3">
+        Durante a ronda, o agente pode registrar diversos pontos rapidamente, sem interromper a
+        operação.
+      </p>
+    </div>
+
+    <!-- PASSO 5 -->
+    <div class="mb-16">
+      <h3 class="text-xl font-semibold mb-4">5. Validação com Google Street View</h3>
+
+      <img src="/images/round-5.png" width="700" />
+
+      <p class="text-sm text-muted-foreground mt-3">
+        A visualização via Street View aumenta a precisão na identificação do local, garantindo
+        maior confiabilidade.
+      </p>
+    </div>
+
+    <!-- BLOCO FINAL -->
+    <h2 class="text-2xl font-bold mb-4">Resultado prático</h2>
+
+    <p class="text-lg text-muted-foreground mb-10">
+      A ronda deixa de ser um processo manual e passa a ser uma operação rápida, padronizada e
+      totalmente rastreável, reduzindo o tempo entre identificação e solução.
+    </p>
+  </section>
+
+  <CTA
+    title="Transforme a ronda em uma operação rápida e organizada"
+    description="Veja como o Lumos agiliza a identificação e a execução de manutenções na cidade."
+    action={{ label: 'Solicitar demonstração', href: '/demonstracao' }}
+  />
+</MarketingLayout>

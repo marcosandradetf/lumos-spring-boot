@@ -42,7 +42,6 @@ public class MaterialReferenceService {
         this.materialStockRegisterRepository = materialStockRegisterRepository;
         this.userRepository = userRepository;
         this.logRepository = logRepository;
-
         this.materialReferenceRepository = materialReferenceRepository;
         this.materialContractReferenceItemRepository = materialContractReferenceItemRepository;
         this.depositRepository = depositRepository;

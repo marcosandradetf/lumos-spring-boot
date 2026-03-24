@@ -20,6 +20,8 @@ export default defineConfig({
           '/sobre',
           '/software-iluminacao-publica',
           '/gestao-contratos-iluminacao-publica',
+          '/assinatura-em-campo-iluminacao-publica',
+          '/ronda-iluminacao-publica-mapeamento-de-pontos',
           '/recursos',
           '/precos',
           '/contato',
@@ -29,6 +31,7 @@ export default defineConfig({
           '/privacidade',
           '/termos',
           '/demonstracao',
+          '/blog',
         ];
 
         return allowedRoutes.some((route) => {

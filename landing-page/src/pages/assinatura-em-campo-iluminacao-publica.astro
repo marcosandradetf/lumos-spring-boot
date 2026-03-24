@@ -1,0 +1,96 @@
+---
+import MarketingLayout from '@/layouts/MarketingLayout.astro';
+import CTA from '@sections/marketing/CTA.astro';
+---
+
+<MarketingLayout
+  title="Assinatura em campo para iluminação pública | Validação e segurança na medição"
+  description="Colete assinatura do fiscal diretamente em campo e garanta validação formal das execuções. Reduza glosas, evite questionamentos e fortaleça a prestação de contas."
+>
+  <section class="py-20 max-w-5xl mx-auto px-6">
+    <h1 class="text-4xl font-bold mb-6">
+      Assinatura em campo: validação real das execuções no contrato público
+    </h1>
+
+    <p class="text-lg text-muted-foreground mb-6">
+      Em contratos de iluminação pública, não basta executar — é preciso comprovar. A ausência de
+      validação formal pelo fiscal da prefeitura é uma das principais causas de glosas, atrasos em
+      medições e questionamentos em auditorias.
+    </p>
+
+    <p class="text-lg text-muted-foreground mb-10">
+      Sem a assinatura no momento da execução, a empresa fica exposta a riscos jurídicos e
+      financeiros, mesmo tendo realizado o serviço corretamente.
+    </p>
+
+    <h2 class="text-2xl font-bold mb-4">Por que a falta de assinatura gera problemas?</h2>
+
+    <ul class="space-y-3 mb-10">
+      <li>• Execuções sem validação formal do fiscal</li>
+      <li>• Questionamentos na medição dos serviços</li>
+      <li>• Risco de glosa mesmo com serviço executado</li>
+      <li>• Fragilidade na prestação de contas e auditorias</li>
+    </ul>
+
+    <h2 class="text-2xl font-bold mb-6">Como o Lumos resolve</h2>
+
+    <ul class="space-y-3 mb-10">
+      <li>• Coleta de assinatura do fiscal diretamente no app em campo</li>
+      <li>• Vinculação automática da assinatura à execução realizada</li>
+      <li>• Registro com data, hora e localização</li>
+      <li>• Inclusão automática no relatório de execução</li>
+    </ul>
+
+    <!-- BLOCO 1: APP -->
+    <div class="mb-16">
+      <h3 class="text-xl font-semibold">
+        Assinatura coletada diretamente no local da execução
+      </h3>
+
+      <div class="flex justify-center">
+        <img
+          src="/images/marketing-app-sign.png"
+          alt="Assinatura do fiscal no relatório de execução"
+          class="rounded-2xl"
+        />
+      </div>
+
+      <p class="text-sm text-muted-foreground mt-3">
+        O fiscal da prefeitura assina diretamente no dispositivo, validando a execução no momento em
+        que ela ocorre.
+      </p>
+    </div>
+
+    <!-- BLOCO 2: RELATÓRIO -->
+    <div class="mb-16">
+      <h3 class="text-xl font-semibold mb-4">A assinatura já integrada ao relatório de execução</h3>
+
+      <div class="flex justify-center">
+        <img
+          src="/images/installation-report-sign-section.jpeg"
+          alt="Assinatura do fiscal no relatório de execução"
+          class="rounded-2xl shadow-xl"
+        />
+      </div>
+
+      <p class="text-sm text-muted-foreground mt-3">
+        A assinatura é automaticamente vinculada ao relatório, garantindo validação formal,
+        rastreabilidade e segurança na medição.
+      </p>
+    </div>
+
+    <h2 class="text-2xl font-bold mb-4">Resultado prático</h2>
+
+    <p class="text-lg text-muted-foreground mb-10">
+      Com a assinatura coletada em campo e integrada ao relatório, cada execução passa a contar com
+      validação formal imediata, reduzindo glosas, eliminando retrabalho e garantindo maior
+      segurança no faturamento dos contratos públicos.
+    </p>
+  </section>
+
+  <CTA
+    title="Valide suas execuções no momento em que acontecem"
+    description="Veja como o Lumos elimina dúvidas na medição com assinatura direta em campo."
+    action={{ label: 'Solicitar demonstração', href: '/demonstracao' }}
+  />
+</MarketingLayout>
