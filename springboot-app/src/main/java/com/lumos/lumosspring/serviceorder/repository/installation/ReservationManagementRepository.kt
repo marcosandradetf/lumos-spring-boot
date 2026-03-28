@@ -77,6 +77,7 @@ interface ReservationManagementRepository : CrudRepository<ReservationManagement
     @Modifying
     @Query("update reservation_management set stockist_id = :stockistId where reservation_management_id = :reservationManagementId")
     fun updateStockistId(reservationManagementId: Long, stockistId: UUID)
+    fun findAllByStatusAndTenantId(status: String, tenantId: UUID): MutableList<ReservationManagement>
 
     data class ExecutionDto(
         val installationId: Long,

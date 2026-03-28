@@ -11,8 +11,6 @@ import java.util.UUID;
 
 @Repository
 public interface RoleRepository extends CrudRepository<Role, Long> {
-    Role findByRoleName(String nomeRole);
-
     // Nova consulta no repositório
     @Query("""
         SELECT r.role_name\s
@@ -20,7 +18,16 @@ public interface RoleRepository extends CrudRepository<Role, Long> {
         JOIN role r ON ur.id_role = r.role_id
         WHERE ur.id_user = :userId
    \s""")
-    List<String> findRolesByUserId(@Param("userId") UUID userId);
+    List<String> findDescriptionRolesByUserId(@Param("userId") UUID userId);
+
+
+    @Query("""
+        SELECT r.*
+        FROM user_role ur
+        JOIN role r ON ur.id_role = r.role_id
+        WHERE ur.id_user = :userId
+   \s""")
+    List<Role> findRolesByUserId(@Param("userId") UUID userId);
 
 
 }

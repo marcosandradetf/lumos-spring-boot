@@ -73,13 +73,34 @@
         </ng-template>
       </p-table>
     </div>
+  } @else if ((deposits.length === 0 || stockists.length === 0) && isAdm) {
+      <app-guide-state
+        icon="pi pi-box"
+        title="Antes de exibir requisições de materiais..."
+        subtitle="Você precisa preparar a base do sistema antes de continuar."
+        [steps]="[
+          [deposits.length === 0, 'Cadastrar almoxarifados'],
+          [stockists.length === 0, 'Cadastrar estoquistas'],
+        ]"
+        [hasButtonLabel]="deposits.length === 0"
+        buttonLabel="Cadastrar almoxarifados"
+        buttonRoute="/estoque/almoxarifados"
+        buttonIcon="pi pi-warehouse"
+
+        [hasSecondaryLabel]="stockists.length === 0"
+        secondaryLabel="Cadastrar estoquistas"
+        secondaryRoute="/configuracoes/estoquistas"
+        secondaryIcon="pi pi-list"
+
+      ></app-guide-state>
   } @else if (depositName === null && deposits.length == 0) {
     <div class="flex flex-col items-center justify-center py-20 text-center text-gray-500 w-full">
       <i class="fa-solid fa-triangle-exclamation text-warning text-6xl mb-2"></i>
 
       <h3 class="text-xl font-semibold mb-2 dark:text-white ">Você não é estoquista em nenhum almoxarifado do
         sistema</h3>
-      <p class="text-lg">Fale com o <strong>Administrador</strong> para te cadastrar caso precise de acesso.</p>
+      <p class="text-lg">Fale com o <strong>Administrador</strong> de TI da sua empresa para te cadastrar caso precise
+        de acesso.</p>
     </div>
 
   } @else {
@@ -108,7 +129,7 @@
         editMode="row"
         selectionMode="single"
         [(selection)]="selectedOrder"
-        >
+      >
 
         <ng-template pTemplate="header">
           <tr>

@@ -1,0 +1,98 @@
+<div class="flex items-center justify-center px-6 xl:mt-32">
+
+  <div class="max-w-lg w-full text-center">
+
+    <!-- LOGO -->
+    <div class="flex justify-center mb-10 opacity-90">
+      <img src="/public/lumos_logo.svg" alt="Lumos" class="h-9 w-auto" />
+    </div>
+
+    <!-- CARD -->
+    <div class="relative rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-2xl border border-slate-200/50 dark:border-slate-800 p-8">
+
+      <!-- GLOW -->
+      <div class="absolute -top-10 left-1/2 -translate-x-1/2 w-32 h-32 blur-3xl rounded-full"
+           [ngClass]="config.glow">
+      </div>
+
+      <!-- ICON -->
+      <div class="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
+           [ngClass]="config.bgClass">
+        <i [class]="'pi ' + config.icon + ' text-2xl ' + config.colorClass"></i>
+      </div>
+
+      <!-- CODE -->
+      <div class="text-6xl font-bold mb-2 tracking-tight"
+           *ngIf="config.code !== '0'"
+           [ngClass]="config.colorClass">
+        {{ config.code }}
+      </div>
+
+      <!-- TITLE -->
+      <h1 class="text-2xl md:text-3xl font-semibold text-slate-900 dark:text-slate-100 mb-3">
+        {{ config.title }}
+      </h1>
+
+      <!-- MESSAGE -->
+      <p class="text-sm md:text-base text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+        {{ config.message }}
+      </p>
+
+      <!-- BADGE -->
+      <div class="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full mb-6"
+           [ngClass]="config.bgClass + ' ' + config.colorClass">
+
+        <span class="w-2 h-2 rounded-full animate-pulse"
+              [ngClass]="config.colorClass.replace('text', 'bg')">
+        </span>
+
+        {{ config.badge }}
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+
+        <!-- RELOAD (não mostrar no 403) -->
+        <button
+          *ngIf="type !== '403'"
+          (click)="goBack()"
+          class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg
+                 bg-primary text-white font-medium hover:bg-primary-dark transition-all shadow-md hover:shadow-lg active:scale-[0.98]"
+        >
+          <i class="pi pi-refresh text-sm"></i>
+          Tentar novamente
+        </button>
+
+        <!-- HOME -->
+        <button
+          (click)="goHome()"
+          class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg
+                 border border-slate-300 dark:border-slate-700
+                 text-slate-700 dark:text-slate-200 font-medium
+                 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+        >
+          <i class="pi pi-home text-sm"></i>
+          Ir para início
+        </button>
+
+      </div>
+
+      <!-- FOOTER -->
+      <div class="mt-6 text-xs text-slate-400">
+        Código do erro:
+        <span class="font-mono">ERR-{{ type.toUpperCase() }}</span>
+      </div>
+
+    </div>
+
+    <!-- SUPPORT -->
+    <div class="mt-6 text-sm text-slate-500 dark:text-slate-400">
+      Precisa de ajuda?
+      <a href="https://lumosip.com.br/contato"
+         class="font-medium text-primary hover:underline">
+        Fale com o suporte
+      </a>
+    </div>
+
+  </div>
+</div>

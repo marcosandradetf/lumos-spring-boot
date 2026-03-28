@@ -13,11 +13,25 @@ import { siteConfig } from '@/config';
 
 const highlightedFeatures = [
   {
+    title: 'Ronda pela cidade em busca de falhas',
+    description:
+      'Percorra a cidade identificando pontos de iluminação pública que precisam de manutenção.',
+    image: '/images/round-4.png',
+    badge: 'Operacional',
+    highlights: [
+      'Mapa interativo integrado ao sistema (Google Maps)',
+      'Registro de múltiplos pontos em sequência durante o processo',
+      'Captura automática de coordenadas geográficas',
+      'Coleta rápida de informações do problema com poucos toques',
+    ],
+    cta: { label: 'Saiba mais', href: '/ronda-iluminacao-publica-mapeamento-de-pontos' },
+  },
+  {
     title: 'Mapa Operacional em Tempo Real',
     description:
       'Visualize tudo o que está acontecendo no campo em um único mapa inteligente. Acompanhe execuções em andamento e finalizadas com precisão geográfica, incluindo instalações e manutenções, com acesso imediato a fotos, etiquetas e dados de cada ponto.',
-    image: '/images/map-executions.png',
-    badge: 'Operacional',
+    image: '/images/execution-map.png',
+    badge: 'Gerencial',
     highlights: [
       'Visualização em tempo real das execuções no mapa',
       'Pontos georreferenciados com alta precisão',
@@ -31,8 +45,8 @@ const highlightedFeatures = [
     title: 'Vínculo Contratual Inteligente',
     description:
       'Mesmo quando a execução em campo acontece sem Ordem de Serviço, seu faturamento continua seguro. O sistema permite vincular posteriormente os serviços e materiais executados aos itens contratuais, garantindo rastreabilidade, conformidade e precisão na medição.',
-    icon: 'lucide:link-2',
-    badge: 'Financeiro',
+    image: '/images/os-validation.png',
+    badge: 'Gestão & Financeiro',
     highlights: [
       'Execução em campo sem O.S., sem perder controle contratual',
       'Vinculação posterior de materiais e serviços ao contrato',
@@ -40,13 +54,13 @@ const highlightedFeatures = [
       'Redução de glosas com validação baseada em contrato',
       'Cálculo automático dos valores conforme itens contratuais',
     ],
-    // cta: { label: 'Entenda o faturamento', href: '/solucoes/contratos' },
+    cta: { label: 'Entenda o gerenciamento de contratos', href: '/gestao-contratos-iluminacao-publica' },
   },
   {
     title: 'Relatórios de Execução e Faturamento',
     description:
       'Transforme as execuções de campo em relatórios completos e prontos para faturamento e prestação de contas. Tenha controle total das atividades realizadas, com dados organizados para auditorias, medições contratuais e transparência junto às prefeituras.',
-    image: '/images/installation-report.jpeg',
+    image: '/images/generate-report-data.png',
     badge: 'Gestão & Financeiro',
     highlights: [
       'Relatórios detalhados de instalações e manutenções',
@@ -91,7 +105,7 @@ const highlightedFeatures = [
     title: 'Gestão de Estoque Inteligente',
     description:
       'Controle total dos seus materiais com agilidade e precisão. Gerencie entradas, saídas e movimentações com leitura de código de barras, mantenha seu catálogo organizado e tenha rastreabilidade completa para evitar perdas e garantir eficiência operacional.',
-    image: '/images/features/inventory.webp',
+    image: '/images/stock-movement.png',
     badge: 'Estoque',
     highlights: [
       'Cadastro e movimentação via leitura de código de barras',
@@ -102,21 +116,6 @@ const highlightedFeatures = [
       'Rastreabilidade de materiais do recebimento até a aplicação',
     ],
     // cta: { label: 'Gerenciar estoque', href: '/solucoes/estoque' },
-  },
-  {
-    title: 'Dashboard de Indicadores (KPIs)',
-    description:
-      'Tenha uma visão clara da produtividade e da saúde dos seus contratos em tempo real. Acompanhe o desempenho por equipe ou colaborador, monitore saldos contratuais e tome decisões rápidas com base em dados confiáveis.',
-    icon: 'lucide:bar-chart-3',
-    badge: 'Estratégico',
-    highlights: [
-      'Produtividade detalhada por equipe e por colaborador',
-      'Acompanhamento de metas operacionais em tempo real',
-      'Visão de saldo e consumo por contrato',
-      'Identificação rápida de gargalos e baixa performance',
-      'Indicadores atualizados automaticamente com base nas execuções',
-    ],
-    // cta: { label: 'Explorar dashboards', href: '/funcionalidades/dashboards' },
   },
 ];
 

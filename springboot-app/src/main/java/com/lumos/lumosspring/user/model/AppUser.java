@@ -3,6 +3,7 @@ package com.lumos.lumosspring.user.model;
 import com.lumos.lumosspring.authentication.dto.LoginRequest;
 
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import com.lumos.lumosspring.authentication.model.TenantEntity;
@@ -43,6 +44,10 @@ public class AppUser extends TenantEntity implements Persistable<UUID> {
     private Long teamId;
 
     private Boolean support;
+
+    private OffsetDateTime createdAt;
+
+    private OffsetDateTime deactivatedAt;
 
     public UUID getUserId() {
         return userId;
@@ -159,6 +164,22 @@ public class AppUser extends TenantEntity implements Persistable<UUID> {
 
     public void setSupport(Boolean support) {
         this.support = support;
+    }
+
+    public OffsetDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(OffsetDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public OffsetDateTime getDeactivatedAt() {
+        return deactivatedAt;
+    }
+
+    public void setDeactivatedAt(OffsetDateTime deactivatedAt) {
+        this.deactivatedAt = deactivatedAt;
     }
 
     @Override

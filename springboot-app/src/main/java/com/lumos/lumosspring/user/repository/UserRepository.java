@@ -4,6 +4,7 @@ import com.lumos.lumosspring.user.dto.OperationalUserResponse;
 import com.lumos.lumosspring.user.model.AppUser;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -38,4 +39,17 @@ public interface UserRepository extends CrudRepository<AppUser, UUID> {
     List<UUID> getResponsibleTechUsers(UUID tenantId);
 
     List<AppUser> findByTenantIdAndStatusTrueAndSupportFalseOrderByNameAsc(UUID tenantId, Boolean status, Boolean support);
+
+    /**
+     * Seats faturáveis: ativos, não suporte, não desativados (alinhado ao billing).
+     */
+    @Query("""
+            SELECT COUNT(*)
+            FROM app_user au
+            WHERE au.tenant_id = :tenantId
+              AND COALESCE(au.status, FALSE) = TRUE
+              AND COALESCE(au.support, FALSE) = FALSE
+              AND au.deactivated_at IS NULL
+            """)
+    Long countBillableActiveSeats(@Param("tenantId") UUID tenantId);
 }

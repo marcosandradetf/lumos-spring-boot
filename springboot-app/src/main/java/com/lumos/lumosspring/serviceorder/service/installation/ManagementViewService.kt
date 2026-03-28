@@ -22,9 +22,17 @@ class ManagementViewService(
 ) {
     fun getPendingReservesForStockist(): ResponseEntity<Any> {
         val userId = Utils.getCurrentUserId()
+        val isAdm = Utils.getCurrentScope()?.let {
+            val roles = it.split(" ")
+            roles.contains("ADMIN")
+        } ?: false
+
         val response = ArrayList<ReserveDTOResponse?>()
-        val pendingManagement =
+        val pendingManagement = if (isAdm) {
+            reservationManagementRepository.findAllByStatusAndTenantId(ReservationStatus.PENDING, getCurrentTenantId())
+        } else {
             reservationManagementRepository.findAllByStatusAndStockistId(ReservationStatus.PENDING, userId)
+        }
 
         for (pRow in pendingManagement) {
             val description = pRow.description
@@ -37,9 +45,9 @@ class ManagementViewService(
                 if (preMeasurementID != null) {
                     // Consulta para itens de pré-medição
                     val items = preMeasurementStreetItemRepository.getItemsByPreMeasurementId(
-                            preMeasurementID,
-                            ReservationStatus.PENDING
-                        )
+                        preMeasurementID,
+                        ReservationStatus.PENDING
+                    )
 
                     response.add(
                         ReserveDTOResponse(
@@ -59,9 +67,9 @@ class ManagementViewService(
                 } else if (directExecutionID != null) {
                     // Consulta para itens de execução direta
                     val items = directExecutionRepositoryItem.getItemsByDirectExecutionId(
-                            directExecutionID,
-                            ReservationStatus.PENDING
-                        )
+                        directExecutionID,
+                        ReservationStatus.PENDING
+                    )
 
                     response.add(
                         ReserveDTOResponse(
@@ -86,7 +94,7 @@ class ManagementViewService(
     }
 
     fun getExecutions(status: String, contractId: Long?): ResponseEntity<Any> {
-        when(status) {
+        when (status) {
             ExecutionStatus.WAITING_STOCKIST, ExecutionStatus.WAITING_COLLECT, ExecutionStatus.AVAILABLE_EXECUTION -> {
                 return ResponseEntity.ok().body(
                     reservationManagementRepository.getServiceOrders(
@@ -96,6 +104,7 @@ class ManagementViewService(
                     )
                 )
             }
+
             else -> {
                 return ResponseEntity.ok().body(
                     installationViewRepository.findInstallationsByStatus(status, getCurrentTenantId())

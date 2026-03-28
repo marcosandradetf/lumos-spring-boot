@@ -1,8 +1,12 @@
 // app/app.routes.ts
 import {Routes} from '@angular/router';
 import {AuthGuard} from './core/auth/auth.guard';
-import {TruckDepositComponent} from './stock/truck-deposits/deposits.component';
 import {ServiceRequestMapComponent} from './maintenance/request/service-request-map.component';
+import {
+    ContractReferenceItemFormComponent
+} from './contract/contract-reference-item-form/contract-reference-item-form.component';
+import {MaterialFormComponent} from './stock/material-form/material-form.component';
+import {ServerErrorComponent} from './server-error/server-error.component';
 
 
 export const routes: Routes = [
@@ -25,6 +29,21 @@ export const routes: Routes = [
         canActivate: [AuthGuard],
         data: {role: [''], path: ''},
     },
+
+    // start billing paths
+    {
+        path: 'cobranca',
+        loadComponent: () => import('./billing/billing.component').then(m => m.BillingComponent),
+        canActivate: [AuthGuard],
+        data: {role: ['ADMIN'], path: 'cobranca'},
+    },
+    {
+        path: 'acesso-indisponivel',
+        loadComponent: () => import('./billing/unavailable-access.component').then(m => m.UnavailableAccessComponent),
+        canActivate: [AuthGuard],
+        data: {role: [], path: 'acesso-indisponivel'},
+    },
+    // end billing paths
 
     // start paths stock
     {
@@ -108,6 +127,18 @@ export const routes: Routes = [
         data: {role: ['ADMIN', 'ANALISTA'], path: 'contratos'},
     },
     {
+        path: 'contratos/itens-contratuais/cadastro',
+        component: ContractReferenceItemFormComponent,
+        children: [
+            {
+                path: 'material-create',
+                component: MaterialFormComponent
+            }
+        ],
+        canActivate: [AuthGuard],
+        data: {role: ['ADMIN', 'ANALISTA'], path: 'contratos'},
+    },
+    {
         path: 'contratos/criar',
         loadComponent: () => import('./contract/pages/create/create.component').then(m => m.CreateComponent),
         canActivate: [AuthGuard],
@@ -151,7 +182,7 @@ export const routes: Routes = [
         path: 'configuracoes/usuarios',
         loadComponent: () => import('./manage/user/user.component').then(m => m.UserComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ANALISTA'], path: 'configuracoes'},
+        data: {role: ['ADMIN'], path: 'configuracoes'},
     },
     {
         path: 'configuracoes/equipes',
@@ -169,7 +200,7 @@ export const routes: Routes = [
         path: 'configuracoes/conta',
         loadComponent: () => import('./manage/account/account.component').then(a => a.AccountComponent),
         canActivate: [AuthGuard],
-        data: {role: [], path: 'conta'},
+        data: {role: ['ADMIN',], path: 'conta'},
     },
     // end
 
@@ -215,7 +246,7 @@ export const routes: Routes = [
     },
 
     {
-        path: 'execucoes/iniciar-sem-pre-medicao',
+        path: 'ordens-de-servico/nova',
         loadComponent: () => import('./executions/execution-no-pre-measurement/execution-no-pre-measurement.component').then(e => e.ExecutionNoPreMeasurementComponent),
         canActivate: [AuthGuard],
         data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
@@ -234,19 +265,19 @@ export const routes: Routes = [
         path: 'requisicoes/instalacoes/gerenciamento-estoque',
         loadComponent: () => import('./requests/reservation-management/reservation-management.component').then(r => r.ReservationManagementComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas'},
+        data: {role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas'},
     },
     {
         path: 'requisicoes/gerenciamento/execucao',
         loadComponent: () => import('./requests/reservation-management-select/reservation-management-select.component').then(r => r.ReservationManagementSelectComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas'},
+        data: {role: ['ADMIN','ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas'},
     },
     {
         path: 'requisicoes',
         loadComponent: () => import('./requests/reservation-pending/reservation-pending.component').then(r => r.ReservationPendingComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas'},
+        data: {role: ['ADMIN','ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas'},
     },
     //end
 
@@ -279,7 +310,10 @@ export const routes: Routes = [
         path: 'relatorios/estoque/saida-saldo-instalacao',
         loadComponent: () => import('./reports/material-reservation/material-reservation.component').then(r => r.MaterialReservationComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ANALISTA','ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'relatorios'},
+        data: {
+            role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ANALISTA', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'],
+            path: 'relatorios'
+        },
     },
     {
         path: 'relatorios/execucoes/analitico-de-operacoes',
@@ -303,6 +337,7 @@ export const routes: Routes = [
         canActivate: [AuthGuard],
         data: {role: [], path: 'dashboard'},
     },
+
     {
         path: 'dashboard/mapa-execucoes',
         loadComponent: () => import('./dashboard/map/map.component').then(d => d.MapComponent),
@@ -325,17 +360,32 @@ export const routes: Routes = [
     {
         path: 'abrir-chamado',
         component: ServiceRequestMapComponent,
-        data: { mode: 'manual' }
+        data: {mode: 'manual'}
     },
 
     {
         path: 'modo-ronda',
         component: ServiceRequestMapComponent,
-        data: { mode: 'round' }
+        data: {mode: 'round'}
+    },
+
+
+    {
+        path: 'status/:type',
+        component: ServerErrorComponent,
     },
 
     //
-    {path: '**', redirectTo: 'dashboard'},
+
+    {
+        path: '',
+        redirectTo: 'dashboard',
+        pathMatch: 'full'
+    },
+    {
+        path: '**',
+        redirectTo: "status/404"
+    },
 
 
 ];

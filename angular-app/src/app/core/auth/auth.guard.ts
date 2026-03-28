@@ -29,7 +29,7 @@ export class AuthGuard implements CanActivate {
             if (hasAcess) {
               return true;
             } else {
-              void this.router.navigate(['/acesso-negado', path]);
+              void this.router.navigate(['/status/403']);
               return false;
             }
           }

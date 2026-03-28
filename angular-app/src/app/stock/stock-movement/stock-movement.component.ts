@@ -38,6 +38,9 @@ import {BarcodeFormat} from '@zxing/library';
 import {StyleClass} from 'primeng/styleclass';
 import {ConfirmPopup, ConfirmPopupModule} from 'primeng/confirmpopup';
 import {SharedState} from '../../core/service/shared-state';
+import {GuideStateComponent} from '../../guide-state/guide-state.component';
+import {LoadingComponent} from '../../shared/components/loading/loading.component';
+import {Utils} from '../../core/service/utils';
 
 @Component({
     selector: 'app-stock-movement',
@@ -55,7 +58,6 @@ import {SharedState} from '../../core/service/shared-state';
         Skeleton,
         Toast,
         DropdownModule,
-        PrimeBreadcrumbComponent,
         InputText,
         ToggleButton,
         Button,
@@ -71,8 +73,10 @@ import {SharedState} from '../../core/service/shared-state';
         Dialog,
         ZXingScannerModule,
         ConfirmPopupModule,
+        GuideStateComponent,
+        LoadingComponent,
     ],
-    providers:[ConfirmationService],
+    providers: [ConfirmationService],
     templateUrl: './stock-movement.component.html',
     styleUrl: './stock-movement.component.scss'
 })
@@ -122,6 +126,9 @@ export class StockMovementComponent implements OnInit {
     ) {
     }
 
+    hasTruck = false;
+    hasDeposit = false;
+
     ngOnInit() {
         this.isMobile = window.innerWidth <= 1024;
         this.titleService.setTitle("Movimentar Estoque");
@@ -142,20 +149,28 @@ export class StockMovementComponent implements OnInit {
         ];
 
         const depositId = this.route.snapshot.queryParamMap.get('almoxarifado');
+        this.loading = true;
         this.stockService.getDeposits().subscribe({
             next: (d) => {
                 this.deposits = d;
+
+                this.hasTruck = this.deposits.some(d => d.isTruck);
+                this.hasDeposit = this.deposits.some(d => !d.isTruck);
+
                 if (depositId) {
                     this.currentDeposit = this.deposits.find(d => d.idDeposit === Number(depositId));
                     this.loadMaterials();
                     this.scannerEnabled = this.isMobile;
                 }
+                this.loading = false;
             },
             error: (err) => {
-                this.utils.showMessage(err.error.message ?? err.error.error ?? err.error, "error");
+                Utils.handleHttpError(err, this.router);
+                this.loading = false;
             }
         });
     }
+
 
     loadMaterials() {
         if (!this.currentDeposit) return;
@@ -211,6 +226,7 @@ export class StockMovementComponent implements OnInit {
     }
 
     successMessage = false;
+
     submitDataMovement(): void {
         this.stockService.stockMovement(this.sendMovement).pipe(
             tap(() => {
@@ -295,6 +311,7 @@ export class StockMovementComponent implements OnInit {
     //     this.handleConfirmMovement();
     // }
     @ViewChild('confirmPopup') confirmPopup!: ConfirmPopup;
+
     submitFormMovement(form: NgForm, event: Event) {
         this.formSubmitted = true;
 

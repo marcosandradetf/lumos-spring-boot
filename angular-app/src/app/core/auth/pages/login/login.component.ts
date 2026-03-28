@@ -13,6 +13,7 @@ import { Card } from 'primeng/card';
 import { Password } from 'primeng/password';
 import { InputText } from 'primeng/inputtext';
 import {Message} from 'primeng/message';
+import {Divider} from 'primeng/divider';
 
 
 export type DocItem = {
@@ -37,6 +38,7 @@ export type DocItem = {
         MarkdownModule,
         Message,
         NgOptimizedImage,
+        Divider,
     ],
     templateUrl: './login.component.html',
     styleUrl: './login.component.scss',
@@ -168,6 +170,7 @@ export class LoginComponent implements OnInit {
             },
             error: (error) => {
                 this.authLoading = false;
+                console.warn(error);
 
                 // se seu backend manda error.error.message, ótimo; senão cai no genérico
                 const msg = error?.error?.message ?? error?.error ?? 'Usuário ou senha inválidos.';
@@ -188,8 +191,7 @@ export class LoginComponent implements OnInit {
     }
 
     openSubscriptionModal() {
-        window.open('https://api.whatsapp.com/send?phone=5531996808280&text=Olá, tenho interesse em saber mais sobre o Lumos.',
-            '_blank');
+        window.location.href = 'https://lumosip.com.br/teste-gratis'
     }
 
     startDemo() {

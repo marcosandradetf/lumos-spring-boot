@@ -33,6 +33,7 @@ import {isEqual, cloneDeep} from 'lodash';
 import {InputNumber} from 'primeng/inputnumber';
 import {Popover} from 'primeng/popover';
 import {LoadingOverlayComponent} from '../../../../shared/components/loading-overlay/loading-overlay.component';
+import {GuideStateComponent} from '../../../../guide-state/guide-state.component';
 
 @Component({
     selector: 'app-contract-list',
@@ -58,7 +59,8 @@ import {LoadingOverlayComponent} from '../../../../shared/components/loading-ove
         OverlayPanelModule,
         InputNumber,
         Popover,
-        LoadingOverlayComponent
+        LoadingOverlayComponent,
+        GuideStateComponent
     ],
     templateUrl: './contract-list.component.html',
     styleUrl: './contract-list.component.scss'
@@ -154,17 +156,20 @@ export class ContractListComponent implements OnInit {
         this.loading = true;
         this.route.queryParams.subscribe(params => {
             this.reason = params['for'];
+
+            if (this.reason.toLowerCase() === 'view') {
+                this.titleService.setTitle("Visualizar Contratos");
+                SharedState.setCurrentPath(['Contratos', 'Visualizar Contratos']);
+            } else if (this.reason.toLowerCase() === 'execution') {
+                this.titleService.setTitle("Selecionar contrato");
+                SharedState.setCurrentPath(['Ordem de serviço', 'Selecionar contrato']);
+            } else {
+                this.titleService.setTitle("Importar Pré-Medição");
+                SharedState.setCurrentPath(['Importar Pré-Medição', 'Selecionar contrato']);
+            }
         });
 
-        if (this.reason.toLowerCase() !== 'premeasurement') {
-            this.titleService.setTitle("Visualizar Contratos");
-        } else {
-            this.titleService.setTitle("Importar Pré-Medição");
-        }
-
         this.getContracts();
-
-        SharedState.setCurrentPath(['Contratos', 'Exibir Todos']);
 
     }
 
@@ -387,7 +392,7 @@ export class ContractListComponent implements OnInit {
         }
 
         void this.router.navigate(
-            ['/execucoes/iniciar-sem-pre-medicao/'],
+            ['/ordens-de-servico/nova/'],
             {
                 queryParams: {
                     codigo: c.contractId,

@@ -24,6 +24,8 @@ import {InputNumber} from 'primeng/inputnumber';
 import {TableModule} from 'primeng/table';
 import {Message} from 'primeng/message';
 import {Popover} from 'primeng/popover';
+import {GuideStateComponent} from '../../../guide-state/guide-state.component';
+import {LoadingComponent} from '../../../shared/components/loading/loading.component';
 
 
 @Component({
@@ -51,7 +53,9 @@ import {Popover} from 'primeng/popover';
         InputNumber,
         TableModule,
         Message,
-        Popover
+        Popover,
+        GuideStateComponent,
+        LoadingComponent
     ],
     templateUrl: './create.component.html',
     styleUrl: './create.component.scss'

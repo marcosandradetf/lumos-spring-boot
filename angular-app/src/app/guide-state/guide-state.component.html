@@ -1,0 +1,102 @@
+<div class="flex items-center justify-center xl:py-20 px-4">
+  <div class="max-w-xl w-full text-center">
+
+    <!-- ICON -->
+    <div class="flex justify-center mb-6">
+      <div class="relative">
+        <div class="absolute inset-0 blur-xl bg-blue-400/30 rounded-full"></div>
+
+        <div class="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600
+                    flex items-center justify-center shadow-lg">
+          <i [class]="icon + ' text-2xl text-white'"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- TITLE -->
+    <div class="space-y-2">
+      <h2 class="text-2xl md:text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+        {{ title }}
+      </h2>
+
+      <p *ngIf="subtitle" class="text-sm md:text-base text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+        {{ subtitle }}
+      </p>
+    </div>
+
+    <!-- STEPS -->
+    <div *ngIf="steps?.length"
+         class="mt-8 text-left bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800
+                rounded-2xl p-5 shadow-sm">
+
+      <div class="flex items-center gap-2 mb-4">
+        <i class="pi pi-list text-slate-400 text-sm"></i>
+        <span class="text-sm font-medium text-slate-700 dark:text-slate-200">
+          O que você precisa fazer
+        </span>
+      </div>
+
+      <div class="space-y-3">
+        <div *ngFor="let step of filteredSteps; let i = index"
+             class="flex items-start gap-3">
+
+          @if(step[0]) {
+            <!-- step number -->
+            <div class="min-w-[28px] h-7 flex items-center justify-center
+                      rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 text-xs font-semibold">
+              {{ i + 1 }}
+            </div>
+
+            <!-- text -->
+            <div class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+              {{ step[1] }}
+            </div>
+          }
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="flex flex-col gap-3 mt-8 w-full max-w-sm mx-auto">
+
+      <!-- PRIMARY -->
+      <button
+        *ngIf="hasButtonLabel"
+        pButton
+        [label]="buttonLabel ?? ''"
+        [icon]="buttonIcon"
+        class="w-full px-5 py-3 font-medium shadow-md"
+        severity="primary"
+        (click)="navigate(buttonRoute)"
+      ></button>
+
+      <!-- SECONDARY -->
+      <button
+        *ngIf="hasSecondaryLabel"
+        pButton
+        [label]="secondaryLabel ?? ''"
+        [icon]="secondaryIcon"
+        class="w-full px-5 py-3 font-medium"
+        [severity]="!hasPrimary ? 'primary' : 'secondary'"
+        [outlined]="hasPrimary"
+        (click)="navigate(secondaryRoute)"
+      ></button>
+
+      <!-- TERTIARY -->
+      <button
+        *ngIf="hasTertiaryLabel"
+        pButton
+        [label]="tertiaryLabel ?? ''"
+        [icon]="tertiaryIcon"
+        class="w-full px-5 py-3 font-medium"
+        [severity]="!hasPrimary && !hasSecondary ? 'primary' : null"
+        [text]="hasPrimary || hasSecondary"
+        (click)="navigate(tertiaryRoute)"
+      ></button>
+
+    </div>
+
+  </div>
+</div>

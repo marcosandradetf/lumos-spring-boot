@@ -1,4 +1,23 @@
-<div>
+<app-loading *ngIf="loading"></app-loading>
+
+<app-guide-state
+  *ngIf="contracts.length === 0 && !loading"
+  [icon]="reason === 'execution' ? 'pi pi-clipboard' : 'pi pi-file'"
+  [title]="reason === 'execution' ? 'Antes de criar uma OS' : 'Antes de exibir contratos...'"
+  subtitle="Você precisa preparar a base do sistema antes de continuar."
+  [steps]="[
+    [true, 'Preencher informações de contratos'],
+    [true, 'Vincular itens contratuais e revisar'],
+    [true, 'Aguardar aprovação']
+  ]"
+  [hasButtonLabel]="true"
+  buttonLabel="Cadastrar contratos"
+  buttonRoute="/contratos/criar"
+  buttonIcon="pi pi-plus"
+></app-guide-state>
+
+
+<div *ngIf="contracts.length > 0 && !loading">
   <app-loading-overlay [loading]="loadingOverlay"></app-loading-overlay>
   <div
     class="pt-3 px-4 w-full flex flex-col items-center justify-center gap-2 text-center"

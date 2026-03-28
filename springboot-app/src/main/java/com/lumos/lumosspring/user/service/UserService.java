@@ -274,23 +274,12 @@ public class UserService {
             }
 
 
-            Set<Role> userRoles = new HashSet<>();
             var date = LocalDate.of(u.year(), u.month(), u.day());
 
-            for (String r : u.role()) {
-                if (r.isEmpty()) {
-                    continue;
-                }
+            Set<Role> currentUserRoles = new HashSet<>(roleRepository.findRolesByUserId(user.getUserId()));
+            Set<Role> newRoles = new HashSet<>(u.role());
 
-                var role = roleRepository.findByRoleName(r);
-                userRoles.add(role);
-            }
-
-            var oldRoleNames = roleRepository.findRolesByUserId(user.getUserId());
-
-            List<String> newRoleNames = new ArrayList<>(u.role());
-
-            if (!u.status() || !oldRoleNames.equals(newRoleNames)) {
+            if (!u.status() || !currentUserRoles.equals(newRoles)) {
                 refreshTokenRepository.findByAppUser(user.getUserId())
                         .ifPresent(tokens -> tokens.forEach(token -> {
                             if (token.getExpiryDate().isBefore(Instant.now())) {
@@ -314,14 +303,13 @@ public class UserService {
             user.setDateOfBirth(date);
             user.setStatus(u.status());
 
-            for (Role role : userRoles) {
+            namedParameterJdbcTemplate.update("""
+                        delete from user_role where id_user = :userId
+                    """, Map.of("userId", UUID.fromString(u.userId())));
+            for (Role role : newRoles) {
                 var params = new MapSqlParameterSource()
                         .addValue("userId", UUID.fromString(u.userId()))
                         .addValue("roleId", role.getRoleId());
-
-                namedParameterJdbcTemplate.update("""
-                            delete from user_role where id_user = :userId
-                        """, params);
 
                 namedParameterJdbcTemplate.update("""
                             INSERT INTO user_role (id_user, id_role)
@@ -371,22 +359,10 @@ public class UserService {
             throw new Utils.BusinessException(STR."CPF \{u.email()} já existente no sistema, recupere a senha ou utilize outro CPF.");
         }
 
-        Set<Role> userRoles = new HashSet<>();
+        Set<Role> userRoles = new HashSet<>(u.role());
         var user = new AppUser();
         var date = LocalDate.of(u.year(), u.month(), u.day());
         var password = UUID.randomUUID().toString();
-
-        for (String r : u.role()) {
-            if (r.isEmpty()) {
-                continue;
-            }
-
-            var role = roleRepository.findByRoleName(r);
-            if (role == null) {
-                continue;
-            }
-            userRoles.add(role);
-        }
 
         user.setUserId(UUID.randomUUID());
         user.setNewEntry(true);

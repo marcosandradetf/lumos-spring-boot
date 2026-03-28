@@ -15,6 +15,7 @@ import {ufRequest} from '../../core/uf-request.dto';
 import {IbgeService} from '../../core/service/ibge.service';
 import {citiesRequest} from '../../core/cities-request.dto';
 import {SharedState} from '../../core/service/shared-state';
+import {LoadingComponent} from '../../shared/components/loading/loading.component';
 
 @Component({
     selector: 'app-deposits',
@@ -26,7 +27,7 @@ import {SharedState} from '../../core/service/shared-state';
         ButtonComponent,
         ModalComponent,
         AlertMessageComponent,
-        NgClass,
+        LoadingComponent,
     ],
     templateUrl: './deposits.component.html',
     styleUrl: './deposits.component.scss'
@@ -51,6 +52,7 @@ export class DepositsComponent {
     message: string = '';
     state: State = State.create;
     depositId: number = 0;
+    loading = false;
     @ViewChild('collapseDiv') collapseDiv!: ElementRef;
     @ViewChild('top') top!: ElementRef;
 

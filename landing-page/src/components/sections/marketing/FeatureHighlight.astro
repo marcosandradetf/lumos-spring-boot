@@ -94,7 +94,7 @@ const hasHeading = title || subtitle;
               {/* Image/Visual Side */}
               <div class="flex-1 w-full">
                 {feature.image ? (
-                  <div class="relative rounded-2xl overflow-hidden border border-border shadow-xl">
+                  <div class="overflow-hidden ">
                     <img
                       src={feature.image}
                       alt={feature.title}
@@ -102,7 +102,7 @@ const hasHeading = title || subtitle;
                       loading="lazy"
                     />
                     {/* Gradient overlay for polish */}
-                    <div class="absolute inset-0 bg-linear-to-t from-black/10 to-transparent pointer-events-none" />
+
                   </div>
                 ) : (
                   <div class="aspect-video rounded-2xl bg-linear-to-br from-primary/10 to-primary/5 border border-border flex items-center justify-center">

@@ -1,0 +1,90 @@
+<div class="flex items-center justify-center p-4">
+  <!-- Main Container -->
+  <div class="w-full max-w-md">
+    <p-card class="shadow-2xl border-0">
+      <!-- Header with Background -->
+      <ng-template pTemplate="header">
+        <div class="bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500 dark:from-blue-600 dark:via-indigo-600 dark:to-violet-600 h-40 flex flex-col items-center justify-center">
+<!--          <i class="pi pi-lock text-white text-5xl"></i>-->
+          <img src="/public/icon-512.png" alt="Lumos Logo" width="64">
+          <h2 class="text-neutral-100 font-semibold text-lg ">Lumos</h2>
+        </div>
+      </ng-template>
+
+      <!-- Content -->
+      <div class="text-center space-y-6 py-4">
+        <div>
+          <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
+            Acesso temporariamente indisponível
+          </h1>
+          <p class="text-gray-600 dark:text-gray-400 text-lg">
+            Fale com um usuário administrador no sistema para obter mais informações.
+          </p>
+        </div>
+
+        <!-- Reasons List -->
+        <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-left border-l-4 border-blue-500 dark:border-blue-400">
+          <p class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Isso pode ocorrer quando:</p>
+          <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+            <li class="flex items-start">
+              <span class="text-blue-600 dark:text-blue-400 mr-2">•</span>
+              <span>Seu período de teste foi finalizado</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-blue-600 dark:text-blue-400 mr-2">•</span>
+              <span>Sua assinatura expirou</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-blue-600 dark:text-blue-400 mr-2">•</span>
+              <span>Sua assinatura foi cancelada</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-blue-600 dark:text-blue-400 mr-2">•</span>
+              <span>Há um problema com o pagamento</span>
+            </li>
+          </ul>
+        </div>
+
+      </div>
+
+      <!-- Footer with Actions -->
+      <ng-template pTemplate="footer">
+        <div class="space-y-3">
+
+          <button
+            pButton
+            type="button"
+            label="Tentar novamente"
+            icon="pi pi-replay"
+            severity="primary"
+            (click)="router.navigate(['']);"
+            [loading]="loggingOut"
+            class="w-full"
+          ></button>
+
+          <p-divider layout="horizontal"></p-divider>
+
+          <button
+            pButton
+            type="button"
+            label="Fazer Logout"
+            icon="pi pi-sign-out"
+            severity="secondary"
+            (click)="logout()"
+            [loading]="loggingOut"
+            class="w-full"
+          ></button>
+        </div>
+      </ng-template>
+    </p-card>
+
+    <!-- Support Footer -->
+    <div class="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+      <p>Precisa de ajuda?</p>
+      <a href="mailto:support@lumos.com" class="text-blue-600 dark:text-blue-400 hover:underline font-semibold">
+        Contate nosso suporte
+      </a>
+    </div>
+  </div>
+</div>
+

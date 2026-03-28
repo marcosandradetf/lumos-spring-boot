@@ -1,0 +1,435 @@
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-950 dark:to-slate-900 p-4 md:p-8">
+  <p-toast position="top-right"></p-toast>
+
+  <div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8 text-center">
+      <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
+        Gerenciar Assinatura
+      </h1>
+      <p class="text-lg text-gray-600 dark:text-gray-400">
+        Renove ou atualize seu plano de assinatura
+      </p>
+    </div>
+
+    <!-- Warning Alert -->
+    <div *ngIf="reasonCode"
+         class="mb-6 p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 dark:border-yellow-600">
+      <div class="flex items-start">
+        <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-500 mt-0.5 mr-3 flex-shrink-0" fill="currentColor"
+             viewBox="0 0 20 20">
+          <path fill-rule="evenodd"
+                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                clip-rule="evenodd"/>
+        </svg>
+        <p class="text-yellow-800 dark:text-yellow-200 font-medium">{{ getReason() }}</p>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="flex justify-center items-center py-16">
+      <div class="text-center">
+        <p-progressSpinner
+          [style]="{'width': '50px', 'height': '50px'}"
+          strokeWidth="4"
+          fill="transparent"
+          animationDuration="1">
+        </p-progressSpinner>
+        <p class="mt-4 text-gray-600 dark:text-gray-400">Carregando informações de assinatura...</p>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div *ngIf="!loading && subscriptionStatus" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Status Card -->
+      <div class="lg:col-span-2">
+        <p-card class="shadow-lg">
+          <ng-template pTemplate="header">
+            <div
+              class="bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 h-32 flex items-end px-6 pb-6">
+              <h2 class="text-white text-2xl font-bold">Status da Assinatura</h2>
+            </div>
+          </ng-template>
+
+          <div class="space-y-6">
+            <!-- Status Row -->
+            <div class="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-700">
+              <span class="text-gray-600 dark:text-gray-400 font-medium">Status</span>
+              <p-tag
+                [value]="subscriptionStatus.status || 'Desconhecido'"
+                [severity]="getStatusSeverity()"
+                styleClass="text-sm"
+              ></p-tag>
+            </div>
+
+            <!-- Plan Row -->
+            <div class="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-700">
+              <span class="text-gray-600 dark:text-gray-400 font-medium">Plano</span>
+              <span
+                class="text-gray-900 dark:text-white font-semibold">{{ subscriptionStatus.planName || 'N/A' }}</span>
+            </div>
+
+            <!-- Trial Date Row -->
+            <div *ngIf="subscriptionStatus.trialEndsAt"
+                 class="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-700">
+              <span class="text-gray-600 dark:text-gray-400 font-medium">Período de Teste Termina</span>
+              <span
+                class="text-gray-900 dark:text-white font-semibold">{{ subscriptionStatus.trialEndsAt | date: 'short' }}</span>
+            </div>
+
+            <!-- Access Row -->
+            <div class="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-700">
+              <span class="text-gray-600 dark:text-gray-400 font-medium">Acesso Permitido</span>
+              <p-tag
+                [value]="subscriptionStatus.accessAllowed ? 'Sim' : 'Não'"
+                [severity]="getAccessSeverity()"
+              ></p-tag>
+            </div>
+
+            <!-- Message Row -->
+            <div *ngIf="subscriptionStatus.message" class="flex items-center justify-between">
+              <span class="text-gray-600 dark:text-gray-400 font-medium">Mensagem</span>
+              <span class="text-gray-900 dark:text-white">{{ subscriptionStatus.message }}</span>
+            </div>
+          </div>
+
+          <ng-template pTemplate="footer">
+            <div class="flex gap-3 flex-col sm:flex-row">
+              <button
+                pButton
+                type="button"
+                label="Renovar Assinatura"
+                icon="pi pi-refresh"
+                [loading]="actionInProgress"
+                (click)="toggleRenewForm()"
+                class="flex-1"
+              ></button>
+              <button
+                pButton
+                type="button"
+                label="Fazer Upgrade"
+                icon="pi pi-arrow-up"
+                severity="success"
+                [loading]="actionInProgress"
+                (click)="toggleUpgradeForm()"
+                class="flex-1"
+              ></button>
+            </div>
+          </ng-template>
+        </p-card>
+      </div>
+
+      <!-- Quick Actions Sidebar -->
+      <div class="space-y-4">
+        <p-card class="shadow-lg">
+          <ng-template pTemplate="header">
+            <div
+              class="bg-gradient-to-r from-green-500 to-emerald-600 dark:from-green-600 dark:to-emerald-700 h-24 flex items-end px-6 pb-4">
+              <h3 class="text-white font-bold">Ações Rápidas</h3>
+            </div>
+          </ng-template>
+
+          <div class="flex flex-col gap-3">
+            <button
+              pButton
+              type="button"
+              label="Processar Pagamento"
+              icon="pi pi-credit-card"
+              severity="warn"
+              [loading]="actionInProgress"
+              (click)="processPayment()"
+              class="w-full"
+            ></button>
+            <p-divider layout="horizontal"></p-divider>
+            <button
+              pButton
+              type="button"
+              label="Voltar ao Dashboard"
+              icon="pi pi-home"
+              severity="secondary"
+              (click)="goToDashboard()"
+              class="w-full"
+            ></button>
+          </div>
+        </p-card>
+
+        <!-- Info Card -->
+        <p-card class="shadow-lg">
+          <ng-template pTemplate="header">
+            <div
+              class="bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 h-20 flex items-end px-6 pb-4">
+              <h3 class="text-white font-bold">Precisa de Ajuda?</h3>
+            </div>
+          </ng-template>
+
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            Entre em contato com nosso suporte para dúvidas sobre sua assinatura.
+          </p>
+          <a href="mailto:support@lumos.com"
+             class="text-blue-600 dark:text-blue-400 hover:underline text-sm font-semibold">
+            Contatar Suporte →
+          </a>
+        </p-card>
+      </div>
+    </div>
+
+    <!-- Forms Section -->
+    <div *ngIf="!loading && subscriptionStatus" class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+      <!-- Renew Form -->
+      <p-card *ngIf="showRenewForm" class="shadow-lg border-2 border-blue-500 dark:border-blue-600">
+        <ng-template pTemplate="header">
+          <div
+            class="bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 h-20 flex items-end px-6 pb-4">
+            <h3 class="text-white font-bold">Renovar Assinatura</h3>
+          </div>
+        </ng-template>
+
+        <form [formGroup]="renewForm" (ngSubmit)="onRenewSubmit()" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Ciclo de Cobrança
+            </label>
+            <p-dropdown
+              formControlName="billingCycle"
+              [options]="billingCycleOptions"
+              optionLabel="label"
+              optionValue="value"
+              [showClear]="false"
+              class="w-full"
+              styleClass="w-full"
+            ></p-dropdown>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Plano (Opcional)
+            </label>
+            <input
+              pInputText
+              type="text"
+              formControlName="planName"
+              placeholder="Deixe em branco para manter o plano atual"
+              class="w-full"
+            />
+          </div>
+
+          <p-divider layout="horizontal"></p-divider>
+
+          <div class="flex gap-3">
+            <button
+              pButton
+              type="submit"
+              label="Confirmar Renovação"
+              icon="pi pi-check"
+              [disabled]="renewForm.invalid || actionInProgress"
+              [loading]="actionInProgress"
+              class="flex-1"
+            ></button>
+            <button
+              pButton
+              type="button"
+              label="Cancelar"
+              icon="pi pi-times"
+              severity="secondary"
+              (click)="toggleRenewForm()"
+              class="flex-1"
+            ></button>
+          </div>
+        </form>
+      </p-card>
+
+      <!-- Upgrade Form -->
+      <p-card *ngIf="showUpgradeForm" class="shadow-lg border-2 border-green-500 dark:border-green-600">
+        <ng-template pTemplate="header">
+          <div
+            class="bg-gradient-to-r from-green-500 to-emerald-600 dark:from-green-600 dark:to-emerald-700 h-20 flex items-end px-6 pb-4">
+            <h3 class="text-white font-bold">Fazer Upgrade</h3>
+          </div>
+        </ng-template>
+
+        <form [formGroup]="upgradeForm" (ngSubmit)="onUpgradeSubmit()" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Novo Plano
+            </label>
+            <input
+              pInputText
+              type="text"
+              formControlName="targetPlanName"
+              placeholder="Digite o nome do novo plano"
+              class="w-full"
+              required
+            />
+            <small *ngIf="upgradeForm.get('targetPlanName')?.invalid && upgradeForm.get('targetPlanName')?.touched"
+                   class="text-red-600 dark:text-red-400">
+              Campo obrigatório
+            </small>
+          </div>
+
+          <p-divider layout="horizontal"></p-divider>
+
+          <div class="flex gap-3">
+            <button
+              pButton
+              type="submit"
+              label="Confirmar Upgrade"
+              icon="pi pi-check"
+              severity="success"
+              [disabled]="upgradeForm.invalid || actionInProgress"
+              [loading]="actionInProgress"
+              class="flex-1"
+            ></button>
+            <button
+              pButton
+              type="button"
+              label="Cancelar"
+              icon="pi pi-times"
+              severity="secondary"
+              (click)="toggleUpgradeForm()"
+              class="flex-1"
+            ></button>
+          </div>
+        </form>
+      </p-card>
+    </div>
+  </div>
+</div>
+
+<!-- Subscription Status -->
+<div *ngIf="!loading && subscriptionStatus" class="subscription-card">
+  <div class="status-header">
+    <h2>Status da Assinatura</h2>
+    <span class="status-badge" [ngClass]="'status-' + (subscriptionStatus.status?.toLowerCase() || 'unknown')">
+        {{ subscriptionStatus.status || 'Desconhecido' }}
+      </span>
+  </div>
+
+  <div class="status-details">
+    <div class="detail-row">
+      <label>Plano:</label>
+      <span>{{ subscriptionStatus.planName || 'N/A' }}</span>
+    </div>
+
+    <div class="detail-row" *ngIf="subscriptionStatus.trialEndsAt">
+      <label>Período de Teste Termina:</label>
+      <span>{{ subscriptionStatus.trialEndsAt | date: 'short' }}</span>
+    </div>
+
+    <div class="detail-row">
+      <label>Acesso Permitido:</label>
+      <span class="access-status" [ngClass]="subscriptionStatus.accessAllowed ? 'granted' : 'denied'">
+          {{ subscriptionStatus.accessAllowed ? 'Sim' : 'Não' }}
+        </span>
+    </div>
+
+    <div class="detail-row" *ngIf="subscriptionStatus.message">
+      <label>Mensagem:</label>
+      <span>{{ subscriptionStatus.message }}</span>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="action-buttons">
+    <button
+      (click)="toggleRenewForm()"
+      [disabled]="actionInProgress"
+      class="btn btn-primary">
+      {{ showRenewForm ? 'Cancelar Renovação' : 'Renovar Assinatura' }}
+    </button>
+
+    <button
+      (click)="toggleUpgradeForm()"
+      [disabled]="actionInProgress"
+      class="btn btn-secondary">
+      {{ showUpgradeForm ? 'Cancelar Upgrade' : 'Fazer Upgrade' }}
+    </button>
+
+    <button
+      (click)="processPayment()"
+      [disabled]="actionInProgress"
+      class="btn btn-tertiary">
+      {{ actionInProgress ? 'Processando...' : 'Processar Pagamento' }}
+    </button>
+
+    <button
+      (click)="goToDashboard()"
+      [disabled]="actionInProgress"
+      class="btn btn-outline">
+      Voltar ao Dashboard
+    </button>
+  </div>
+</div>
+
+<!-- Renew Form -->
+<div *ngIf="!loading && showRenewForm" class="form-card">
+  <h3>Renovar Assinatura</h3>
+  <form [formGroup]="renewForm" (ngSubmit)="onRenewSubmit()">
+    <div class="form-group">
+      <label for="billingCycle">Ciclo de Cobrança:</label>
+      <select
+        id="billingCycle"
+        formControlName="billingCycle"
+        class="form-control">
+        <option value="MONTHLY">Mensal</option>
+        <option value="YEARLY">Anual</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="planName">Plano (opcional):</label>
+      <input
+        id="planName"
+        type="text"
+        formControlName="planName"
+        class="form-control"
+        placeholder="Deixe em branco para manter o plano atual">
+    </div>
+
+    <div class="form-actions">
+      <button
+        type="submit"
+        [disabled]="renewForm.invalid || actionInProgress"
+        class="btn btn-primary">
+        {{ actionInProgress ? 'Processando...' : 'Confirmar Renovação' }}
+      </button>
+      <button
+        type="button"
+        (click)="toggleRenewForm()"
+        class="btn btn-outline">
+        Cancelar
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Upgrade Form -->
+<div *ngIf="!loading && showUpgradeForm" class="form-card">
+  <h3>Fazer Upgrade do Plano</h3>
+  <form [formGroup]="upgradeForm" (ngSubmit)="onUpgradeSubmit()">
+    <div class="form-group">
+      <label for="targetPlanName">Novo Plano:</label>
+      <input
+        id="targetPlanName"
+        type="text"
+        formControlName="targetPlanName"
+        class="form-control"
+        placeholder="Digite o nome do novo plano"
+        required>
+    </div>
+
+    <div class="form-actions">
+      <button
+        type="submit"
+        [disabled]="upgradeForm.invalid || actionInProgress"
+        class="btn btn-primary">
+        {{ actionInProgress ? 'Processando...' : 'Confirmar Upgrade' }}
+      </button>
+      <button
+        type="button"
+        (click)="toggleUpgradeForm()"
+        class="btn btn-outline">
+        Cancelar
+      </button>
+    </div>
+  </form>
+</div>

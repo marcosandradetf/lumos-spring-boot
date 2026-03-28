@@ -1,279 +1,265 @@
-<div class="flex" #top>
-  <div class="w-full h-full">
+<p-toast></p-toast>
+<div class="w-full px-4 py-6">
 
-    @if (loading) {
-      <app-loading></app-loading>
-    } @else {
+  <!-- HEADER -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+    <div>
+      <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">
+        Usuários
+      </h2>
+      <p class="text-sm text-gray-500 dark:text-gray-400">
+        Gerencie os usuários do sistema
+      </p>
+    </div>
 
-      <form #usersForm="ngForm" (ngSubmit)="submitUsers(usersForm)"
-            class="w-full pl-2">
+    <div class="flex gap-2">
+      <button class="btn btn-primary btn-sm md:btn-md" (click)="newUser()" type="button">
+        <i class="pi pi-user-plus"></i>
+        <span class="hidden sm:inline">Novo</span>
+      </button>
 
-        <div class="flex items-center gap-3 pb-2">
-          <!-- Botão adicionar -->
-          <button
-            class="btn btn-primary btn-circle btn-sm tooltip tooltip-right"
-            (click)="newUser()"
-            type="button"
-            data-tip="Adicionar usuário">
-            <i class="pi pi-user-plus"></i>
-          </button>
+      <button class="btn btn-error btn-sm md:btn-md" (click)="removeUser()" type="button">
+        <i class="pi pi-user-minus"></i>
+        <span class="hidden sm:inline">Remover</span>
+      </button>
+    </div>
+  </div>
 
-          <!-- Botão remover -->
-          <button
-            class="btn btn-error btn-circle btn-sm tooltip tooltip-right"
-            (click)="removeUser()"
-            type="button"
-            data-tip="Remover usuário">
-            <i class="pi pi-user-minus"></i>
-          </button>
-        </div>
+  @if (loading) {
+    <app-loading></app-loading>
+  } @else {
 
+    <form #usersForm="ngForm" (ngSubmit)="submitUsers(usersForm)">
+
+      <!-- DESKTOP TABLE -->
+      <div class="hidden md:block bg-white dark:bg-neutral-900 border rounded-xl p-4 overflow-x-auto">
 
         <app-table [large]="false">
+
           <tr header>
             <th></th>
-            <th hidden>Código</th>
             <th>Usuário</th>
             <th>Nome</th>
-            <th>Sobrenome</th>
             <th>Email</th>
             <th>CPF</th>
-            <th>Data de Nascimento</th>
+            <th>Nascimento</th>
             <th>Funções</th>
             <th>Status</th>
-            <th>Ação</th>
+            <th>Ações</th>
           </tr>
 
-          <tr *ngFor="let user of users; let i = index" class="odd:bg-neutral-100 dark:odd:bg-neutral" body>
+          <tr body *ngFor="let user of users; let i = index"
+              class="hover:bg-gray-50 dark:hover:bg-neutral-800">
 
-            <!-- Ação principal (editar/cancelar) -->
-            <td [ngClass]="user.sel ? 'min-w-24' : ''">
-              <button
-                class="btn btn-info btn-circle btn-sm tooltip tooltip-right"
-                (click)="user.userId !== '' ? user.sel = !user.sel : removeUser()"
-                type="button"
-                [attr.data-tip]="user.sel ? 'Cancelar' : 'Editar Usuário'">
-                <i class="pi" [ngClass]="user.sel ? 'pi-times' : 'pi-user-edit'"></i>
-              </button>
-              <button
-                *ngIf="user.sel"
-                class="btn btn-info btn-circle btn-sm tooltip tooltip-right ml-2"
-                type="submit"
-                [attr.data-tip]="'Salvar'">
-                <i class="pi pi-save"></i>
-              </button>
+            <!-- EDIT -->
+            <td>
+              <div class="flex gap-2">
+                <button class="btn btn-ghost btn-sm"
+                        (click)="user.userId !== '' ? user.sel = !user.sel : removeUser()"
+                        type="button">
+                  <i class="pi" [ngClass]="user.sel ? 'pi-times' : 'pi-pencil'"></i>
+                </button>
+
+                <button *ngIf="user.sel"
+                        class="btn btn-primary btn-sm"
+                        type="submit">
+                  <i class="pi pi-save"></i>
+                </button>
+              </div>
             </td>
 
-            <!-- ID -->
-            <td hidden>{{ user.userId }}</td>
-
-            <!-- Username -->
+            <!-- USERNAME -->
             <td>
               <ng-container *ngIf="user.sel; else showUsername">
-                <input required
-                       [(ngModel)]="user.username"
-                       name="username{{i}}"
-                       type="text"
-                       placeholder="Insira o username"
-                       class="input input-bordered input-sm"
-                       #username="ngModel"
-                       [pattern]="usernamePattern">
-                <div *ngIf="username.invalid && username.touched">
-                  <small *ngIf="username.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
-                  <small *ngIf="username.errors?.['pattern']" class="text-red-600">Username inválido.</small>
-                </div>
+                <input [(ngModel)]="user.username" name="username{{i}}"
+                       class="input input-bordered input-sm w-full"/>
               </ng-container>
               <ng-template #showUsername>{{ user.username }}</ng-template>
             </td>
 
-            <!-- Nome -->
+            <!-- NOME -->
             <td>
               <ng-container *ngIf="user.sel; else showName">
-                <input required
-                       [(ngModel)]="user.name"
-                       name="name{{i}}"
-                       type="text"
-                       placeholder="Insira o nome"
-                       class="input input-bordered input-sm"
-                       #name="ngModel">
-                <div *ngIf="name.invalid && name.touched">
-                  <small *ngIf="name.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
-                </div>
+                <input [(ngModel)]="user.name" name="name{{i}}"
+                       class="input input-bordered input-sm w-full"/>
               </ng-container>
-              <ng-template #showName>{{ user.name }}</ng-template>
+              <ng-template #showName>{{ user.name }} {{ user.lastname }}</ng-template>
             </td>
 
-            <!-- Sobrenome -->
-            <td>
-              <ng-container *ngIf="user.sel; else showLastname">
-                <input required
-                       [(ngModel)]="user.lastname"
-                       name="lastname{{i}}"
-                       type="text"
-                       placeholder="Insira o sobrenome"
-                       class="input input-bordered input-sm"
-                       #lastname="ngModel">
-                <div *ngIf="lastname.invalid && lastname.touched">
-                  <small *ngIf="lastname.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
-                </div>
-              </ng-container>
-              <ng-template #showLastname>{{ user.lastname }}</ng-template>
-            </td>
-
-            <!-- Email -->
+            <!-- EMAIL -->
             <td>
               <ng-container *ngIf="user.sel; else showEmail">
-                <input required
-                       [(ngModel)]="user.email"
-                       name="email{{i}}"
-                       type="text"
-                       placeholder="nome@exemplo.com"
-                       class="input input-bordered input-sm"
-                       #email="ngModel"
-                       [pattern]="emailPattern">
-                <div *ngIf="email.invalid && email.touched">
-                  <small *ngIf="email.errors?.['required']" class="text-red-600">Email obrigatório.</small>
-                  <small *ngIf="email.errors?.['pattern']" class="text-red-600">Email inválido.</small>
-                </div>
+                <input [(ngModel)]="user.email" name="email{{i}}"
+                       class="input input-bordered input-sm w-full"/>
               </ng-container>
               <ng-template #showEmail>{{ user.email }}</ng-template>
             </td>
 
-            <!-- CPF -->
+            <!-- CPF (SEU PADRÃO ORIGINAL) -->
             <td>
               <ng-container *ngIf="(!user.sel || !user.show) && user.userId !== ''; else editCpf">
-                <div class="flex items-center select-none justify-between min-w-28">
-                  <p *ngIf="!user.show" class="py-2 bg-transparent select-none">{{ user.cpf }}</p>
-                  <span class="pi pi-user-edit cursor-pointer"
-                        title="Editar CPF"
-                        *ngIf="user.sel"
-                        (click)="user.cpf = ''; user.show = !user.show"></span>
+                <div class="flex justify-between items-center">
+                  <p>{{ user.cpf }}</p>
+                  <span *ngIf="user.sel"
+                        class="pi pi-pencil cursor-pointer"
+                        (click)="user.cpf=''; user.show=true"></span>
                 </div>
               </ng-container>
+
               <ng-template #editCpf>
-                <input required
-                       [(ngModel)]="user.cpf"
+                <input [(ngModel)]="user.cpf"
                        name="cpf{{i}}"
-                       type="text"
-                       placeholder="999.999.999-99"
-                       maxlength="14"
-                       class="input input-bordered input-sm"
                        mask="000.000.000-00"
-                       [dropSpecialCharacters]="true"
-                       #cpf="ngModel"
-                       [pattern]="cpfPattern">
-                <div *ngIf="cpf.invalid && cpf.touched">
-                  <small *ngIf="cpf.errors?.['required']" class="text-red-600">CPF obrigatório.</small>
-                  <small *ngIf="cpf.errors?.['pattern']" class="text-red-600">CPF inválido.</small>
-                </div>
+                       class="input input-bordered input-sm w-full"/>
               </ng-template>
             </td>
 
-            <!-- Data de nascimento -->
+            <!-- DATA (SEU PADRÃO ORIGINAL) -->
             <td>
               <ng-container *ngIf="user.sel; else showDate">
-                <div class="flex items-center space-x-2">
-                  <input required [(ngModel)]="user.day" name="day{{i}}" type="number" placeholder="Dia" min="1"
-                         [max]="getMaxDay(user.month, user.year)"
-                         class="input input-bordered input-sm max-w-12"/>
-                  <select [(ngModel)]="user.month" name="month{{i}}" class="select select-bordered select-sm">
+                <div class="flex gap-1">
+                  <input [(ngModel)]="user.day" name="day{{i}}" class="input input-sm w-12"/>
+                  <select [(ngModel)]="user.month" name="month{{i}}" class="select select-sm">
                     <option *ngFor="let m of months" [value]="m.number">{{ m.name }}</option>
                   </select>
-                  <input required [(ngModel)]="user.year" name="year{{i}}" type="text" minlength="4" maxlength="4"
-                         placeholder="Ano" class="input input-bordered input-sm max-w-16"/>
+                  <input [(ngModel)]="user.year" name="year{{i}}" class="input input-sm w-16"/>
                 </div>
               </ng-container>
+
               <ng-template #showDate>
                 {{ user.day + " de " + getMonth(user.month.toString())?.name + " de " + user.year }}
               </ng-template>
             </td>
 
-            <!-- Funções -->
+            <!-- ROLES -->
             <td>
-              <ng-container *ngIf="user.sel; else showRoles">
-                <p-multiselect
-                  name="roles_{{user.userId}}"
-                  [options]="roles"
-                  optionLabel="roleName"
-                  optionValue="roleName"
-                  [defaultLabel]="'Selecionar funções'"
-                  [(ngModel)]="user.role"
-                  [maxSelectedLabels]="1"
-                  class="min-w-44"
-                >
-                </p-multiselect>
-              </ng-container>
-              <ng-template #showRoles>
-                <div class="dropdown dropdown-hover">
-                  <div tabindex="0" role="button" class="flex items-center">Visualizar Funções<span
-                    class="material-icons">arrow_drop_down_icon</span></div>
-                  <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded z-[1] w-52 p-2 shadow">
-                    <li *ngFor="let role of user.role" class="p-2">{{ role }}</li>
-                  </ul>
-                </div>
-              </ng-template>
+              <p-multiselect
+                *ngIf="user.sel"
+                [options]="roles"
+                [(ngModel)]="user.role"
+                optionLabel="label"
+                appendTo="body"
+                [maxSelectedLabels]="2"
+                name="roleName{{i}}">
+
+                <ng-template let-role pTemplate="item">
+                  <div class="flex flex-col gap-1 w-full">
+
+                    <div class="flex items-center justify-between">
+                      <span class="font-medium">
+                        {{ role.label }}
+                      </span>
+
+                      <span
+                        class="text-xs px-2 py-0.5 rounded"
+                        [ngClass]="{
+                            'bg-red-100 text-red-700': role.roleName === 'ADMIN',
+                            'bg-orange-100 text-orange-700': ['ANALISTA', 'RESPONSAVEL_TECNICO'].includes(role.roleName),
+                            'bg-blue-100 text-blue-700': ['ESTOQUISTA_CHEFE', 'ESTOQUISTA'].includes(role.roleName),
+                            'bg-gray-100 text-gray-700': !['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO', 'ESTOQUISTA_CHEFE', 'ESTOQUISTA'].includes(role.roleName)
+                          }">
+
+                          {{ getBadge(role.roleName) }}
+                        </span>
+                    </div>
+
+                    <small class="text-gray-500 text-xs">
+                      {{ role.description }}
+                    </small>
+
+                  </div>
+                </ng-template>
+
+              </p-multiselect>
+
+              <div *ngIf="!user.sel" class="flex flex-wrap gap-1">
+                <span *ngFor="let role of user.role"
+                      class="px-2 py-1 text-xs rounded bg-blue-100 dark:bg-blue-900">
+                  {{ role.label }}
+                </span>
+              </div>
             </td>
 
-            <!-- Status -->
+            <!-- STATUS -->
             <td>
-              <input type="checkbox" [(ngModel)]="user.status" name="status{{i}}" class="toggle toggle-primary"
+              <input type="checkbox"
+                     [(ngModel)]="user.status"
+                     name="status{{i}}"
+                     class="toggle toggle-primary"
                      [disabled]="!user.sel"/>
             </td>
 
-            <!-- Reset senha -->
-            <td>
-              <app-button title="Resetar Senha"
-                          classButton="btn-sm"
-                          (click)="confirmResetPassword(user.userId, user.email)">
-              </app-button>
+            <!-- RESET -->
+            <td class="space-x-2">
+              <button
+                type="button"
+                class="btn btn-outline btn-sm"
+                      (click)="confirmResetPassword(user.userId, user.email)">
+                Resetar
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline btn-sm"
+                (click)="confirmResetPassword(user.userId, user.email)">
+                Copiar
+              </button>
             </td>
 
           </tr>
+
         </app-table>
+      </div>
 
-      </form>
+      <!-- MOBILE (CARDS) -->
+      <div class="md:hidden flex flex-col gap-4">
 
-    }
-  </div>
+        <div *ngFor="let user of users; let i = index"
+             class="bg-white dark:bg-neutral-900 rounded-xl p-4 shadow border">
 
-  <app-alert-message [message]="serverMessage" [timeout]=5000 [alertType]="alertType"></app-alert-message>
-  <!--    modal confirmation-->
-  <app-modal [modalOpen]="openConfirmationModal" [confirmation]="true" (modalClose)="openConfirmationModal = false">
-    <div>
-      @if (currentPassword === null) {
-        <h3 class="text-center mb-7">Confirma o reset de senha?</h3>
-        <div class="flex justify-around">
-          <app-button
-            (click)="openConfirmationModal = false; loading = false"
-            title="Cancelar"
-            classButton="btn bg-red-500 hover:bg-red-700"
-            textColor="text-black">
-          </app-button>
+          <div class="flex justify-between items-center mb-2">
+            <p class="font-semibold">{{ user.username }}</p>
 
-          <app-button
-            (click)="resetPassword()"
-            title="Confirmar"
-            [loading]="loading"
-            classButton="btn btn-primary w-32 text-white">
-          </app-button>
-        </div>
-      } @else {
-        <h3 class="text-center mb-4">Senha Gerada! Copie a nova senha do usuário</h3>
+            <button class="btn btn-ghost btn-xs"
+                    (click)="user.sel = !user.sel">
+              <i class="pi" [ngClass]="user.sel ? 'pi-times' : 'pi-pencil'"></i>
+            </button>
+          </div>
 
-        <div class="flex items-center justify-center gap-2 mb-4">
-          <p
-            class="border rounded px-3 py-2 w-56 text-center font-mono bg-gray-100 dark:bg-neutral-800 select-none">
-            {{ currentPassword }}
+          <p class="text-sm text-gray-500">
+            {{ user.name }} {{ user.lastname }}
           </p>
-          <button (click)="copyPassword()"
-                  class="btn bg-blue-500 hover:bg-blue-700 text-white px-3 py-2 rounded">
-            <i class="fa-solid fa-copy"></i> Copiar
-          </button>
-        </div>
-      }
-    </div>
-  </app-modal>
 
-  <p-toast></p-toast>
+          <p class="text-sm">{{ user.email }}</p>
+
+          <p class="text-sm">CPF: {{ user.cpf }}</p>
+
+          <p class="text-sm">
+            {{ user.day }}/{{ user.month }}/{{ user.year }}
+          </p>
+
+          <div class="flex flex-wrap gap-1 mt-2">
+            <span *ngFor="let role of user.role"
+                  class="px-2 py-1 text-xs rounded bg-blue-100 dark:bg-blue-900">
+              {{ role }}
+            </span>
+          </div>
+
+          <div class="flex justify-between items-center mt-3">
+            <input type="checkbox"
+                   [(ngModel)]="user.status"
+                   class="toggle toggle-primary"/>
+
+            <button class="btn btn-xs btn-outline"
+                    (click)="confirmResetPassword(user.userId, user.email)">
+              Resetar
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+    </form>
+  }
 
 </div>

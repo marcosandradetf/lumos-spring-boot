@@ -1,3 +1,5 @@
+import {Router} from '@angular/router';
+
 export class Utils {
     static normalizeString(value: string): string {
         return value
@@ -84,6 +86,28 @@ export class Utils {
             maximumFractionDigits: 2,
         }).format(parseFloat(value) / 100); // Exibe o valor formatado no campo de input
 
+    }
+
+    static handleHttpError(error: any, router: Router) {
+        if (error.status === 0) {
+            // 🔥 erro de rede / backend offline
+            console.error('Servidor inacessível ou sem conexão');
+
+            void router.navigate(['/status/offline']);
+            return;
+        }
+
+        if (error.status === 403) {
+            // 🔥 erro interno
+            void router.navigate(['/status/403']);
+            return;
+        }
+
+        if (error.status >= 500) {
+            // 🔥 erro interno
+            void router.navigate(['/status/500']);
+            return;
+        }
     }
 
 

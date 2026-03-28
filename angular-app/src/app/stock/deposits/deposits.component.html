@@ -1,242 +1,257 @@
-<div class="flex" #top>
-  <div class="mb-5 w-full">
+<div class="w-full px-4 py-6">
 
-    <!--    form    -->
-    <div
-      class="collapse">
-      <input
-        #collapseDiv
-        type="checkbox" class="peer" (click)="setOpen()"/>
-      <div
-        class="collapse-title">
-        @if (!formOpen) {
-          <div><p>Clique para fazer um novo Cadastro</p></div>
-        } @else {
-          <div class="flex justify-end"><p class="material-icons">close</p></div>
-        }
-      </div>
-      <div
-        class="collapse-content peer-checked: peer-checked:">
-        <form #myForm="ngForm" (ngSubmit)="onSubmit(myForm)"
-              class=" h-auto flex flex-col">
-          <h4 class="border-b poppins-regular select-none ">{{
-              state === State.create ? "Cadastrar Novo Almoxarifado" : "Atualizar Almoxarifado"
-            }}</h4>
-
-          <div class="flex space-x-4 flex-wrap">
-
-            <label class="form-control w-full max-w-xs ml-4">
-              <div class="label">
-                <span class="label-text">Descrição</span>
-              </div>
-              <input type="text"
-                     name="depositName"
-                     [(ngModel)]="deposit.depositName"
-                     required
-                     minlength="3"
-                     #descriptionModel="ngModel"
-                     placeholder="Insira o Nome" class="input input-bordered w-full max-w-xs"/>
-              <div *ngIf="descriptionModel.invalid && formSubmitted">
-                <small *ngIf="descriptionModel.errors?.['required']" class="text-red-600">Preenchimento
-                  obrigatório.</small>
-                <small *ngIf="descriptionModel.errors?.['minlength']" class="text-orange-600">
-                  Nome do almoxarifado requer no mínimo 3 caracteres.
-                </small>
-              </div>
-            </label>
-
-            <label class="form-control w-full max-w-xs">
-              <div class="label">
-                <span class="label-text">Estado</span>
-              </div>
-              <select
-                [(ngModel)]="deposit.depositState"
-                (change)="getCities($any($event.target).value)"
-                class="select select-bordered"
-                name="depositState"
-                #ufModel="ngModel"
-                required >
-                <option disabled>Selecione o estado do almoxarifado</option>
-                @for (uf of ufs; track uf.nome) {
-                  <option [value]="uf.sigla">{{uf.nome}}</option>
-                }
-              </select>
-              <div *ngIf="ufModel.invalid && formSubmitted">
-                <small *ngIf="ufModel.errors?.['required']" class="text-red-600">Preenchimento
-                  obrigatório.</small>
-              </div>
-            </label>
-
-            <div
-              [ngClass]="{'tooltip': !deposit.depositState, 'tooltip-bottom': !deposit.depositState}"
-              [attr.data-tip]="deposit.depositState ? '' : 'Selecione o Estado Primeiro'"
-              class="tooltip tooltip-bottom form-control w-full max-w-xs" >
-              <label class="form-control w-full max-w-xs">
-                <div class="label">
-                  <span class="label-text">Cidade</span>
-                </div>
-                <select
-                  (change)="updateRegion($any($event.target).value)"
-                  [(ngModel)]="deposit.depositCity"
-                  class="select select-bordered"
-                  name="depositCity"
-                  [disabled]="!deposit.depositState"
-                  #cityModel="ngModel"
-                  required >
-                  <option disabled>Selecione a cidade do contract</option>
-                  @for (city of cities; track city.nome) {
-                    <option [value]="city.nome">{{city.nome}}</option>
-                  }
-                </select>
-                <div *ngIf="cityModel.invalid && formSubmitted">
-                  <small *ngIf="cityModel.errors?.['required']" class="text-red-600">Preenchimento
-                    obrigatório.</small>
-                </div>
-              </label>
-            </div>
-
-            <div
-              [ngClass]="{'tooltip': !deposit.depositCity, 'tooltip-bottom': !deposit.depositCity}"
-              [attr.data-tip]="deposit.depositCity ? '' : 'Selecione a Cidade'"
-              class="tooltip tooltip-bottom form-control w-full max-w-xs" >
-              <label class="form-control w-full max-w-xs">
-                <div class="label">
-                  <span class="label-text">Região</span>
-                </div>
-                <input
-                  [(ngModel)]="deposit.depositRegion"
-                  disabled
-                  type="text"
-                  class="input input-disabled"
-                  name="depositRegion"
-                  required
-                  #regionModel="ngModel"
-                />
-                <div *ngIf="regionModel.invalid && formSubmitted">
-                  <small *ngIf="regionModel.errors?.['required']" class="text-red-600">Preenchimento
-                    obrigatório.</small>
-                </div>
-              </label>
-            </div>
-
-            <label class="form-control w-full max-w-xs">
-              <div class="label">
-                <span class="label-text">Endereço</span>
-              </div>
-              <input type="text"
-                     name="depositAddress"
-                     [(ngModel)]="deposit.depositAddress"
-                     required
-                     minlength="5"
-                     #addressModel="ngModel"
-                     placeholder="Insira o Nome" class="input input-bordered w-full max-w-xs"/>
-              <div *ngIf="addressModel.invalid && formSubmitted">
-                <small *ngIf="addressModel.errors?.['required']" class="text-red-600">Preenchimento
-                  obrigatório.</small>
-                <small *ngIf="addressModel.errors?.['minlength']" class="text-red-600">
-                  Endereço requer no mínimo 5 caracteres.
-                </small>
-              </div>
-            </label>
-
-            <label class="form-control w-full max-w-xs">
-              <div class="label">
-                <span class="label-text">Bairro</span>
-              </div>
-              <input type="text"
-                     name="depositDistrict"
-                     [(ngModel)]="deposit.depositDistrict"
-                     required
-                     minlength="3"
-                     #districtModel="ngModel"
-                     placeholder="Insira o Nome" class="input input-bordered w-full max-w-xs"/>
-              <div *ngIf="districtModel.invalid && formSubmitted">
-                <small *ngIf="districtModel.errors?.['required']" class="text-red-600">Preenchimento
-                  obrigatório.</small>
-                <small *ngIf="districtModel.errors?.['minlength']" class="text-red-600">
-                  Bairro requer no mínimo 3 caracteres.
-                </small>
-              </div>
-            </label>
-
-            <label class="form-control w-full max-w-xs">
-              <div class="label">
-                <span class="label-text">Telefone</span>
-              </div>
-              <input type="text"
-                     name="depositPhone"
-                     [ngModel]="formatPhone(deposit.depositPhone)"
-                     (ngModelChange)="updatePhone($event)"
-                     minlength="15"
-                     maxlength="15"
-                     #phoneModel="ngModel"
-                     (input)="formatTel($event)"
-                     placeholder="(XX) XXXXX-XXXX"
-                     class="input input-bordered w-full max-w-xs"/>
-              <div *ngIf="phoneModel.invalid && formSubmitted">
-                <small *ngIf="phoneModel.errors?.['minlength']" class="text-red-600">
-                  Formato do telefone deve ser (XX) XXXXX-XXXX.
-                </small>
-              </div>
-            </label>
-
-            <div class="w-full flex border-t mt-10 p-6">
-              <p>{{ message }}</p>
-              <button class="btn btn-active btn-primary ml-auto dark:btn-accent" type="submit">{{
-                  state === State.create ? "Gravar" : "Atualizar"
-                }}</button>
-            </div>
-
-          </div>
-        </form>
-      </div>
+  <!-- HEADER -->
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">
+        Almoxarifados
+      </h2>
+      <p class="text-sm text-gray-500 dark:text-gray-400">
+        Gerencie e cadastre novos almoxarifados
+      </p>
     </div>
 
-    <!--    table     -->
-    <div class="mt-3 p-1">
-      <app-table>
-        <tr header>
-          <th>Código</th>
-          <th>Descrição</th>
-          <th>Região</th>
-          <th>Endereço</th>
-          <th>Bairro</th>
-          <th>Cidade</th>
-          <th>Estado</th>
-          <th>Telefone</th>
-          <th colspan="2" ></th>
-        </tr>
+    <button
+      class="btn btn-primary flex items-center gap-2"
+      (click)="setOpen()">
+      <i class="pi pi-plus"></i>
+      Novo almoxarifado
+    </button>
+  </div>
 
-        @for (deposit of deposits; track deposit.idDeposit) {
-          <tr class="odd:bg-neutral-100 dark:odd:bg-neutral" body>
-            <td>{{ deposit.idDeposit }}</td>
-            <td>{{ deposit.depositName }}</td>
-            <td>{{ deposit.depositRegion }}</td>
-            <td>{{ deposit.depositAddress }}</td>
-            <td>{{ deposit.depositDistrict }}</td>
-            <td>{{ deposit.depositCity }}</td>
-            <td>{{ deposit.depositState }}</td>
-            <td>{{ formatPhoneView(deposit.depositPhone) }}</td>
-            <td class="material-icons cursor-pointer" (click)="updateDeposit(deposit)">edit</td>
-            <td class="material-icons cursor-pointer text-red-600" (click)="depositId = deposit.idDeposit; showConfirmation = true;">delete</td>
-          </tr>
-        }
+  <app-loading *ngIf="loading"></app-loading>
 
-      </app-table>
+  <!-- FORM -->
+  <div *ngIf="formOpen"
+       class="bg-white dark:bg-neutral-900
+              border border-neutral-200 dark:border-neutral-800
+              rounded-xl p-6 shadow-sm mb-6">
+
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-semibold text-gray-800 dark:text-white">
+        {{ state === State.create ? 'Novo almoxarifado' : 'Editar almoxarifado' }}
+      </h3>
+
+      <button class="text-gray-500 hover:text-gray-800 dark:hover:text-white"
+              (click)="setOpen()">
+        <i class="pi pi-times text-lg"></i>
+      </button>
     </div>
 
-    <app-modal [modalOpen]="showConfirmation" [confirmation]="true" (modalClose)="showConfirmation = false">
-      <div>
-        <h3 class="text-center mb-7">Confirma a exclusão?</h3>
-        <div class="flex justify-around">
-          <app-button (click)="showConfirmation = false" title="Cancelar" classButton="btn bg-red-500 hover:bg-red-700"
-                      textColor="text-black"></app-button>
-          <app-button (click)="deleteDeposit()" title="Confirmar"></app-button>
+    <form #myForm="ngForm" (ngSubmit)="onSubmit(myForm)" class="flex flex-col gap-4">
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        <!-- DESCRIÇÃO -->
+        <div>
+          <label class="label-text">Descrição</label>
+          <input
+            type="text"
+            name="depositName"
+            [(ngModel)]="deposit.depositName"
+            required
+            minlength="3"
+            #descriptionModel="ngModel"
+            placeholder="Ex: Almoxarifado Central"
+            class="input input-bordered w-full"/>
+
+          <small *ngIf="descriptionModel.invalid && formSubmitted" class="text-red-600">
+            Nome deve ter no mínimo 3 caracteres
+          </small>
         </div>
-      </div>
-    </app-modal>
 
-    <app-alert-message [message]="serverMessage" [timeout]=5000 [alertType]="alertType"></app-alert-message>
+        <!-- ESTADO -->
+        <div>
+          <label class="label-text">Estado</label>
+          <select
+            [(ngModel)]="deposit.depositState"
+            (change)="getCities($any($event.target).value)"
+            name="depositState"
+            required
+            #ufModel="ngModel"
+            class="select select-bordered w-full">
+
+            <option disabled selected>Selecione</option>
+            @for (uf of ufs; track uf.nome) {
+              <option [value]="uf.sigla">{{uf.nome}}</option>
+            }
+          </select>
+
+          <small *ngIf="ufModel.invalid && formSubmitted" class="text-red-600">
+            Campo obrigatório
+          </small>
+        </div>
+
+        <!-- CIDADE -->
+        <div>
+          <label class="label-text">Cidade</label>
+          <select
+            [(ngModel)]="deposit.depositCity"
+            (change)="updateRegion($any($event.target).value)"
+            name="depositCity"
+            [disabled]="!deposit.depositState"
+            required
+            #cityModel="ngModel"
+            class="select select-bordered w-full">
+
+            <option disabled selected>Selecione</option>
+            @for (city of cities; track city.nome) {
+              <option [value]="city.nome">{{city.nome}}</option>
+            }
+          </select>
+
+          <small *ngIf="cityModel.invalid && formSubmitted" class="text-red-600">
+            Campo obrigatório
+          </small>
+        </div>
+
+        <!-- REGIÃO -->
+        <div>
+          <label class="label-text">Região</label>
+          <input
+            [(ngModel)]="deposit.depositRegion"
+            disabled
+            name="depositRegion"
+            class="input input-disabled w-full"/>
+        </div>
+
+        <!-- ENDEREÇO -->
+        <div>
+          <label class="label-text">Endereço</label>
+          <input
+            type="text"
+            name="depositAddress"
+            [(ngModel)]="deposit.depositAddress"
+            required
+            minlength="5"
+            #addressModel="ngModel"
+            placeholder="Rua, número..."
+            class="input input-bordered w-full"/>
+
+          <small *ngIf="addressModel.invalid && formSubmitted" class="text-red-600">
+            Endereço inválido
+          </small>
+        </div>
+
+        <!-- BAIRRO -->
+        <div>
+          <label class="label-text">Bairro</label>
+          <input
+            type="text"
+            name="depositDistrict"
+            [(ngModel)]="deposit.depositDistrict"
+            required
+            minlength="3"
+            #districtModel="ngModel"
+            placeholder="Ex: Centro"
+            class="input input-bordered w-full"/>
+
+          <small *ngIf="districtModel.invalid && formSubmitted" class="text-red-600">
+            Bairro inválido
+          </small>
+        </div>
+
+        <!-- TELEFONE -->
+        <div>
+          <label class="label-text">Telefone</label>
+          <input
+            type="text"
+            name="depositPhone"
+            [ngModel]="formatPhone(deposit.depositPhone)"
+            (ngModelChange)="updatePhone($event)"
+            minlength="15"
+            maxlength="15"
+            (input)="formatTel($event)"
+            placeholder="(XX) XXXXX-XXXX"
+            class="input input-bordered w-full"/>
+        </div>
+
+      </div>
+
+      <!-- FOOTER -->
+      <div class="flex justify-between items-center border-t pt-4 mt-4">
+        <p class="text-sm text-gray-500">{{ message }}</p>
+
+        <button
+          type="submit"
+          class="btn btn-primary">
+          {{ state === State.create ? 'Salvar almoxarifado' : 'Atualizar almoxarifado' }}
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- TABELA -->
+  <div class="bg-white dark:bg-neutral-900
+              border border-neutral-200 dark:border-neutral-800
+              rounded-xl shadow-sm p-4">
+
+    <app-table>
+      <tr header>
+        <th>Código</th>
+        <th>Descrição</th>
+        <th>Cidade</th>
+        <th>Estado</th>
+        <th>Telefone</th>
+        <th class="text-center">Ações</th>
+      </tr>
+
+      @for (deposit of deposits; track deposit.idDeposit) {
+        <tr class="hover:bg-gray-50 dark:hover:bg-neutral-800 transition">
+          <td>{{ deposit.idDeposit }}</td>
+          <td class="font-medium">{{ deposit.depositName }}</td>
+          <td>{{ deposit.depositCity }}</td>
+          <td>{{ deposit.depositState }}</td>
+          <td>{{ formatPhoneView(deposit.depositPhone) }}</td>
+
+          <td class="flex gap-3 justify-center">
+            <button
+              class="text-blue-600 hover:text-blue-800"
+              (click)="updateDeposit(deposit)">
+              <i class="pi pi-pencil"></i>
+            </button>
+
+            <button
+              class="text-red-600 hover:text-red-800"
+              (click)="depositId = deposit.idDeposit; showConfirmation = true;">
+              <i class="pi pi-trash"></i>
+            </button>
+          </td>
+        </tr>
+      }
+    </app-table>
 
   </div>
+
+  <!-- MODAL -->
+  <app-modal [modalOpen]="showConfirmation" [confirmation]="true"
+             (modalClose)="showConfirmation = false">
+
+    <div class="text-center">
+      <h3 class="mb-6 text-lg font-semibold">Confirmar exclusão?</h3>
+
+      <div class="flex justify-center gap-4">
+        <app-button
+          (click)="showConfirmation = false"
+          title="Cancelar"
+          classButton="btn btn-outline">
+        </app-button>
+
+        <app-button
+          (click)="deleteDeposit()"
+          title="Excluir"
+          classButton="btn btn-error">
+        </app-button>
+      </div>
+    </div>
+
+  </app-modal>
+
+  <app-alert-message
+    [message]="serverMessage"
+    [timeout]="5000"
+    [alertType]="alertType">
+  </app-alert-message>
+
 </div>

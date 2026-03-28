@@ -50,6 +50,15 @@
 
         </p-table>
 
+      <div *ngIf="stockMovement.length === 0"
+           class="flex w-full item-center justify-center xl:mt-32">
+        <div class="flex w-96 flex-col border shadow rounded-xl p-4 ">
+          <i class="pi pi-info-circle text-center text-4xl text-blue-500 mb-4"></i>
+          <h2 class="font-bold text-xl text-center">Sem movimentações pendentes</h2>
+          <p class="text-center">No momento não existe nenhuma movimentação pendente de aprovação</p>
+        </div>
+      </div>
+
         <div *ngIf="isMobile" class="flex flex-col items-center w-full px-4">
 
             <div

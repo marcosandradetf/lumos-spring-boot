@@ -207,7 +207,7 @@ public class TokenService {
             ));
 
             // Busca direto as roles do usuário sem precisar buscar UserRole e Role separadamente
-            var rolesNames = roleRepository.findRolesByUserId(user.get().getUserId());
+            var rolesNames = roleRepository.findDescriptionRolesByUserId(user.get().getUserId());
 
             // Verificar se o usuário tem acesso
             boolean hasAccess = rolesNames.stream().anyMatch(allowedRoles::contains);
@@ -234,6 +234,43 @@ public class TokenService {
         }
     }
 
+    /**
+     * Emite access + refresh após cadastro (ex.: trial self-service), sem repetir validação de senha.
+     * Mesmo comportamento de cookies/body que {@link #newLogin(LoginRequest, HttpServletResponse, boolean)} após autenticar.
+     */
+    public ResponseEntity<?> issueTokensForNewUser(UUID userId, HttpServletResponse response, boolean isMobile) {
+        var user = userRepository.findByUserId(userId).orElseThrow(() ->
+                new IllegalStateException("Usuário não encontrado para emissão de token"));
+        if (!user.getStatus()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("O Usuário informado não possui permissão de acesso."));
+        }
+        if (isMobile) {
+            var allowedRoles = new HashSet<>(Set.of(
+                    Role.Values.MOTORISTA.name(),
+                    Role.Values.ELETRICISTA.name(),
+                    Role.Values.ANALISTA.name(),
+                    Role.Values.ADMIN.name(),
+                    Role.Values.RESPONSAVEL_TECNICO.name()
+            ));
+            var rolesNames = roleRepository.findDescriptionRolesByUserId(user.getUserId());
+            boolean hasAccess = rolesNames.stream().anyMatch(allowedRoles::contains);
+            if (!hasAccess) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("Usuário sem acesso ao aplicativo"));
+            }
+        }
+        this.generateToken(user.getUserId());
+        if (!isMobile) {
+            String cookieValue = "refreshToken=" + refreshToken +
+                    "; Max-Age=" + refreshExpiresIn +
+                    "; Path=/" +
+                    "; HttpOnly; Secure; SameSite=Strict";
+            response.setHeader(HttpHeaders.SET_COOKIE, cookieValue);
+            return ResponseEntity.ok(new LoginResponse(accessToken));
+        } else {
+            return ResponseEntity.ok(new NewLoginResponseMobile(accessToken, refreshToken));
+        }
+    }
+
     public ResponseEntity<Void> logout(String refreshToken, HttpServletResponse response, boolean isMobile) {
         refreshTokenRepository.deleteByToken(refreshToken);
 
@@ -251,7 +288,7 @@ public class TokenService {
     }
 
     private String getRoles(UUID userId) {
-        var rolesNames = roleRepository.findRolesByUserId(userId);
+        var rolesNames = roleRepository.findDescriptionRolesByUserId(userId);
         return String.join(" ", rolesNames);
     }
 

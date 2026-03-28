@@ -1,4 +1,25 @@
-<div class="flex relative" #top xmlns="http://www.w3.org/1999/html">
+<app-loading *ngIf="loading"></app-loading>
+
+<app-guide-state
+  *ngIf="items.length === 0 && !loading"
+  icon="pi pi-file"
+  title="Antes de cadastrar contratos..."
+  subtitle="Você precisa preparar a base do sistema antes de continuar."
+  [steps]="[
+    [true,'Cadastrar itens contratuais'],
+    [true,'Vincular materiais aos itens'],
+    [true,'Definir estrutura do contrato']
+  ]"
+
+  [hasButtonLabel]="true"
+  buttonLabel="Cadastrar itens contratuais"
+  buttonRoute="/contratos/itens-contratuais/cadastro"
+  buttonIcon="pi pi-plus"
+></app-guide-state>
+
+<div
+  *ngIf="items.length > 0  && !loading"
+  class="flex relative" #top xmlns="http://www.w3.org/1999/html">
   <div class="w-full">
 
     <app-loading-overlay [loading]="loading"></app-loading-overlay>

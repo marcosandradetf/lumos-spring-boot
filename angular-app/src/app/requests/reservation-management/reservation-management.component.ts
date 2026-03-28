@@ -4,7 +4,7 @@ import {ExecutionService} from '../../executions/execution.service';
 import {AuthService} from '../../core/auth/auth.service';
 import {UtilsService} from '../../core/service/utils.service';
 import {ReserveRequest} from '../../executions/executions.model';
-import {NgForOf, NgIf} from '@angular/common';
+import {NgClass, NgForOf, NgIf} from '@angular/common';
 import {LoadingComponent} from '../../shared/components/loading/loading.component';
 import {Router} from '@angular/router';
 import {Menu} from 'primeng/menu';
@@ -12,6 +12,7 @@ import {MenuItem} from 'primeng/api';
 import {Toast} from 'primeng/toast';
 import {SharedState} from '../../core/service/shared-state';
 import {ButtonDirective} from 'primeng/button';
+import {Utils} from '../../core/service/utils';
 
 @Component({
     selector: 'app-reservation-management',
@@ -22,7 +23,8 @@ import {ButtonDirective} from 'primeng/button';
         NgForOf,
         Menu,
         Toast,
-        ButtonDirective
+        ButtonDirective,
+        NgClass
     ],
     templateUrl: './reservation-management.component.html',
     styleUrl: './reservation-management.component.scss'
@@ -30,6 +32,7 @@ import {ButtonDirective} from 'primeng/button';
 export class ReservationManagementComponent {
     loading = true;
     reservations: ReserveRequest[] = [];
+    isAdmin = false;
 
     constructor(private titleService: Title,
                 private authService: AuthService,
@@ -39,20 +42,19 @@ export class ReservationManagementComponent {
 
         SharedState.setCurrentPath(["Solicitações ao Estoquista", "Ordens de serviço de instalações"])
         this.titleService.setTitle("Ordens de serviço de instalações");
+        this.isAdmin = this.authService.getUser().getRoles().includes('ADMIN');
 
         this.executionService.getPendingReservesForStockist().subscribe({
             next: (response) => {
                 this.reservations = response;
             },
             error: (error) => {
-                this.loading = false;
-                this.utils.showMessage(error.error.message, 'error');
+                Utils.handleHttpError(error, this.router);
             },
             complete: () => {
                 this.loading = false;
             }
         });
-
     }
 
     getItemsQuantity(reserve: ReserveRequest) {

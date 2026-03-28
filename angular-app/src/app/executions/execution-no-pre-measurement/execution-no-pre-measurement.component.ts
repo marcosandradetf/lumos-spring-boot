@@ -26,12 +26,12 @@ import {AuthService} from '../../core/auth/auth.service';
 import {ExecutionService} from '../execution.service';
 import {HeaderComponent} from "../../shared/components/header/header.component";
 import {SharedState} from '../../core/service/shared-state';
+import {GuideStateComponent} from '../../guide-state/guide-state.component';
 
 @Component({
     selector: 'app-execution-no-pre-measurement',
     standalone: true,
     imports: [
-        Breadcrumb,
         LoadingComponent,
         NgIf,
         PrimeTemplate,
@@ -47,7 +47,7 @@ import {SharedState} from '../../core/service/shared-state';
         Tooltip,
         FloatLabel,
         Textarea,
-        HeaderComponent
+        GuideStateComponent
     ],
     templateUrl: './execution-no-pre-measurement.component.html',
     styleUrl: './execution-no-pre-measurement.component.scss'
@@ -80,6 +80,7 @@ export class ExecutionNoPreMeasurementComponent implements OnInit {
                 private contractService: ContractService) {
     }
 
+
     ngOnInit() {
         this.loading = true;
         SharedState.setCurrentPath(["Instalação", "Gerar Ordem de Serviço"]);
@@ -110,6 +111,7 @@ export class ExecutionNoPreMeasurementComponent implements OnInit {
                 this.teamService.getTeams().subscribe({
                     next: (response) => {
                         this.teams = response;
+
                     },
                     error: (error: { error: { message: string } }) => {
                         this.utils.showMessage("Erro ao carregar Equipe", 'error');
@@ -132,7 +134,6 @@ export class ExecutionNoPreMeasurementComponent implements OnInit {
                 this.utils.showMessage(error.error.message, 'error');
             }
         });
-
 
     }
 

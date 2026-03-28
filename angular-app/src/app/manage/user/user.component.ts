@@ -16,6 +16,8 @@ import {Toast} from 'primeng/toast';
 import {MultiSelect} from 'primeng/multiselect';
 import {LoadingComponent} from '../../shared/components/loading/loading.component';
 import {SharedState} from '../../core/service/shared-state';
+import {Utils} from '../../core/service/utils';
+import {PrimeTemplate} from 'primeng/api';
 
 @Component({
     selector: 'app-user',
@@ -34,7 +36,8 @@ import {SharedState} from '../../core/service/shared-state';
         Toast,
         NgClass,
         MultiSelect,
-        LoadingComponent
+        LoadingComponent,
+        PrimeTemplate
     ],
     providers: [provideNgxMask()],
     templateUrl: './user.component.html',
@@ -55,7 +58,7 @@ export class UserComponent {
         year: string;
         month: string;
         day: string;
-        role: string[];
+        role: any[];
         status: boolean;
         sel: boolean;
         show: boolean;
@@ -87,6 +90,7 @@ export class UserComponent {
         selected: boolean,
         roleId: string,
         roleName: string,
+        label: string,
     }[] = [];
 
     add: boolean = false;
@@ -131,8 +135,8 @@ export class UserComponent {
         this.titleService.setTitle("Configurações - Usuários");
         SharedState.setCurrentPath(["Configurações", "Usuários"]);
 
-        this.userService.getUsers().subscribe(
-            users => {
+        this.userService.getUsers().subscribe({
+            next: users => {
                 this.users = users;
                 this.usersBackup = JSON.parse(JSON.stringify(this.users));
                 this.rolesUser = users.flatMap(user =>
@@ -141,14 +145,20 @@ export class UserComponent {
                         role: role
                     }))
                 );
+            },
+            error: err => {
+                Utils.handleHttpError(err, this.router);
             }
-        );
+        });
 
-        this.userService.getRoles().subscribe(
-            roles => {
+        this.userService.getRoles().subscribe({
+            next: roles => {
                 this.roles = roles;
+            },
+            error: err => {
+                Utils.handleHttpError(err, this.router);
             }
-        );
+        });
     }
 
 
@@ -408,4 +418,15 @@ export class UserComponent {
     }
 
 
+    protected getBadge(roleName: string): string {
+        if (roleName === 'ADMIN') {
+            return 'Acesso total';
+        } else if (['ANALISTA', 'RESPONSAVEL_TECNICO'].includes(roleName)) {
+            return 'Acesso alto';
+        } else if (['ESTOQUISTA', 'ESTOQUISTA_CHEFE'].includes(roleName)) {
+            return 'Acesso médio';
+        } else {
+            return 'Baixo acesso';
+        }
+    }
 }

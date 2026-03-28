@@ -32,6 +32,7 @@ export class SidebarComponent implements OnInit {
     bToggleReports: boolean = true;
     items: MenuItem[] | undefined;
     showDrawer = false;
+    configurationFinished = false;
 
     constructor(private utils: UtilsService, protected router: Router) {
     }
@@ -46,6 +47,8 @@ export class SidebarComponent implements OnInit {
         this.utils.menuState$.subscribe((isOpen: boolean) => {
             this.menuOpen = isOpen;
         });
+
+        this.configurationFinished = localStorage.getItem('configurationFinished') !== null;
 
         // Verifica se existe algum valor salvo no localStorage
         let savedMenuState = localStorage.getItem('menuOpen');
@@ -80,12 +83,28 @@ export class SidebarComponent implements OnInit {
         savedMenuState = localStorage.getItem('toggleport');
         if (savedMenuState !== null) this.bToggleReports = JSON.parse(savedMenuState);
 
+        if(!this.configurationFinished) {
+            this.bToggleContracts = true;
+            this.bToggleStock = true;
+            this.bToggleSettings = true;
+        }
+
 
         this.items = [
             {
+                label: 'Primeiros passos', // título mais curto e direto
+                title: 'Visualize a localização das execuções em campo',
+                icon: 'pi pi-play', // azul = informação/visualização
+                routerLink: ['/dashboard/mapa-execucoes'],
+                visible: !this.configurationFinished,
+                command: () => {
+                    SharedState.showMenuDrawer$.next(false);
+                }
+            },
+            {
                 label: 'Dashboards',
                 icon: 'pi pi-chart-bar dark:text-neutral-200 text-gray-800', // ícone mais relacionado a dashboards
-                expanded: true,
+                expanded: this.configurationFinished,
                 items: [
                     {
                         label: 'Mapa de Execuções', // título mais curto e direto
@@ -94,7 +113,8 @@ export class SidebarComponent implements OnInit {
                         routerLink: ['/dashboard/mapa-execucoes'],
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
-                        }
+                        },
+
                     },
                     {
                         disabled: true,
@@ -135,13 +155,13 @@ export class SidebarComponent implements OnInit {
                                 icon: 'pi pi-plus text-green-500',
                                 routerLink: ['/contratos/listar'],
                                 queryParams: {for: 'execution'},
-                                command: () => SharedState.showMenuDrawer$.next(false)
+                                        command: () => SharedState.showMenuDrawer$.next(false)
                             },
                             {
                                 label: 'Usar pré-medição analisada',
                                 icon: 'pi pi-clipboard text-blue-500',
                                 routerLink: 'pre-medicao/disponivel',
-                                command: () => SharedState.showMenuDrawer$.next(false)
+                                        command: () => SharedState.showMenuDrawer$.next(false)
                             }
                         ]
                     },
@@ -248,7 +268,7 @@ export class SidebarComponent implements OnInit {
                         expanded: true,
                         items: [
                             {
-                                label: 'Analítico de Operações',
+                                        label: 'Analítico de Operações',
                                 icon: 'pi pi-sliders-h text-blue-500',
                                 routerLink: ['/relatorios/execucoes/analitico-de-operacoes'],
                                 command: () => {
@@ -256,7 +276,7 @@ export class SidebarComponent implements OnInit {
                                 }
                             },
                             {
-                                label: 'Manutenções (30 dias)',
+                                        label: 'Manutenções (30 dias)',
                                 icon: 'pi pi-wrench text-blue-500',
                                 routerLink: ['/relatorios/manutencoes'],
                                 command: () => {
@@ -264,7 +284,7 @@ export class SidebarComponent implements OnInit {
                                 }
                             },
                             {
-                                label: 'Instalações (90 dias)',
+                                        label: 'Instalações (90 dias)',
                                 icon: 'pi pi-lightbulb text-blue-500',
                                 routerLink: ['/relatorios/instalacoes'],
                                 command: () => {
@@ -272,7 +292,7 @@ export class SidebarComponent implements OnInit {
                                 }
                             },
                             {
-                                label: 'Agrupados',
+                                        label: 'Agrupados',
                                 icon: 'pi pi-box text-blue-500',
                                 routerLink: ['/relatorios/gerenciamento'],
                                 command: () => {
@@ -287,7 +307,7 @@ export class SidebarComponent implements OnInit {
                         expanded: false,
                         items: [
                             {
-                                label: 'Saída/Saldo por Instalação',
+                                        label: 'Saída/Saldo por Instalação',
                                 icon: 'pi pi-hammer text-orange-400',
                                 routerLink: ['/relatorios/estoque/saida-saldo-instalacao'],
                                 command: () => {
@@ -321,12 +341,20 @@ export class SidebarComponent implements OnInit {
                 },
                 items: [
                     {
+                        label: 'Itens Contratuais',
+                        icon: 'pi pi-list text-green-500',
+                        routerLink: ['/contratos/itens-contratuais/cadastro'],
+                        command: () => {
+                            SharedState.showMenuDrawer$.next(false);
+                        },
+                    },
+                    {
                         label: 'Novo Contrato',
                         icon: 'pi pi-plus-circle text-green-500',
                         routerLink: ['/contratos/criar'],
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
-                        }
+                        },
                     },
                     {
                         label: 'Listar Contratos',
@@ -335,7 +363,7 @@ export class SidebarComponent implements OnInit {
                         queryParams: {for: 'view'},
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
-                        }
+                        },
                     },
                     {
                         label: 'Vincular Instalações', // O título que você escolheu
@@ -344,7 +372,15 @@ export class SidebarComponent implements OnInit {
                         routerLink: ['/contratos/instalacoes-pendentes'],
                         badge: '15',
                         badgeStyleClass: 'p-badge-success', // Badge verde para indicar que é coisa pronta esperando só o vínculo
-                        command: () => SharedState.showMenuDrawer$.next(false)
+                        command: () => SharedState.showMenuDrawer$.next(false),
+                    },
+                    {
+                        label: 'Catálogo de Itens Contratuais',
+                        icon: 'pi pi-table text-neutral-500',
+                        routerLink: ['/contratos/itens-contratuais/catalogo'],
+                        command: () => {
+                            SharedState.showMenuDrawer$.next(false);
+                        },
                     },
                 ]
             },
@@ -363,7 +399,7 @@ export class SidebarComponent implements OnInit {
                         routerLink: ['/estoque/movimentar-estoque'],
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
-                        }
+                        },
                     },
                     {
                         label: 'Movimentações Pendentes',
@@ -371,7 +407,7 @@ export class SidebarComponent implements OnInit {
                         routerLink: ['/estoque/movimentar-estoque-pendente'],
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
-                        }
+                        },
                     },
                     {
                         label: 'Cadastro de Materiais',
@@ -379,7 +415,7 @@ export class SidebarComponent implements OnInit {
                         routerLink: ['/estoque/cadastrar-material'],
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
-                        }
+                        },
                     },
                     {
                         label: 'Almoxarifados',
@@ -387,7 +423,7 @@ export class SidebarComponent implements OnInit {
                         routerLink: ['/estoque/almoxarifados'],
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
-                        }
+                        },
                     },
                     {
                         label: 'Caminhões',
@@ -395,7 +431,7 @@ export class SidebarComponent implements OnInit {
                         routerLink: ['/estoque/caminhoes'],
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
-                        }
+                        },
                     },
                     {
                         label: 'Catálogo de Materiais',
@@ -403,7 +439,7 @@ export class SidebarComponent implements OnInit {
                         routerLink: ['/estoque/catalogo-materiais'],
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
-                        }
+                        },
                     }
                 ]
             },
@@ -411,7 +447,7 @@ export class SidebarComponent implements OnInit {
             {
                 label: 'Configurações',
                 icon: 'pi pi-cog dark:text-neutral-200 text-gray-800',
-                expanded: false,
+                expanded: this.bToggleSettings,
                 items: [
                     {
                         label: 'Usuários',

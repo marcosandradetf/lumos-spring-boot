@@ -45,6 +45,17 @@ export class AppComponent implements OnInit {
     menuOpen = false;  // Definir o estado do menu no componente pai
 
     async ngOnInit() {
+        this.utils.menuState$.subscribe((isOpen: boolean) => {
+            this.menuOpen = isOpen;
+        });
+        let savedMenuState = localStorage.getItem('menuOpen');
+        if (savedMenuState !== null) {
+            this.menuOpen = JSON.parse(savedMenuState); // Converte de volta para booleano
+        }
+
+        const saved = localStorage.getItem('sidebarWidth');
+        if (saved) this.sidebarWidth = +saved;
+
         const userStorage = localStorage.getItem('user');
         if (!userStorage) return;
 
@@ -94,17 +105,6 @@ export class AppComponent implements OnInit {
                 }
             });
         }
-
-        this.utils.menuState$.subscribe((isOpen: boolean) => {
-            this.menuOpen = isOpen;
-        });
-        let savedMenuState = localStorage.getItem('menuOpen');
-        if (savedMenuState !== null) {
-            this.menuOpen = JSON.parse(savedMenuState); // Converte de volta para booleano
-        }
-
-        const saved = localStorage.getItem('sidebarWidth');
-        if (saved) this.sidebarWidth = +saved;
     }
 
     protected readonly SharedState = SharedState;

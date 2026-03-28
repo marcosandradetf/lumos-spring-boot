@@ -241,6 +241,6 @@ export class AuthService {
     }
 
     getQrcodeToken() {
-        return this.http.get<any>(this.apiUrl + "/get-qrcode-token");
+        return this.http.get<any>(environment.springboot + "/api/get-qrcode-token");
     }
 }

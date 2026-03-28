@@ -9,6 +9,8 @@ public class Role {
     private Long roleId;
 
     private String roleName;
+    private String label;
+    private String description;
 
     public long getRoleId() {
         return roleId;
@@ -24,6 +26,26 @@ public class Role {
 
     public void setRoleName(String roleName) {
         this.roleName = roleName;
+    }
+
+    public void setRoleId(Long roleId) {
+        this.roleId = roleId;
+    }
+
+    public String getLabel() {
+        return label;
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public enum Values {
@@ -45,6 +67,8 @@ public class Role {
         public long getRoleId() {
             return roleId;
         }
+
+
 
     }
 }
