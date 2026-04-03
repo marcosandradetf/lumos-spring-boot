@@ -6,6 +6,7 @@ import {StockMovementResponse} from '../dto/stock-movement-response.dto';
 import {Type} from '../dto/tipo.model';
 import {Group} from '../dto/grupo.model';
 import {Deposit} from '../dto/almoxarifado.model';
+import {CreateStockistRequest, Stockist, UpdateStockistRequest} from '../dto/stockist.model';
 import {environment} from '../../../environments/environment';
 import {DepositByStockist, StockistModel} from '../../executions/executions.model';
 
@@ -100,6 +101,18 @@ export class StockService {
 
   getStockists() {
     return this.http.get<StockistModel[]>(`${this.endpoint}/deposit/get-stockists`);
+  }
+
+  insertStockist(stockist: CreateStockistRequest) {
+    return this.http.post<Stockist[]>(`${this.endpoint}/stockist/insert`, stockist);
+  }
+
+  updateStockist(stockist: UpdateStockistRequest) {
+    return this.http.put<Stockist[]>(`${this.endpoint}/stockist/update`, stockist);
+  }
+
+  deleteStockist(stockistId: number) {
+    return this.http.delete<Stockist[]>(`${this.endpoint}/stockist/${stockistId}/delete`);
   }
 
   getDepositsByStockist(userId: string) {

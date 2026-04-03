@@ -1,21 +1,22 @@
-import {Component, ElementRef, ViewChild} from '@angular/core';
-import {StockService} from '../services/stock.service';
-import {Title} from '@angular/platform-browser';
-import {Router} from '@angular/router';
-import {FormsModule, NgForm} from '@angular/forms';
-import {NgClass, NgIf} from '@angular/common';
-import {TableComponent} from '../../shared/components/table/table.component';
-import {Deposit} from '../dto/almoxarifado.model';
-import {catchError, tap, throwError} from 'rxjs';
-import {State} from '../services/material.service';
-import {ButtonComponent} from '../../shared/components/button/button.component';
-import {ModalComponent} from '../../shared/components/modal/modal.component';
-import {AlertMessageComponent} from '../../shared/components/alert-message/alert-message.component';
-import {ufRequest} from '../../core/uf-request.dto';
-import {IbgeService} from '../../core/service/ibge.service';
-import {citiesRequest} from '../../core/cities-request.dto';
-import {SharedState} from '../../core/service/shared-state';
-import {LoadingComponent} from '../../shared/components/loading/loading.component';
+import { Component, ElementRef, ViewChild } from '@angular/core';
+import { StockService } from '../services/stock.service';
+import { Title } from '@angular/platform-browser';
+import { Router } from '@angular/router';
+import { FormsModule, NgForm } from '@angular/forms';
+import { NgClass, NgIf } from '@angular/common';
+import { TableComponent } from '../../shared/components/table/table.component';
+import { Deposit } from '../dto/almoxarifado.model';
+import { catchError, tap, throwError } from 'rxjs';
+import { State } from '../services/material.service';
+import { ButtonComponent } from '../../shared/components/button/button.component';
+import { ModalComponent } from '../../shared/components/modal/modal.component';
+import { AlertMessageComponent } from '../../shared/components/alert-message/alert-message.component';
+import { ufRequest } from '../../core/uf-request.dto';
+import { IbgeService } from '../../core/service/ibge.service';
+import { citiesRequest } from '../../core/cities-request.dto';
+import { SharedState } from '../../core/service/shared-state';
+import { LoadingComponent } from '../../shared/components/loading/loading.component';
+import { Utils } from '../../core/service/utils';
 
 @Component({
     selector: 'app-deposits',
@@ -57,14 +58,19 @@ export class DepositsComponent {
     @ViewChild('top') top!: ElementRef;
 
     constructor(private stockService: StockService,
-                private title: Title, protected router: Router,
-                private ibgeService: IbgeService) {
+        private title: Title, protected router: Router,
+        private ibgeService: IbgeService) {
         this.title.setTitle('Gerenciar - Almoxarifados');
         SharedState.setCurrentPath(['Estoque', 'Almoxarifados']);
 
-        this.stockService.getDeposits().subscribe(
-            d => this.deposits = d.filter(d => !d.isTruck)
-        );
+        this.stockService.getDeposits().subscribe({
+            next: (deposits: Deposit[]) => {
+                this.deposits = deposits;
+            },
+            error: (err) => {
+                Utils.handleHttpError(err, this.router);    
+            }
+        });
 
         this.ibgeService.getUfs().subscribe((ufs: ufRequest[]) => {
             this.ufs = ufs;
@@ -138,8 +144,7 @@ export class DepositsComponent {
                     this.message = 'Almoxarifado foi atualizado com sucesso.';
                     this.deposits = response;
                 }), catchError(err => {
-                    console.log(err);
-                    this.message = err.error.message;
+                    this.message = err.error.message || err.error.error;
                     return throwError(() => throwError(() => this.message));
                 })
             ).subscribe();
@@ -166,7 +171,7 @@ export class DepositsComponent {
             this.deposit.depositPhone = d.depositPhone;
             this.depositId = d.idDeposit;
             if (this.top)
-                this.top.nativeElement.scrollIntoView({behavior: 'smooth', block: 'start'});
+                this.top.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     }
 

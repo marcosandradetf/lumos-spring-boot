@@ -1,0 +1,355 @@
+<p-toast></p-toast>
+
+<app-guide-state
+  *ngIf="deposits.length === 0 && !isInitialLoading"
+  icon="pi pi-file"
+  title="Antes de vincular estoquistas..."
+  subtitle="Você precisa preparar a base do sistema antes de continuar."
+  [steps]="[
+    [true, 'Cadastrar Almoxarifados']
+  ]"
+  [hasButtonLabel]="true"
+  buttonLabel="Cadastrar Almoxarifados"
+  buttonRoute="/estoque/almoxarifados"
+  buttonIcon="pi pi-home"
+></app-guide-state>
+
+<app-loading *ngIf="isInitialLoading"></app-loading>
+
+<div class="w-full px-4 py-6 relative" *ngIf="deposits.length > 0">
+    <app-loading-overlay [loading]="loading"></app-loading-overlay>
+
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-6">
+        <div>
+            <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">
+                Estoquistas
+            </h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+                Cadastre e gerencie os responsáveis pelos almoxarifados do sistema.
+            </p>
+        </div>
+
+        <button
+            class="btn btn-primary flex items-center gap-2 w-full sm:w-auto"
+            type="button"
+            (click)="setOpen()">
+            <i class="pi pi-user-plus"></i>
+            {{ formOpen ? 'Fechar cadastro' : 'Novo estoquista' }}
+        </button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4 shadow-sm">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Estoquistas vinculados</p>
+            <p class="text-3xl font-semibold text-gray-900 dark:text-white mt-2">{{ stockists.length }}</p>
+        </div>
+
+        <div class="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4 shadow-sm">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Almoxarifados disponíveis</p>
+            <p class="text-3xl font-semibold text-gray-900 dark:text-white mt-2">{{ deposits.length }}</p>
+        </div>
+
+        <div class="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4 shadow-sm">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Usuários ativos</p>
+            <p class="text-3xl font-semibold text-gray-900 dark:text-white mt-2">{{ availableUsers.length }}</p>
+        </div>
+    </div>
+
+    <app-loading *ngIf="loading"></app-loading>
+
+    <div
+        *ngIf="!loading && formOpen"
+        class="mb-6 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 md:p-6 shadow-sm">
+        <div class="flex items-start justify-between gap-4 mb-5">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                    {{ stockist.stockistId ? 'Editar vínculo de estoquista' : 'Novo vínculo de estoquista' }}
+                </h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    Cada registro relaciona um usuário a um almoxarifado.
+                </p>
+            </div>
+
+            <button
+                class="btn btn-ghost btn-sm"
+                type="button"
+                (click)="setOpen(false)">
+                <i class="pi pi-times"></i>
+            </button>
+        </div>
+
+        <form #stockistForm="ngForm" (ngSubmit)="onSubmit(stockistForm)" class="flex flex-col gap-5">
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <div class="flex flex-col gap-2">
+                    <label for="userIdUser" class="text-sm font-medium text-gray-700 dark:text-gray-200">
+                        Usuário
+                    </label>
+
+                    <p-select
+                        inputId="userIdUser"
+                        name="userIdUser"
+                        [(ngModel)]="stockist.userIdUser"
+                        [options]="availableUsers"
+                        optionLabel="name"
+                        optionValue="userId"
+                        placeholder="Selecione o usuário"
+                        [filter]="true"
+                        filterBy="name,email,username"
+                        appendTo="body"
+                        styleClass="w-full">
+                        <ng-template let-user pTemplate="item">
+                            <div class="flex flex-col py-1">
+                                <span class="font-medium">{{ user.name }}</span>
+                                <small class="text-gray-500">{{ user.email }}</small>
+                            </div>
+                        </ng-template>
+                    </p-select>
+
+                    <small *ngIf="!stockist.userIdUser && formSubmitted" class="text-red-600 dark:text-red-400">
+                        Selecione um usuário.
+                    </small>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label for="depositIdDeposit" class="text-sm font-medium text-gray-700 dark:text-gray-200">
+                        Almoxarifado
+                    </label>
+
+                    <p-select
+                        inputId="depositIdDeposit"
+                        name="depositIdDeposit"
+                        [(ngModel)]="stockist.depositIdDeposit"
+                        [options]="deposits"
+                        optionLabel="depositName"
+                        optionValue="idDeposit"
+                        placeholder="Selecione o almoxarifado"
+                        [filter]="true"
+                        filterBy="depositName,depositCity,depositState"
+                        appendTo="body"
+                        styleClass="w-full">
+                        <ng-template let-deposit pTemplate="item">
+                            <div class="flex flex-col py-1">
+                                <span class="font-medium">{{ deposit.depositName }}</span>
+                                <small class="text-gray-500">
+                                    {{ deposit.depositCity }} - {{ deposit.depositState }}
+                                </small>
+                            </div>
+                        </ng-template>
+                    </p-select>
+
+                    <small *ngIf="!stockist.depositIdDeposit && formSubmitted" class="text-red-600 dark:text-red-400">
+                        Selecione um almoxarifado.
+                    </small>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="rounded-xl bg-neutral-50 dark:bg-neutral-950/60 border border-neutral-200 dark:border-neutral-800 p-4">
+                    <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
+                        Preview do usuário
+                    </p>
+                    <p class="font-medium text-gray-900 dark:text-white">
+                        {{ getUserLabel(stockist.userIdUser) || 'Nenhum usuário selecionado' }}
+                    </p>
+                </div>
+
+                <div class="rounded-xl bg-neutral-50 dark:bg-neutral-950/60 border border-neutral-200 dark:border-neutral-800 p-4">
+                    <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
+                        Preview do almoxarifado
+                    </p>
+                    <p class="font-medium text-gray-900 dark:text-white">
+                        {{ getDepositLabel(stockist.depositIdDeposit) || 'Nenhum almoxarifado selecionado' }}
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2 border-t border-neutral-200 dark:border-neutral-800">
+                <button
+                    type="button"
+                    class="btn btn-ghost"
+                    (click)="setOpen(false)">
+                    Cancelar
+                </button>
+
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                    [disabled]="saving">
+                    <i class="pi pi-save"></i>
+                    {{ stockist.stockistId ? 'Atualizar vínculo' : 'Salvar vínculo' }}
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div
+        *ngIf="!loading"
+        class="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm overflow-hidden">
+        <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between px-5 py-4 border-b border-neutral-200 dark:border-neutral-800">
+            <div>
+                <h3 class="font-semibold text-gray-900 dark:text-white">Vínculos cadastrados</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    Lista de usuários que já atuam como estoquistas.
+                </p>
+            </div>
+
+            <span
+                *ngIf="isFallbackData"
+                class="inline-flex items-center gap-2 rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 dark:border-amber-900 dark:bg-amber-950/60 dark:text-amber-300">
+                <i class="pi pi-info-circle"></i>
+                Dados carregados pelo endpoint legado
+            </span>
+        </div>
+
+        <div *ngIf="stockists.length === 0" class="px-5 py-12 text-center">
+            <i class="pi pi-users text-4xl text-gray-300 dark:text-gray-700"></i>
+            <h4 class="mt-4 text-lg font-semibold text-gray-900 dark:text-white">Nenhum estoquista cadastrado</h4>
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                Crie o primeiro vínculo para liberar fluxos que dependem de estoquistas no sistema.
+            </p>
+        </div>
+
+        <div *ngIf="stockists.length > 0" class="hidden md:block overflow-x-auto">
+            <table class="table w-full">
+                <thead>
+                <tr>
+                    <th>Usuário</th>
+                    <th>Perfis</th>
+                    <th>Almoxarifado</th>
+                    <th>Contato</th>
+                    <th class="text-right">Ações</th>
+                </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let item of stockists" class="hover:bg-gray-50 dark:hover:bg-neutral-800/70">
+                        <td>
+                            <div class="flex flex-col">
+                                <span class="font-medium text-gray-900 dark:text-white">{{ item.userName }}</span>
+                                <small class="text-gray-500 dark:text-gray-400">
+                                    {{ item.userEmail || item.userIdUser }}
+                                </small>
+                            </div>
+                        </td>
+
+                        <td>
+                            <div class="flex flex-wrap gap-2">
+                                <p-tag
+                                    *ngFor="let role of item.userRoles"
+                                    [severity]="getSeverity([role])"
+                                    [value]="role">
+                                </p-tag>
+
+                                <span *ngIf="item.userRoles.length === 0" class="text-sm text-gray-400">
+                                    Não informado
+                                </span>
+                            </div>
+                        </td>
+
+                        <td>
+                            <div class="flex flex-col">
+                                <span class="font-medium text-gray-900 dark:text-white">{{ item.depositName }}</span>
+                                <small class="text-gray-500 dark:text-gray-400">
+                                    {{ item.depositRegion || item.depositAddress || 'Sem complemento cadastrado' }}
+                                </small>
+                            </div>
+                        </td>
+
+                        <td class="text-sm text-gray-600 dark:text-gray-300">
+                            {{ item.depositPhone || 'Telefone não informado' }}
+                        </td>
+
+                        <td>
+                            <div class="flex items-center justify-end gap-2">
+                                <button
+                                    type="button"
+                                    class="btn btn-ghost btn-sm"
+                                    (click)="editStockist(item)">
+                                    <i class="pi pi-pencil"></i>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="btn btn-ghost btn-sm text-red-600 dark:text-red-400"
+                                    [disabled]="!item.stockistId"
+                                    (click)="confirmDelete(item)">
+                                    <i class="pi pi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div *ngIf="stockists.length > 0" class="md:hidden flex flex-col gap-3 p-4">
+            <div
+                *ngFor="let item of stockists"
+                class="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/80 dark:bg-neutral-950/40 p-4">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <h4 class="font-semibold text-gray-900 dark:text-white">{{ item.userName }}</h4>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ item.userEmail || item.userIdUser }}</p>
+                    </div>
+
+                    <div class="flex items-center gap-1">
+                        <button
+                            type="button"
+                            class="btn btn-ghost btn-xs"
+                            (click)="editStockist(item)">
+                            <i class="pi pi-pencil"></i>
+                        </button>
+
+                        <button
+                            type="button"
+                            class="btn btn-ghost btn-xs text-red-600 dark:text-red-400"
+                            [disabled]="!item.stockistId"
+                            (click)="confirmDelete(item)">
+                            <i class="pi pi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap gap-2 mt-3">
+                    <p-tag
+                        *ngFor="let role of item.userRoles"
+                        [severity]="getSeverity([role])"
+                        [value]="role">
+                    </p-tag>
+
+                    <span *ngIf="item.userRoles.length === 0" class="text-sm text-gray-400">
+                        Perfil não informado
+                    </span>
+                </div>
+
+                <div class="mt-4 space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                    <p><span class="font-medium">Almoxarifado:</span> {{ item.depositName }}</p>
+                    <p><span class="font-medium">Local:</span> {{ item.depositRegion || item.depositAddress || 'Sem complemento cadastrado' }}</p>
+                    <p><span class="font-medium">Contato:</span> {{ item.depositPhone || 'Telefone não informado' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <app-modal [modalOpen]="showConfirmation" [confirmation]="true" (modalClose)="showConfirmation = false">
+        <div class="text-center">
+            <h3 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Remover vínculo?</h3>
+            <p class="mb-6 text-sm text-gray-500 dark:text-gray-400">
+                Essa ação remove o estoquista do almoxarifado selecionado.
+            </p>
+
+            <div class="flex justify-center gap-3">
+                <app-button
+                    title="Cancelar"
+                    classButton="btn btn-outline"
+                    (click)="showConfirmation = false">
+                </app-button>
+
+                <app-button
+                    title="Excluir"
+                    classButton="btn btn-error"
+                    (click)="deleteStockist()">
+                </app-button>
+            </div>
+        </div>
+    </app-modal>
+</div>

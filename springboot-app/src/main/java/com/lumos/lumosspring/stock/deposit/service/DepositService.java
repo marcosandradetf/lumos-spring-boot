@@ -16,6 +16,7 @@ import com.lumos.lumosspring.user.repository.UserRepository;
 import com.lumos.lumosspring.util.JdbcUtil;
 import com.lumos.lumosspring.util.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -57,6 +58,7 @@ public class DepositService {
         return depositRepository.findById(id).orElse(null);
     }
 
+    @CacheEvict(value = "getAllDeposits", key = "T(com.lumos.lumosspring.util.Utils).getCurrentTenantId()")
     public ResponseEntity<?> save(DepositDTO depositDTO) {
         if (depositRepository.existsByDepositName(depositDTO.depositName())) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Collections.singletonMap("message", "Este almoxarifado já existe."));
@@ -69,6 +71,7 @@ public class DepositService {
         deposit.setDepositCity(depositDTO.depositCity());
         deposit.setDepositState(depositDTO.depositState());
         deposit.setDepositPhone(depositDTO.depositPhone());
+        deposit.setTruck(false);
 
         if (depositDTO.depositRegion() != null && !depositDTO.depositRegion().isEmpty()) {
             var regions = regionRepository.findRegionByRegionName(depositDTO.depositRegion());
@@ -86,9 +89,10 @@ public class DepositService {
 
         materialStockRegisterRepository.insertMaterials(deposit.getIdDeposit(), Utils.getCurrentTenantId());
 
-        return ResponseEntity.ok(this.findAll());
+        return ResponseEntity.ok(Map.of("depositId", deposit.getIdDeposit()));
     }
 
+    @CacheEvict(value = "getAllDeposits", key = "T(com.lumos.lumosspring.util.Utils).getCurrentTenantId()")
     public ResponseEntity<?> update(Long depositId, DepositDTO depositDTO) {
         var deposit = depositRepository.findById(depositId).orElse(null);
 
@@ -117,7 +121,7 @@ public class DepositService {
 
         depositRepository.save(deposit);
 
-        return ResponseEntity.ok(this.findAll());
+        return ResponseEntity.ok().build();
     }
 
     @Transactional
@@ -145,7 +149,7 @@ public class DepositService {
 
         depositRepository.delete(deposit);
 
-        return ResponseEntity.ok(this.findAll());
+        return ResponseEntity.ok().build();
     }
 
     public ResponseEntity<?> getStockists() {

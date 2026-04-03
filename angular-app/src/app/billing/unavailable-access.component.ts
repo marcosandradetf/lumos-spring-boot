@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import {CommonModule, Location} from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../core/auth/auth.service';
 
@@ -7,6 +7,8 @@ import { AuthService } from '../core/auth/auth.service';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { DividerModule } from 'primeng/divider';
+import { SharedState } from '../core/service/shared-state';
+import { Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-unavailable-access',
@@ -20,20 +22,24 @@ export class UnavailableAccessComponent implements OnInit {
   loggingOut = false;
 
   constructor(
-      protected router: Router,
-      private authService: AuthService,
-      private location: Location
-  ) {}
+    protected router: Router,
+    private authService: AuthService,
+    private location: Location,
+    private title: Title
+  ) { }
 
   ngOnInit(): void {
-      const isLocked = localStorage.getItem('isLocked') !== null;
-      if (!isLocked) {
-          if (window.history.length > 1) {
-              this.location.back();
-          } else {
-              void this.router.navigate(['/dashboard']);
-          }
+    SharedState.setCurrentPath(["Acesso Indisponível"]);
+    this.title.setTitle('Acesso Indisponível - Lumos');
+
+    const isLocked = localStorage.getItem('isLocked') !== null;
+    if (!isLocked) {
+      if (window.history.length > 1) {
+        this.location.back();
+      } else {
+        void this.router.navigate(['/dashboard']);
       }
+    }
   }
 
   goToBilling(): void {
