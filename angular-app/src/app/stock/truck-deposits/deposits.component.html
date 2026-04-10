@@ -14,9 +14,29 @@
     <button
       class="btn btn-primary flex items-center gap-2"
       (click)="router.navigate(['/configuracoes/equipes'])">
-      <i class="pi pi-plus"></i>
-      Novo caminhão
+      <i class="pi pi-users"></i>
+      Nova equipe/caminhão
     </button>
+  </div>
+
+  <div class="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/40">
+    <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+      <div>
+        <p class="text-sm font-semibold text-amber-900 dark:text-amber-100">
+          Esta tela depende do cadastro de equipes
+        </p>
+        <p class="text-sm text-amber-800 dark:text-amber-200">
+          O vínculo operacional do caminhão nasce na equipe. Use a tela de equipes para cadastrar ou ajustar placa, estado e cidade; aqui você acompanha e edita o caminhão já refletido no estoque.
+        </p>
+      </div>
+
+      <button
+        class="btn btn-outline btn-sm border-amber-300 text-amber-800 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-100 dark:hover:bg-amber-900/40"
+        type="button"
+        (click)="router.navigate(['/configuracoes/equipes'])">
+        Ir para equipes
+      </button>
+    </div>
   </div>
 
   <!-- FORM -->
@@ -159,6 +179,7 @@
         <th>Placa</th>
         <th>Cidade</th>
         <th>Estado</th>
+        <th>Equipe vinculada</th>
         <th class="text-center">Ações</th>
       </tr>
 
@@ -169,6 +190,11 @@
           <td>{{ deposit.plateVehicle }}</td>
           <td>{{ deposit.depositCity }}</td>
           <td>{{ deposit.depositState }}</td>
+          <td>
+            <span class="text-sm font-medium text-gray-800 dark:text-gray-100">
+              {{ deposit.teamName || 'Sem equipe vinculada' }}
+            </span>
+          </td>
 
           <td class="flex gap-3 justify-center">
             <button

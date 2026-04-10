@@ -9,11 +9,11 @@
 import type { SocialLinks, LegalConfig } from '../lib/types';
 
 /** Site name displayed in header, footer, and meta tags */
-export const name = 'Lumos – Gestão de Iluminação Pública';
+export const name = 'Lumos IP – Gestão de Iluminação Pública';
 
 /** Site description for SEO and meta tags */
 export const description =
-  'O Lumos é um software completo de gestão de iluminação pública para empresas que operam contratos com prefeituras. Automatize operações de campo, controle contratos, reduza glosas no faturamento e tenha total rastreabilidade das execuções em tempo real.';
+  'O Lumos IP é um software completo de gestão de iluminação pública para empresas que operam contratos com prefeituras. Automatize operações de campo, controle contratos, reduza glosas no faturamento e tenha total rastreabilidade das execuções em tempo real.';
 
 /** Production URL of your site (used for sitemap, RSS, canonical URLs) */
 export const url = 'https://lumosip.com.br';

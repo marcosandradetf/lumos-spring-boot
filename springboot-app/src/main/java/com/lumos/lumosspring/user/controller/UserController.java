@@ -44,10 +44,16 @@ public class UserController {
         return roleRepository.findAll();
     }
 
-    @PostMapping("/user/{userId}/reset-password")
+    @PostMapping("/user/{userId}/generate-activation-code")
     @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
-    public ResponseEntity<?> resetPassword(@PathVariable String userId) {
-        return userService.resetPassword(userId);
+    public ResponseEntity<?> generateActivationCode(@PathVariable String userId) {
+        return userService.generateActivationCode(userId);
+    }
+
+    @PostMapping("/user/{userId}/reset-activation")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+    public ResponseEntity<?> resetActivation(@PathVariable String userId) {
+        return userService.resetActivation(userId);
     }
 
     @PostMapping("/user/{userId}/set-password")

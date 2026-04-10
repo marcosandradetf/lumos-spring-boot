@@ -168,13 +168,13 @@ public class RegisterService {
         itemDependency.forEach(dependency -> {
             preMeasurementInstallationRepository.updateInstallationItem(
                     dependency.getContractItemId(),
-                    quantityExecuted.multiply(dependency.getFactor()),
+                    quantityExecuted,
                     preMeasurementStreetId
             );
 
             contractItemsQuantitativeRepository.updateBalance(
                     dependency.getContractItemId(),
-                    quantityExecuted.multiply(dependency.getFactor())
+                    quantityExecuted
             );
         });
     }

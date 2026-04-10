@@ -1,10 +1,33 @@
 import {Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
-import {User} from '../../models/user.model';
-import {Observable} from 'rxjs';
-import * as http from 'node:http';
-import {Deposit} from '../../stock/dto/almoxarifado.model';
 import {environment} from '../../../environments/environment';
+
+export type UserActivationStatus = 'PENDING_ACTIVATION' | 'ACTIVE' | 'BLOCKED';
+
+export interface ActivationCodeResponse {
+    activationCode: string;
+    expiresAt: string;
+    message: string;
+}
+
+export interface UserManagementResponse {
+    userId: string;
+    username: string;
+    name: string;
+    lastname: string;
+    email: string;
+    cpf: string;
+    dateOfBirth?: string;
+    year: string;
+    month: string;
+    day: string;
+    role: any[];
+    status: any;
+    mustChangePassword?: boolean;
+    activationExpiresAt?: string | null;
+    sel: boolean;
+    show: boolean;
+}
 
 @Injectable({
     providedIn: 'root'
@@ -16,47 +39,23 @@ export class UserService {
     }
 
     public getUsers() {
-        return this.http.get<{
-            userId: string,
-            username: string,
-            name: string,
-            lastname: string,
-            email: string,
-            cpf: string,
-            dateOfBirth: string,
-            day: string;
-            month: string;
-            year: string;
-            role: string[],
-            status: boolean,
-            sel: boolean,
-            show: boolean,
-        }[]>(`${this.endpoint}/get-users`);
+        return this.http.get<UserManagementResponse[]>(`${this.endpoint}/get-users`);
     }
 
     public getUser(uuid: string) {
-        return this.http.get<{
-            userId: string,
-            username: string,
-            name: string,
-            lastname: string,
-            email: string,
-            cpf: string,
-            dateOfBirth: string,
-            day: string;
-            month: string;
-            year: string;
-            role: any[],
-            status: boolean,
+        return this.http.get<UserManagementResponse & {
             phone: string,
             department: string,
-            sel: boolean,
         }>(`${this.endpoint}/get-user/${uuid}`);
     }
 
 
-    public resetPassword(userId: string) {
-        return this.http.post(`${this.endpoint}/${userId}/reset-password`, {});
+    public generateActivationCode(userId: string) {
+        return this.http.post<ActivationCodeResponse>(`${this.endpoint}/${userId}/generate-activation-code`, {});
+    }
+
+    public resetActivation(userId: string) {
+        return this.http.post<ActivationCodeResponse>(`${this.endpoint}/${userId}/reset-activation`, {});
     }
 
     public getRoles() {
@@ -77,59 +76,14 @@ export class UserService {
         lastname: string,
         email: string,
         cpf: string,
-        year: string;
-        month: string;
-        day: string;
+        year: string | number;
+        month: string | number;
+        day: string | number;
         role: string[],
-        status: boolean
+        status: UserActivationStatus
         sel: boolean
     }[]) {
-        return this.http.post<{
-            userId: string,
-            username: string,
-            name: string,
-            lastname: string,
-            email: string,
-            cpf: string,
-            year: string;
-            month: string;
-            day: string;
-            role: string[],
-            status: boolean
-            sel: boolean,
-            show: boolean,
-        }[]>(`${this.endpoint}/update-users`, user);
-    }
-
-    public insertUsers(user: {
-        userId: string,
-        username: string,
-        name: string,
-        lastname: string,
-        email: string,
-        cpf: string,
-        year: string;
-        month: string;
-        day: string;
-        role: string[],
-        status: boolean
-        sel: boolean
-    }[]) {
-        return this.http.post<{
-            userId: string,
-            username: string,
-            name: string,
-            lastname: string,
-            email: string,
-            cpf: string,
-            year: string;
-            month: string;
-            day: string;
-            role: string[],
-            status: boolean
-            sel: boolean,
-            show: boolean,
-        }[]>(`${this.endpoint}/insert-users`, user);
+        return this.http.post<UserManagementResponse[]>(`${this.endpoint}/update-users`, user);
     }
 
     setPassword(uuid: string, password: { oldPassword: string; password: string; passwordConfirm: string }) {

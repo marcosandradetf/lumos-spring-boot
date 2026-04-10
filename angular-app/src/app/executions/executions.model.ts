@@ -1,4 +1,5 @@
 export interface StockistModel {
+    stockistId: number,
     userId: string,
     name: string,
     depositId: number,

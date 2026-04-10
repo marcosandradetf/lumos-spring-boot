@@ -12,7 +12,7 @@ import java.math.BigDecimal
 @Table("contract_item")
 class ContractItem {
     @Id
-    var contractItemId : Long? = null
+    var contractItemId: Long? = null
 
     @Column("contract_item_reference_id")
     var referenceItemId: Long? = null
@@ -20,11 +20,13 @@ class ContractItem {
     @Column("contract_contract_id")
     var contractId: Long? = null
 
-    var contractedQuantity : BigDecimal = BigDecimal.ZERO
+    var contractedQuantity: BigDecimal = BigDecimal.ZERO
     var quantityExecuted: BigDecimal = BigDecimal.ZERO
 
-    var unitPrice : BigDecimal = BigDecimal.ZERO
-    var totalPrice : BigDecimal = BigDecimal.ZERO
+    var unitPrice: BigDecimal = BigDecimal.ZERO
+    var totalPrice: BigDecimal = BigDecimal.ZERO
+
+    var factor: BigDecimal = BigDecimal.ONE
 
     @Transient
     var referenceItem: ContractReferenceItem? = null
@@ -40,7 +42,7 @@ class ContractItem {
 
     fun setPrices(itemValue: BigDecimal) {
         unitPrice = itemValue
-        totalPrice = itemValue.multiply(contractedQuantity)
-        // Não chame métodos em outras entidades aqui
+        val calculatedFactor = contractedQuantity.multiply(factor)
+        totalPrice = itemValue.multiply(calculatedFactor)
     }
 }

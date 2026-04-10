@@ -17,6 +17,7 @@ public interface UserRepository extends CrudRepository<AppUser, UUID> {
     Optional<AppUser> findByUsernameIgnoreCase(String username);
     Optional<AppUser> findByCpfIgnoreCase(String cpf);
     Optional<AppUser> findByUsernameOrCpfIgnoreCase(String username, String cpf);
+    Optional<AppUser> findByCpf(String cpf);
 
     @Query("""
         select distinct au.user_id, au."name" || ' ' || au.last_name as complete_name
@@ -38,7 +39,7 @@ public interface UserRepository extends CrudRepository<AppUser, UUID> {
     """)
     List<UUID> getResponsibleTechUsers(UUID tenantId);
 
-    List<AppUser> findByTenantIdAndStatusTrueAndSupportFalseOrderByNameAsc(UUID tenantId, Boolean status, Boolean support);
+    List<AppUser> findByTenantIdAndSupportFalseOrderByNameAsc(UUID tenantId, Boolean support);
 
     /**
      * Seats faturáveis: ativos, não suporte, não desativados (alinhado ao billing).
@@ -47,7 +48,7 @@ public interface UserRepository extends CrudRepository<AppUser, UUID> {
             SELECT COUNT(*)
             FROM app_user au
             WHERE au.tenant_id = :tenantId
-              AND COALESCE(au.status, FALSE) = TRUE
+              AND au.status = 'ACTIVE'
               AND COALESCE(au.support, FALSE) = FALSE
               AND au.deactivated_at IS NULL
             """)

@@ -30,7 +30,15 @@
         </div>
 
         <button
-            class="btn btn-primary flex items-center gap-2 w-full sm:w-auto"
+            class="btn btn-outline flex items-center gap-2 w-full sm:w-auto"
+            type="button"
+            (click)="openDocumentation()">
+            <i class="pi pi-book"></i>
+            Como cadastrar
+        </button>
+
+        <button
+            class="btn btn-primary flex items-center gap-2 w-full sm:w-auto dark:text-neutral-200"
             type="button"
             (click)="setOpen()">
             <i class="pi pi-user-plus"></i>
@@ -173,7 +181,7 @@
 
                 <button
                     type="submit"
-                    class="btn btn-primary"
+                    class="btn btn-primary dark:text-neutral-200"
                     [disabled]="saving">
                     <i class="pi pi-save"></i>
                     {{ stockist.stockistId ? 'Atualizar vínculo' : 'Salvar vínculo' }}
@@ -353,3 +361,39 @@
         </div>
     </app-modal>
 </div>
+
+<div *ngIf="embeddedDocOpen" class="fixed inset-0 z-40 bg-slate-950/35 backdrop-blur-[2px]" (click)="closeDocumentation()"></div>
+
+<section *ngIf="embeddedDocOpen"
+  class="fixed inset-y-0 right-0 z-50 flex h-full w-full max-w-[96vw] flex-col bg-white shadow-2xl dark:bg-slate-900 lg:w-[min(1200px,92vw)]">
+  <div
+    class="flex flex-col gap-3 border-b border-slate-200 px-4 py-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+        Documentação incorporada
+      </p>
+
+      <h3 class="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+        {{ embeddedDocTitle }}
+      </h3>
+
+      <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        {{ embeddedDocDescription }}
+      </p>
+    </div>
+
+    <button class="btn btn-outline w-full sm:w-auto" type="button" (click)="closeDocumentation()">
+      Fechar
+    </button>
+  </div>
+
+  <div class="flex-1 overflow-y-none p-4 sm:p-5" (click)="$event.stopPropagation()">
+    <iframe
+      *ngIf="embeddedDocUrl"
+      [src]="embeddedDocUrl"
+      class="min-h-[84vh] w-full rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950"
+      referrerpolicy="strict-origin-when-cross-origin"
+      title="Documentação incorporada do Lumos">
+    </iframe>
+  </div>
+</section>

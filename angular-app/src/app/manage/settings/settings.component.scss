@@ -1,0 +1,67 @@
+:host {
+  display: block;
+}
+
+.step-button {
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: 1.25rem;
+  background: transparent;
+  padding: 0.9rem;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.step-button:hover {
+  transform: translateY(-1px);
+  background: rgba(248, 250, 252, 0.9);
+}
+
+:host-context(.dark) .step-button:hover {
+  background: rgba(15, 23, 42, 0.65);
+}
+
+.step-button-active {
+  border-color: rgb(103 232 249);
+  background: rgba(236, 254, 255, 0.95);
+}
+
+:host-context(.dark) .step-button-active {
+  border-color: rgba(8, 145, 178, 0.6);
+  background: rgba(8, 47, 73, 0.35);
+}
+
+.step-button-done {
+  background: rgba(236, 253, 245, 0.7);
+}
+
+:host-context(.dark) .step-button-done {
+  background: rgba(6, 78, 59, 0.18);
+}
+
+.step-badge {
+  display: inline-flex;
+  height: 2rem;
+  min-width: 2rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: rgb(241 245 249);
+  color: rgb(71 85 105);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+:host-context(.dark) .step-badge {
+  background: rgb(30 41 59);
+  color: rgb(226 232 240);
+}
+
+.step-badge-active {
+  background: rgb(8 145 178);
+  color: white;
+}
+
+.step-badge-done {
+  background: rgb(5 150 105);
+  color: white;
+}

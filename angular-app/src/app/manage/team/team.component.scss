@@ -1,0 +1,20 @@
+:host {
+  display: block;
+}
+
+:host ::ng-deep .p-multiselect {
+  width: 100%;
+  min-height: 3rem;
+  border-radius: 0.75rem;
+}
+
+:host ::ng-deep .p-multiselect-label {
+  display: flex;
+  align-items: center;
+  min-height: 3rem;
+  padding-inline: 1rem;
+}
+
+:host ::ng-deep .p-multiselect-trigger {
+  width: 3rem;
+}

@@ -6,9 +6,9 @@ order: 1
 draft: false
 ---
 
-# 💡 Visão Geral — Sistema Lumos
+# 💡 Visão Geral — Sistema Lumos IP
 
-Bem-vindo ao **Lumos**, a plataforma de **gestão operacional completa para iluminação pública**.
+Bem-vindo ao **Lumos IP**, a plataforma de **gestão completa para iluminação pública**.
 
 O Lumos foi projetado para centralizar **contratos, estoque, equipes e execução em campo**, garantindo **rastreabilidade**, **controle operacional** e **dados confiáveis** para a tomada de decisão.
 
@@ -56,7 +56,7 @@ Estruture suas equipes de campo com clareza e rastreabilidade.
 
 **Funcionalidades principais:**
 - Cadastro e organização de equipes operacionais
-- Vinculação de membros, veículos e equipamentos
+- Vinculação de membros, veículos e estoque
 - Confirmação de equipe antes da execução
 - Distribuição eficiente de Ordens de Serviço (OS)
 
@@ -127,8 +127,10 @@ A documentação do Lumos foi estruturada para **aprendizado progressivo, rápid
 | **Gestão de Acesso** | Configuração de usuários e perfis | Criar perfis de acesso |
 | **Estoque** | Controle e movimentação de materiais | Criar almoxarifados |
 | **Contratos** | Gestão do ciclo contratual | Cadastrar contrato |
+| **Modo Ronda** | Agilidade para apontar pontos de manutenções | Conhecer o modo ronda |
 | **Execução** | Uso das Ordens de Serviço | Iniciar uma OS |
 | **Relatórios** | Análise de dados operacionais | Personalizar relatórios |
+| **Painel Cidadão** | Acesso público para o cidadão abrir chamados | Conhecer o Painel Cidadão |
 
 ---
 
@@ -136,12 +138,12 @@ A documentação do Lumos foi estruturada para **aprendizado progressivo, rápid
 
 Se você é um usuário novo ou está em período de avaliação:
 
-- O Lumos é **autoatendimento**
+- O Lumos IP é **autodidata**
 - O primeiro acesso é imediato
 - Não é necessário contato com o suporte para iniciar os testes
 
 👉 **Próximo passo recomendado:**  
-**[🔗 Primeiro Acesso ao Sistema](02-first-access.md)**
+**[🔗 Acesso a plataforma](02-first-access)**
 
 ---
 
@@ -149,8 +151,10 @@ Se você é um usuário novo ou está em período de avaliação:
 
 > Se você domina:
 > - Gestão de usuários  
+> - Controle de equipes  
+> - Gerenciamento de contratos  
 > - Movimentação de estoque  
 > - Execução de OS com evidências  
 > - Relatórios operacionais e fotográficos  
 >
-> 👉 Você domina o Lumos.
+> 👉 Você domina o Lumos IP.

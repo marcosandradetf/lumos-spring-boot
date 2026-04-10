@@ -1,0 +1,151 @@
+<section class="first-access-shell relative min-h-screen overflow-hidden bg-slate-950 text-surface-50">
+  <img
+    src="/public/lumos-login-bg.png"
+    alt="Iluminação pública urbana"
+    class="absolute inset-0 h-full w-full object-cover object-center opacity-15"
+  />
+
+  <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(14,165,233,0.24),_transparent_30%),radial-gradient(circle_at_bottom_right,_rgba(245,158,11,0.12),_transparent_26%)]"></div>
+
+  <div class="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center px-4 py-8 sm:px-6">
+    <div class="grid w-full gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+      <div class="first-access-panel hidden rounded-[2rem] border border-white/10 p-10 lg:block">
+        <div class="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-2 text-sm text-emerald-100">
+          <i class="pi pi-shield"></i>
+          Ativação segura
+        </div>
+
+        <h1 class="mt-6 text-4xl font-semibold leading-tight text-white">
+          Defina sua senha sem expor credenciais.
+        </h1>
+
+        <p class="mt-4 max-w-xl text-base leading-7 text-slate-300">
+          No primeiro acesso, use seu CPF e o código gerado pelo administrador para ativar a conta e criar sua senha com segurança.
+        </p>
+
+        <div class="mt-8 grid gap-3">
+          <div class="first-access-feature rounded-2xl px-4 py-4 text-slate-200">
+            <i class="pi pi-check-circle mr-2 text-emerald-300"></i>
+            O código é temporário e expira automaticamente.
+          </div>
+          <div class="first-access-feature rounded-2xl px-4 py-4 text-slate-200">
+            <i class="pi pi-lock mr-2 text-cyan-200"></i>
+            Sua senha é definida apenas por você e nunca é exibida ao administrador.
+          </div>
+          <div class="first-access-feature rounded-2xl px-4 py-4 text-slate-200">
+            <i class="pi pi-key mr-2 text-amber-200"></i>
+            Após ativar, volte ao login e entre normalmente.
+          </div>
+        </div>
+      </div>
+
+      <p-card class="first-access-card block rounded-[2rem] border border-white/10 shadow-2xl shadow-slate-950/30">
+        <div class="mb-8 text-center">
+          <div class="mx-auto mb-4 flex h-[4.75rem] w-[4.75rem] items-center justify-center rounded-[1.5rem] border border-white/10 bg-white/[0.08]">
+            <img ngSrc="/public/icon-192.png" width="64" height="64" alt="Lumos" class="drop-shadow-lg" />
+          </div>
+
+          <div class="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-cyan-100">
+            <i class="pi pi-key"></i>
+            Ativação da conta
+          </div>
+
+          <h2 class="text-3xl font-semibold tracking-tight text-white">
+            Primeiro acesso
+          </h2>
+          <p class="mt-2 text-sm leading-6 text-slate-300">
+            Informe seus dados para ativar a conta e cadastrar sua senha.
+          </p>
+        </div>
+
+        <form #form="ngForm" (ngSubmit)="activate(form)" class="space-y-5">
+          <div class="first-access-form-panel space-y-5 rounded-[1.75rem] p-5 sm:p-6">
+            <div class="grid gap-5">
+              <div class="flex flex-col gap-2">
+            <label class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">
+              CPF
+            </label>
+            <input
+              pInputText
+              type="text"
+              name="cpf"
+              [(ngModel)]="cpf"
+              required
+              minlength="11"
+              maxlength="14"
+              inputmode="numeric"
+              autocomplete="username"
+              class="first-access-input w-full rounded-2xl px-4 py-3.5"
+              placeholder="Digite seu CPF"
+            />
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">
+              Código de ativação
+            </label>
+            <input
+              pInputText
+              type="text"
+              name="activationCode"
+              [(ngModel)]="activationCode"
+              required
+              autocomplete="one-time-code"
+              class="first-access-input w-full rounded-2xl px-4 py-3.5 uppercase"
+              placeholder="Digite o código recebido"
+            />
+          </div>
+
+              <div class="grid gap-5 sm:grid-cols-2">
+                <div class="flex flex-col gap-2">
+                  <label class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">
+                    Nova senha
+                  </label>
+                  <p-password
+                    name="newPassword"
+                    [(ngModel)]="newPassword"
+                    required
+                    minlength="8"
+                    autocomplete="new-password"
+                    [toggleMask]="true"
+                    inputStyleClass="first-access-input w-full rounded-2xl px-4 py-3.5"
+                  />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                  <label class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">
+                    Confirmar senha
+                  </label>
+                  <p-password
+                    name="confirmPassword"
+                    [(ngModel)]="confirmPassword"
+                    required
+                    minlength="8"
+                    autocomplete="new-password"
+                    [feedback]="false"
+                    [toggleMask]="true"
+                    inputStyleClass="first-access-input w-full rounded-2xl px-4 py-3.5"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <p-message *ngIf="errorMessage" severity="error" [text]="errorMessage" styleClass="w-full"></p-message>
+
+          <p-button
+            label="Ativar conta"
+            type="submit"
+            [loading]="loading"
+            [disabled]="loading"
+            styleClass="w-full !py-3.5 rounded-2xl font-semibold bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-500 text-white shadow-lg shadow-emerald-500/20"
+          ></p-button>
+
+          <a routerLink="/auth/login" class="text-center text-sm font-medium text-primary-200 transition-colors hover:text-primary-100">
+            Voltar para o login
+          </a>
+        </form>
+      </p-card>
+    </div>
+  </div>
+</section>

@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.authentication.controller;
 
+import com.lumos.lumosspring.authentication.dto.ActivateUserRequest;
 import com.lumos.lumosspring.authentication.dto.LoginRequest;
 import com.lumos.lumosspring.authentication.service.TokenService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -35,6 +36,11 @@ public class TokenController {
     @PostMapping("/auth/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody LoginRequest loginRequest) {
         return tokenService.forgotPassword(loginRequest);
+    }
+
+    @PostMapping("/auth/activate")
+    public ResponseEntity<?> activate(@RequestBody ActivateUserRequest request) {
+        return tokenService.activate(request);
     }
 
     @GetMapping("/get-qrcode-token")

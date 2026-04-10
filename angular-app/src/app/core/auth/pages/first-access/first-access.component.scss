@@ -1,0 +1,103 @@
+:host {
+  display: block;
+}
+
+.first-access-shell {
+  isolation: isolate;
+}
+
+.first-access-panel,
+.first-access-card {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
+    rgba(2, 6, 23, 0.5);
+  backdrop-filter: blur(26px);
+}
+
+.first-access-form-panel {
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.72), rgba(15, 23, 42, 0.52)),
+    rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.first-access-feature {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
+    rgba(2, 6, 23, 0.28);
+}
+
+::ng-deep {
+  .first-access-card .p-card {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    border-radius: inherit !important;
+
+    .p-card-body {
+      padding: 1.75rem !important;
+    }
+  }
+
+  .first-access-input,
+  .p-inputtext.first-access-input,
+  .p-password .p-password-input.first-access-input {
+    background: rgba(15, 23, 42, 0.58) !important;
+    border: 1px solid rgba(148, 163, 184, 0.2) !important;
+    color: #f8fafc !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease !important;
+  }
+
+  .first-access-input::placeholder,
+  .p-inputtext.first-access-input::placeholder,
+  .p-password .p-password-input.first-access-input::placeholder {
+    color: rgb(100 116 139) !important;
+  }
+
+  .first-access-input:hover,
+  .p-inputtext.first-access-input:hover,
+  .p-password .p-password-input.first-access-input:hover {
+    background: rgba(15, 23, 42, 0.72) !important;
+    border-color: rgba(148, 163, 184, 0.32) !important;
+  }
+
+  .first-access-input:focus,
+  .p-inputtext.first-access-input:focus,
+  .p-password .p-password-input.first-access-input:focus {
+    border-color: rgba(34, 197, 94, 0.72) !important;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.14) !important;
+    background: rgba(15, 23, 42, 0.84) !important;
+  }
+
+  .p-password {
+    width: 100%;
+
+    .p-password-toggle-mask,
+    .p-input-icon-right > .p-icon-wrapper {
+      color: rgb(148 163 184) !important;
+      right: 0.95rem !important;
+    }
+  }
+
+  .p-message {
+    border-left: 4px solid;
+    border-radius: 1rem;
+
+    .p-message-wrapper {
+      align-items: flex-start;
+    }
+  }
+
+  .p-message.p-message-error {
+    background: rgba(239, 68, 68, 0.11) !important;
+    border-left-color: #ef4444 !important;
+  }
+}
+
+@media (min-width: 640px) {
+  ::ng-deep .first-access-card .p-card .p-card-body {
+    padding: 2rem !important;
+  }
+}

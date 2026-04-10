@@ -1,6 +1,6 @@
-import {Injectable} from '@angular/core';
+import { Injectable } from '@angular/core';
 
-@Injectable({providedIn: 'root'})
+@Injectable({ providedIn: 'root' })
 export class User {
   public uuid!: string;
   public username!: string;
@@ -12,6 +12,7 @@ export class User {
 
   public roles!: string[]; // Perfis de acesso do usuário
   public relatedNotificationTopics!: string[]; // Equipes do usuário
+  public support!: boolean;
 
   constructor() {
   }
@@ -24,7 +25,8 @@ export class User {
     fullName: string,
     tenant: string,
     relatedNotificationTopics: string[],
-    email: string) {
+    email: string,
+    support: boolean) {
     this.uuid = uuid;
     this.username = username;
     this.accessToken = accessToken;
@@ -34,6 +36,7 @@ export class User {
     this.tenant = tenant;
     this.relatedNotificationTopics = relatedNotificationTopics;
     this.email = email;
+    this.support = support;
   }
 
 

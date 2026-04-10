@@ -13,6 +13,7 @@ import com.lumos.api.RequestResult.Success
 import com.lumos.api.RequestResult.SuccessEmptyBody
 import com.lumos.api.RequestResult.Timeout
 import com.lumos.api.RequestResult.UnknownError
+import com.lumos.domain.model.ActivateFirstAccessRequest
 import com.lumos.domain.model.LoginRequest
 import com.lumos.midleware.SecureStorage
 import com.lumos.notifications.NotificationManager
@@ -141,6 +142,32 @@ class AuthRepository(
         } catch (e: Exception) {
             Log.e("Login Error", "Erro ao fazer login: ${e.localizedMessage}")
             ServerError(-1, "${e.localizedMessage}")
+        }
+    }
+
+    suspend fun activateFirstAccess(
+        cpf: String,
+        activationCode: String,
+        newPassword: String,
+    ): RequestResult<Unit> {
+        val request = ActivateFirstAccessRequest(
+            cpf = cpf.filter { it.isDigit() },
+            activationCode = activationCode.trim(),
+            newPassword = newPassword
+        )
+
+        return try {
+            when (val response = ApiExecutor.execute { authApi.activateFirstAccess(request = request) }) {
+                is Success -> Success(Unit)
+                is SuccessEmptyBody -> Success(Unit)
+                is NoInternet -> NoInternet
+                is ServerError -> ServerError(response.code, response.message, response.errorCode)
+                is Timeout -> Timeout
+                is UnknownError -> UnknownError(response.error)
+            }
+        } catch (e: Exception) {
+            Log.e("FirstAccess Error", "Erro ao ativar conta: ${e.localizedMessage}")
+            ServerError(-1, e.localizedMessage)
         }
     }
 

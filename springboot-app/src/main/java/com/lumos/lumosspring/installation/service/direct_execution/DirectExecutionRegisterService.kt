@@ -323,7 +323,7 @@ class DirectExecutionRegisterService(
         itemDependency.forEach { dependency ->
             val dependencyItem = item.copy(
                 contractItemId = dependency.contractItemId,
-                executedQuantity = item.executedQuantity * dependency.factor,
+                executedQuantity = item.executedQuantity,
                 directExecutionStreetItemId = null,
                 materialStockId = null
             )
@@ -334,7 +334,7 @@ class DirectExecutionRegisterService(
                 directExecutionRepositoryStreetItem.save(dependencyItem)
                 contractItemsQuantitativeRepository.updateBalance(
                     dependency.contractItemId,
-                    item.executedQuantity * dependency.factor
+                    item.executedQuantity
                 )
             }
         }

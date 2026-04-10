@@ -100,9 +100,9 @@ export class HeaderComponent implements OnInit {
             key: 'notifications',
             severity: 'warn',
             summary: 'Notificações bloqueadas',
-            detail: 'Você bloqueou notificações do navegador. Para receber alertas, clique no ícone ao lado do endereço do site na barra de navegação, depois em Configurações do site e habilite as notificações..',
+            detail: 'Você bloqueou notificações do navegador. Para não perder nenhuma atualização importante, é essencial permitir as notificações do Lumos no seu dispositivo.\n\nClique para saber como ativar',
             life: 8000,
-            data: {}
+            data: {openGuide: 'notification'}
         });
     }
 }

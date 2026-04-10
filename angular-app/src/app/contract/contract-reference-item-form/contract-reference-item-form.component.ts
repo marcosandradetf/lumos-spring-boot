@@ -75,7 +75,6 @@ export class ContractReferenceItemFormComponent {
         { label: 'FITA ISOLANTE ADESIVO', value: 'FITA ISOLANTE ADESIVO', requiresMaterial: true },
         { label: 'POSTE', value: 'POSTE', requiresMaterial: true },
         { label: 'EXTENSÃO DE REDE', value: 'EXTENSÃO DE REDE', requiresMaterial: false },
-        { label: 'CEMIG', value: 'CEMIG', requiresMaterial: false },
         { label: 'CINTA', value: 'CINTA', requiresMaterial: true },
         { label: 'PARAFUSO', value: 'PARAFUSO', requiresMaterial: true },
         { label: 'FITA ISOLANTE AUTOFUSÃO', value: 'FITA ISOLANTE AUTOFUSÃO', requiresMaterial: true },

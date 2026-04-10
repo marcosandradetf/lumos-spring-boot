@@ -1,13 +1,13 @@
 <div class="h-screen transition-all duration-300 ease-in-out hidden md:block">
-  <div
+  <div (click)="router.navigate([''])"
     class="flex items-center gap-2 px-3 py-2 border border-neutral-200 dark:border-neutral-800 m-2 rounded cursor-pointer">
-    <img
-      ngSrc="/public/icon-192.png"
-      alt="Lumos"
-      height="32" width="32"/>
-    <span class="font-semibold text-lg ml-1 text-gray-800 dark:text-neutral-200 select-none">Lumos™</span>
+    <img ngSrc="/public/icon-192.png" alt="Lumos" height="32" width="32" />
+    <span class="flex items-center font-semibold text-lg select-none tracking-tight">
+      <span class="text-blue-900 dark:text-neutral-100">Lumos</span>
+      <span class="text-green-600 dark:text-green-400 ml-1">IP</span>
+      <span class="text-xs align-top ml-0.5 text-gray-500 dark:text-neutral-400">™</span>
+    </span>
   </div>
   <p-panelmenu [multiple]="true" [model]="items" styleClass="text-xs p-2" *ngIf="menuOpen"></p-panelmenu>
 </div>
-<p-panelmenu [multiple]="true" [model]="items" styleClass="text-xs p-2 md:hidden"
-             *ngIf="showDrawer"></p-panelmenu>
+<p-panelmenu [multiple]="true" [model]="items" styleClass="text-xs p-2 md:hidden" *ngIf="showDrawer"></p-panelmenu>

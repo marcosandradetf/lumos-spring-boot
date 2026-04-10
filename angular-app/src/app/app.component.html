@@ -4,27 +4,22 @@
 
     @if (authService.isLoggedIn$ | async) {
 
-      <!-- SIDEBAR -->
-      <div *ngIf="menuOpen"
-           #menu
-           [style.width.px]="sidebarWidth"
-           class="border-r
+    <!-- SIDEBAR -->
+    <div *ngIf="menuOpen" #menu [style.width.px]="sidebarWidth" class="border-r
                 hidden md:block
                 overflow-y-auto overflow-x-hidden
                 max-h-screen mac-scroll
                 bg-white dark:bg-neutral-900
                 transition-[width] duration-150 ease-out">
 
-        <app-sidebar></app-sidebar>
-      </div>
+      <app-sidebar></app-sidebar>
+    </div>
 
-      <!-- DRAG HANDLE -->
-      <div *ngIf="menuOpen"
-           class="w-1 cursor-col-resize
+    <!-- DRAG HANDLE -->
+    <div *ngIf="menuOpen" class="w-1 cursor-col-resize
                 bg-transparent hover:bg-blue-400/60
-                transition-colors"
-           (mousedown)="startResizing($event)">
-      </div>
+                transition-colors" (mousedown)="startResizing($event)">
+    </div>
 
     }
     <div class="max-h-screen overflow-auto w-screen mac-scroll">
@@ -33,9 +28,9 @@
       <app-account-drawer></app-account-drawer>
 
       @if (authService.isLoggedIn$ | async) {
-        <div class="border-r overflow-y-auto overflow-x-hidden max-h-screen mac-scroll" #menu>
-          <app-header></app-header>
-        </div>
+      <div class="border-r overflow-y-auto overflow-x-hidden max-h-screen mac-scroll" #menu>
+        <app-header></app-header>
+      </div>
       }
       <router-outlet></router-outlet>
     </div>
@@ -50,15 +45,44 @@
 
 <!--<app-loading-overlay [loading]="(logoutLoading$ | async) ?? false"></app-loading-overlay>-->
 
+<div *ngIf="embeddedDocOpen" class="fixed inset-0 z-40 bg-slate-950/35 backdrop-blur-[2px]"
+  (click)="closeEmbeddedDoc()"></div>
+
+<section *ngIf="embeddedDocOpen"
+  class="fixed inset-y-0 right-0 z-50 flex h-full w-full max-w-[96vw] flex-col bg-white shadow-2xl dark:bg-slate-900 lg:w-[min(1200px,92vw)]">
+  <div
+    class="flex flex-col gap-3 border-b border-slate-200 px-4 py-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+        Documentação incorporada
+      </p>
+
+      <h3 class="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+        {{ embeddedDocTitle }}
+      </h3>
+
+      <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        {{ embeddedDocDescription }}
+      </p>
+    </div>
+
+    <button class="btn btn-outline w-full sm:w-auto" type="button" (click)="closeEmbeddedDoc()">
+      Fechar
+    </button>
+  </div>
+
+  <div class="flex-1 overflow-y-none p-4 sm:p-5" (click)="$event.stopPropagation()">
+    <iframe *ngIf="embeddedDocUrl" [src]="embeddedDocUrl"
+      class="min-h-[85vh] w-full rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950"
+      referrerpolicy="strict-origin-when-cross-origin" title="Documentação incorporada do Lumos">
+    </iframe>
+  </div>
+</section>
+
 <div class="p-toast p-component p-toast-top-right" ng-reflect-key="notifications">
-  <p-toast
-    key="notifications"
-    position="top-right"
-    styleClass="corporate-toast">
+  <p-toast key="notifications" position="top-right" styleClass="corporate-toast">
     <ng-template let-message pTemplate="message">
-      <div
-        (click)="onToastClick(message.data)"
-        class="group relative w-96 cursor-pointer
+      <div (click)="onToastClick(message.data)" class="group relative w-96 cursor-pointer
              bg-white dark:bg-neutral-950
              border border-slate-200 dark:border-neutral-800
              rounded-xl shadow-lg
@@ -66,9 +90,7 @@
              transition-all duration-200
              hover:shadow-xl hover:-translate-y-0.5">
         <!-- Barra lateral de severidade -->
-        <div
-          class="absolute left-0 top-0 bottom-0 w-1"
-          [ngClass]="{
+        <div class="absolute left-0 top-0 bottom-0 w-1" [ngClass]="{
           'bg-emerald-500': message.severity === 'success',
           'bg-blue-500': message.severity === 'info',
           'bg-amber-500': message.severity === 'warn',
@@ -79,8 +101,7 @@
           <!-- Header -->
           <div class="flex items-start justify-between gap-3">
             <div class="flex items-start gap-3">
-              <div
-                class="w-9 h-9 flex items-center justify-center rounded-lg
+              <div class="w-9 h-9 flex items-center justify-center rounded-lg
                      bg-slate-100 dark:bg-neutral-800
                      text-slate-600 dark:text-neutral-300">
 

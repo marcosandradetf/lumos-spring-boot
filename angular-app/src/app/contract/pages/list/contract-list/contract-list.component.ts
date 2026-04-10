@@ -104,6 +104,7 @@ export class ContractListComponent implements OnInit {
                         linking: item.linking ?? '',
                         itemDependency: '',
                         quantity: item.contractedQuantity,
+                        factor: item.factor,
                         price: item.unitPrice,
                         totalExecuted: item.totalExecuted,
                         contractItemId: item.contractItemId,
@@ -417,7 +418,7 @@ export class ContractListComponent implements OnInit {
         status: 'ACTIVE' | 'ARCHIVED';
     } = {
         contractor: null,
-        startDate: new Date(new Date().setMonth(new Date().getMonth() - 3)),
+        startDate: new Date(new Date().setMonth(new Date().getMonth() - 6)),
         endDate: new Date(),
         status: 'ACTIVE',
     };
@@ -432,8 +433,8 @@ export class ContractListComponent implements OnInit {
         if (!this.filters.contractor) {
             const days = Utils.diffInDays(this.filters.startDate!, this.filters.endDate!);
 
-            if (days > 93) {
-                this.utils.showMessage("O Período máximo é de 3 meses.", 'warn', 'Período inválido');
+            if (days > 186) {
+                this.utils.showMessage("O Período máximo é de 6 meses.", 'warn', 'Período inválido');
                 return;
             }
         }
@@ -503,6 +504,7 @@ export class ContractListComponent implements OnInit {
                 linking: "",
                 itemDependency: "",
                 quantity: item.contractedQuantity,
+                factor: item.factor,
                 price: item.unitPrice,
                 contractItemId: item.contractItemId,
                 executedQuantity: item.executedQuantity,

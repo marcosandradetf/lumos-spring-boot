@@ -185,6 +185,7 @@ public class DepositService {
             region = regionRepository.findById(deposit.getRegion()).orElseThrow().getRegionName();
 
             stockistsDto.add(new StockistModel(
+                    stockist.getStockistId(),
                     stockist.getUserId().toString(),
                     user.getCompletedName(),
                     deposit.getIdDeposit(),

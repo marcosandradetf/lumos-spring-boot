@@ -1,7 +1,7 @@
 import {NgClass, NgForOf, NgIf} from '@angular/common';
 import {Component} from '@angular/core';
 import {FormsModule, NgForm} from '@angular/forms';
-import {Title} from '@angular/platform-browser';
+import {DomSanitizer, SafeResourceUrl, Title} from '@angular/platform-browser';
 import {Router} from '@angular/router';
 import {catchError, finalize, forkJoin, map, of, switchMap, tap, throwError} from 'rxjs';
 import {Toast} from 'primeng/toast';
@@ -70,11 +70,16 @@ export class StockistsComponent {
     saving = false;
     showConfirmation = false;
     isFallbackData = false;
+    embeddedDocOpen = false;
+    embeddedDocTitle = '';
+    embeddedDocDescription = '';
+    embeddedDocUrl: SafeResourceUrl | null = null;
 
     deposits: Deposit[] = [];
     availableUsers: UserOption[] = [];
     stockists: StockistManagement[] = [];
     selectedStockist: StockistManagement | null = null;
+    readonly documentationUrl = 'https://lumosip.com.br/como-usar/04-stock/01-stockist-management/';
 
     stockist: StockistFormValue = this.createEmptyForm();
 
@@ -84,11 +89,26 @@ export class StockistsComponent {
         private authService: AuthService,
         private utils: UtilsService,
         private title: Title,
-        protected router: Router
+        protected router: Router,
+        private sanitizer: DomSanitizer
     ) {
         this.title.setTitle('Configurações - Estoquistas');
         SharedState.setCurrentPath(['Configurações', 'Estoquistas']);
         this.loadPageData();
+    }
+
+    openDocumentation() {
+        this.embeddedDocTitle = 'Cadastro de Estoquistas';
+        this.embeddedDocDescription = 'Guia para cadastrar responsáveis por almoxarifados e estruturar o controle de estoque.';
+        this.embeddedDocUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.documentationUrl);
+        this.embeddedDocOpen = true;
+    }
+
+    closeDocumentation() {
+        this.embeddedDocOpen = false;
+        this.embeddedDocTitle = '';
+        this.embeddedDocDescription = '';
+        this.embeddedDocUrl = null;
     }
 
     setOpen(force?: boolean) {
@@ -236,7 +256,7 @@ export class StockistsComponent {
             ),
             users: this.userService.getUsers().pipe(
                 map(users => users
-                    .filter(user => user.status)
+                    .filter(user => user.status === true || user.status === 'ACTIVE')
                     .map(user => ({
                         userId: user.userId,
                         name: `${user.name} ${user.lastname}`.trim(),
@@ -268,7 +288,7 @@ export class StockistsComponent {
             map(stockists => {
                 this.isFallbackData = false;
                 return stockists.map(stockist => ({
-                        stockistId: null,
+                        stockistId: stockist.stockistId,
                         depositIdDeposit: stockist.depositId,
                         userIdUser: stockist.userId,
                         notificationCode: this.generateUuid(),
@@ -285,7 +305,7 @@ export class StockistsComponent {
                 map(stockists => {
                     this.isFallbackData = true;
                     return stockists.map(stockist => ({
-                        stockistId: null,
+                        stockistId: stockist.stockistId,
                         depositIdDeposit: stockist.depositId,
                         userIdUser: stockist.userId,
                         notificationCode: this.generateUuid(),

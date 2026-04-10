@@ -712,6 +712,7 @@ export class ExecutionNoWorkServiceComponent implements OnInit {
                 linking: item.referenceItem.linking ?? '',
                 itemDependency: item.referenceItem.itemDependency ?? '',
                 quantity: item.contractedQuantity,
+                factor: item.factor,
                 price: Number(item.unitPrice) ?? '',
                 totalExecuted: item.quantityExecuted,
                 contractItemId: item.contractItemId,

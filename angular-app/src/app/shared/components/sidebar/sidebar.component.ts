@@ -1,10 +1,10 @@
-import {Component, EventEmitter, Input, model, OnInit, Output} from '@angular/core';
-import {AsyncPipe, NgIf, NgOptimizedImage} from '@angular/common';
-import {Router} from '@angular/router';
-import {PanelMenu} from 'primeng/panelmenu';
-import {MenuItem} from 'primeng/api';
-import {UtilsService} from '../../../core/service/utils.service';
-import {SharedState} from '../../../core/service/shared-state';
+import { Component, EventEmitter, Input, model, OnInit, Output } from '@angular/core';
+import { AsyncPipe, NgIf, NgOptimizedImage } from '@angular/common';
+import { Router } from '@angular/router';
+import { PanelMenu } from 'primeng/panelmenu';
+import { MenuItem } from 'primeng/api';
+import { UtilsService } from '../../../core/service/utils.service';
+import { SharedState } from '../../../core/service/shared-state';
 
 @Component({
     selector: 'app-sidebar',
@@ -33,12 +33,19 @@ export class SidebarComponent implements OnInit {
     items: MenuItem[] | undefined;
     showDrawer = false;
     configurationFinished = false;
+    isSupport = false;
 
-    constructor(private utils: UtilsService, protected router: Router) {
+    constructor(
+        private utils: UtilsService, 
+        protected router: Router,
+    ) {
+
     }
 
     ngOnInit(): void {
         const isMobile = window.innerWidth <= 1024;
+        const isSupport = localStorage.getItem('isSupport');
+        this.isSupport = isSupport !== null && isSupport === 'true';
 
         SharedState.showMenuDrawer$.subscribe((open) => {
             this.showDrawer = open;
@@ -83,7 +90,7 @@ export class SidebarComponent implements OnInit {
         savedMenuState = localStorage.getItem('toggleport');
         if (savedMenuState !== null) this.bToggleReports = JSON.parse(savedMenuState);
 
-        if(!this.configurationFinished) {
+        if (!this.configurationFinished) {
             this.bToggleContracts = true;
             this.bToggleStock = true;
             this.bToggleSettings = true;
@@ -95,12 +102,48 @@ export class SidebarComponent implements OnInit {
                 label: 'Primeiros passos', // título mais curto e direto
                 title: 'Visualize a localização das execuções em campo',
                 icon: 'pi pi-play', // azul = informação/visualização
-                routerLink: ['/dashboard/mapa-execucoes'],
+                routerLink: ['/configuracoes/onboarding'],
                 visible: !this.configurationFinished,
                 command: () => {
                     SharedState.showMenuDrawer$.next(false);
                 }
             },
+
+            {
+                label: 'Administração SaaS',
+                visible: this.isSupport,
+                icon: 'pi pi-sliders-v dark:text-neutral-200 text-gray-800',
+                expanded: this.bToggleSettings,
+                items: [
+                    {
+                        disabled: true,
+                        label: 'Adicionar novo cliente',
+                        icon: 'pi pi-plus text-blue-500',
+                        routerLink: ['/configuracoes/usuarios'],
+                        command: () => {
+                            SharedState.showMenuDrawer$.next(false);
+                        }
+                    },
+                    {
+                        label: 'Contratos pendentes',
+                        icon: 'pi pi-book text-blue-500',
+                        routerLink: ['/configuracoes/conta'],
+                        command: () => {
+                            SharedState.showMenuDrawer$.next(false);
+                        }
+                    },
+                    {
+                        disabled: false,
+                        label: 'Faturamento de Clientes',
+                        icon: 'pi pi-wallet text-blue-500',
+                        routerLink: ['/configuracoes/conta'],
+                        command: () => {
+                            SharedState.showMenuDrawer$.next(false);
+                        }
+                    },
+                ]
+            },
+
             {
                 label: 'Dashboards',
                 icon: 'pi pi-chart-bar dark:text-neutral-200 text-gray-800', // ícone mais relacionado a dashboards
@@ -117,7 +160,7 @@ export class SidebarComponent implements OnInit {
 
                     },
                     {
-                        disabled: true,
+                        disabled: false,
                         label: 'Visão Executiva', // título mais natural
                         title: 'Acompanhe a produtividade e tempo das equipes',
                         icon: 'pi pi-compass text-purple-700', // verde = performance/progresso
@@ -127,7 +170,7 @@ export class SidebarComponent implements OnInit {
                         }
                     },
                     {
-                        disabled: true,
+                        disabled: false,
                         label: 'Produtividade da Equipe', // título mais natural
                         title: 'Acompanhe a produtividade e tempo das equipes',
                         icon: 'pi pi-users text-green-500', // verde = performance/progresso
@@ -154,14 +197,14 @@ export class SidebarComponent implements OnInit {
                                 label: 'Criar sem pré-medição',
                                 icon: 'pi pi-plus text-green-500',
                                 routerLink: ['/contratos/listar'],
-                                queryParams: {for: 'execution'},
-                                        command: () => SharedState.showMenuDrawer$.next(false)
+                                queryParams: { for: 'execution' },
+                                command: () => SharedState.showMenuDrawer$.next(false)
                             },
                             {
                                 label: 'Usar pré-medição analisada',
                                 icon: 'pi pi-clipboard text-blue-500',
                                 routerLink: 'pre-medicao/disponivel',
-                                        command: () => SharedState.showMenuDrawer$.next(false)
+                                command: () => SharedState.showMenuDrawer$.next(false)
                             }
                         ]
                     },
@@ -229,7 +272,7 @@ export class SidebarComponent implements OnInit {
                         label: 'Pendentes de Aprovação',
                         icon: 'pi pi-clock text-yellow-500',
                         routerLink: ['/requisicoes'],
-                        queryParams: {status: 'PENDING'},
+                        queryParams: { status: 'PENDING' },
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
                         }
@@ -238,7 +281,7 @@ export class SidebarComponent implements OnInit {
                         label: 'Disponíveis para Coleta',
                         icon: 'pi pi-check-circle text-green-500',
                         routerLink: ['/requisicoes'],
-                        queryParams: {status: 'APPROVED'},
+                        queryParams: { status: 'APPROVED' },
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
                         }
@@ -268,15 +311,7 @@ export class SidebarComponent implements OnInit {
                         expanded: true,
                         items: [
                             {
-                                        label: 'Analítico de Operações',
-                                icon: 'pi pi-sliders-h text-blue-500',
-                                routerLink: ['/relatorios/execucoes/analitico-de-operacoes'],
-                                command: () => {
-                                    SharedState.showMenuDrawer$.next(false);
-                                }
-                            },
-                            {
-                                        label: 'Manutenções (30 dias)',
+                                label: 'Manutenções',
                                 icon: 'pi pi-wrench text-blue-500',
                                 routerLink: ['/relatorios/manutencoes'],
                                 command: () => {
@@ -284,15 +319,23 @@ export class SidebarComponent implements OnInit {
                                 }
                             },
                             {
-                                        label: 'Instalações (90 dias)',
+                                label: 'Instalações',
                                 icon: 'pi pi-lightbulb text-blue-500',
                                 routerLink: ['/relatorios/instalacoes'],
                                 command: () => {
                                     SharedState.showMenuDrawer$.next(false);
                                 }
                             },
+                                          {
+                                label: 'Analítico de Operações',
+                                icon: 'pi pi-sliders-h text-blue-500',
+                                routerLink: ['/relatorios/execucoes/analitico-de-operacoes'],
+                                command: () => {
+                                    SharedState.showMenuDrawer$.next(false);
+                                }
+                            },
                             {
-                                        label: 'Agrupados',
+                                label: 'Agrupados',
                                 icon: 'pi pi-box text-blue-500',
                                 routerLink: ['/relatorios/gerenciamento'],
                                 command: () => {
@@ -307,7 +350,7 @@ export class SidebarComponent implements OnInit {
                         expanded: false,
                         items: [
                             {
-                                        label: 'Saída/Saldo por Instalação',
+                                label: 'Saída/Saldo por Instalação',
                                 icon: 'pi pi-hammer text-orange-400',
                                 routerLink: ['/relatorios/estoque/saida-saldo-instalacao'],
                                 command: () => {
@@ -360,7 +403,7 @@ export class SidebarComponent implements OnInit {
                         label: 'Listar Contratos',
                         icon: 'pi pi-folder-open text-blue-500',
                         routerLink: ['/contratos/listar'],
-                        queryParams: {for: 'view'},
+                        queryParams: { for: 'view' },
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
                         },
@@ -475,10 +518,14 @@ export class SidebarComponent implements OnInit {
                     },
                     {
                         label: 'Estoquistas',
-                        icon: 'pi pi-id-card text-blue-500'
+                        icon: 'pi pi-id-card text-blue-500',
+                        routerLink: ['/configuracoes/estoquistas'],
+                        command: () => {
+                            SharedState.showMenuDrawer$.next(false);
+                        }
                     }
                 ]
-            }
+            },
         ];
 
     }

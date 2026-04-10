@@ -1,173 +1,472 @@
-<div class="flex" #top>
-  <div class="w-full h-full">
+<p-toast></p-toast>
 
-    <form #teamForm="ngForm" (ngSubmit)="submitTeams(teamForm)"
-          class="w-full pl-2 items-center justify-center">
+<app-guide-state *ngIf="users.length === 0 && !loading" icon="pi pi-users" title="Antes de cadastrar equipes"
+  subtitle="Para continuar, primeiro cadastre os usuários que poderão compor as equipes no sistema." [steps]="[
+    [true, 'Cadastrar usuários com função de eletricista para que possam ser vinculados às equipes.'],
+    [true, 'Cadastrar usuários com função de motorista para completar a estrutura necessária das equipes.']
+  ]" [hasButtonLabel]="true" buttonLabel="Ir para cadastro de usuários" buttonRoute="/configuracoes/usuarios"
+  buttonIcon="pi pi-plus">
+</app-guide-state>
 
-        <div class="flex items-center gap-3 pb-2">
-          <!-- Botão adicionar -->
-          <button
-            class="btn btn-primary btn-circle btn-sm tooltip tooltip-right"
-            (click)="newTeam()"
-            type="button"
-            data-tip="Adicionar equipe">
-            <i class="pi pi-user-plus"></i>
-          </button>
+<app-loading *ngIf="loading"></app-loading>
 
-          <!-- Botão remover -->
-          <button
-            class="btn btn-error btn-circle btn-sm tooltip tooltip-right"
-            (click)="removeTeam()"
-            type="button"
-            data-tip="Remover equipe">
-            <i class="pi pi-user-minus"></i>
-          </button>
+<div class="w-full px-4 py-6" #top *ngIf="users.length > 0 && !loading">
+  <div class="mx-auto flex w-full max-w-7xl flex-col gap-6">
+    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div>
+        <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">
+          Equipes
+        </h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Estruture equipes operacionais, vincule caminhões e oriente o uso do app com contexto na própria tela.
+        </p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <button class="btn btn-outline btn-sm md:btn-md" type="button" (click)="openDocumentation('setup-teams')">
+          <i class="pi pi-book"></i>
+          <span class="hidden sm:inline">Como montar equipes</span>
+        </button>
+
+        <button class="btn btn-outline btn-sm md:btn-md" (click)="router.navigate(['/estoque/caminhoes'])"
+          type="button">
+          <i class="pi pi-truck"></i>
+          <span class="hidden sm:inline">Ver caminhões</span>
+        </button>
+
+        <div class="relative">
+          <div class="flex overflow-hidden rounded-xl border border-cyan-600 shadow-sm">
+            <button class="btn btn-primary btn-sm rounded-none border-0 md:btn-md" (click)="newTeam()" type="button">
+              <i class="pi pi-users"></i>
+              <span class="hidden sm:inline">Nova equipe</span>
+            </button>
+
+            <button class="btn btn-primary btn-sm rounded-none border-0 border-l border-cyan-500 px-3 md:btn-md"
+              type="button" (click)="toggleQuickAddMenu()">
+              <i class="pi" [ngClass]="quickAddMenuOpen ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+            </button>
+          </div>
+
+          <div *ngIf="quickAddMenuOpen"
+            class="absolute right-0 z-20 mt-2 w-64 rounded-xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-800 dark:bg-neutral-900">
+            <p class="px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+              Cadastro rápido
+            </p>
+
+            <button *ngFor="let option of quickAddOptions"
+              class="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition hover:bg-slate-50 dark:hover:bg-slate-800"
+              type="button" (click)="addTeamsBatch(option)">
+              <span>Adicionar {{ option }} {{ option === 1 ? 'equipe' : 'equipes' }}</span>
+              <span class="text-xs text-slate-500 dark:text-slate-400">rascunho</span>
+            </button>
+          </div>
         </div>
 
+        <button *ngIf="hasDraftTeams"
+          class="btn btn-outline btn-sm border-amber-300 text-amber-800 hover:bg-amber-50 md:btn-md dark:border-amber-800 dark:text-amber-200 dark:hover:bg-amber-950/30"
+          (click)="removeTeam()" type="button">
+          <i class="pi pi-trash"></i>
+          <span class="hidden sm:inline">Remover {{ draftTeamsCount }} {{ draftTeamsCount === 1 ? 'rascunho' :
+            'rascunhos' }}</span>
+        </button>
+      </div>
+    </div>
 
+    <div class="rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950/30">
+      <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div class="max-w-3xl">
+          <p class="text-sm font-semibold text-blue-900 dark:text-blue-100">
+            Fluxo guiado de operação em campo
+          </p>
+          <p class="mt-1 text-sm leading-6 text-blue-800 dark:text-blue-200">
+            Monte a equipe, defina região e placa corretamente e confirme o caminhão vinculado. Depois use a
+            orientação integrada para preparar a equipe no aplicativo.
+          </p>
+        </div>
+        <div class="flex flex-col gap-2">
 
-      <app-table [large]="false">
-        <tr header>
-          <th></th>
-          <th hidden>Código</th>
-          <th>Descrição</th>
-          <th class="max-w-52">Colaboradores</th>
-          <th>Placa do Caminhão</th>
-          <th class="max-w-52">Estado</th>
-          <th class="max-w-52">Cidade</th>
-          <th class="min-w-52">Região</th>
-        </tr>
+          <!-- Instalação -->
+          <button
+            class="min-h-12 btn btn-outline btn-sm flex items-center gap-2 border-green-300 text-green-800 hover:bg-green-600 dark:border-green-700 dark:text-green-100 dark:hover:bg-green-900/40"
+            type="button" (click)="openDocumentation('field-app')">
 
-        <tr *ngFor="let team of teams; let i = index" class="odd:bg-neutral-100 dark:odd:bg-neutral" body>
+            <i class="pi pi-download"></i>
+            <div class="flex flex-col items-start text-left leading-tight">
+              <span class="font-medium">Instalar o app</span>
+              <span class="text-xs opacity-70">Como orientar a equipe</span>
+            </div>
+          </button>
 
-          <!-- Ação principal (editar/cancelar/salvar) -->
-          <td [ngClass]="team.sel ? 'w-24' : ''">
-            <button
-              class="btn btn-info btn-circle btn-sm tooltip tooltip-right"
-              (click)="team.idTeam !== '' ? team.sel = !team.sel : removeTeam()"
-              type="button"
-              [attr.data-tip]="team.sel ? 'Cancelar' : 'Editar Equipe'">
-              <i class="pi" [ngClass]="team.sel ? 'pi-times' : 'pi-pencil'"></i>
-            </button>
-            <button
-              *ngIf="team.sel"
-              class="btn btn-info btn-circle btn-sm tooltip tooltip-right ml-2"
-              type="submit"
-              [attr.data-tip]="'Salvar'">
-              <i class="pi pi-save"></i>
-            </button>
-          </td>
+          <!-- Uso -->
+          <button
+            class="min-h-12 btn btn-outline btn-sm flex items-center gap-2 border-blue-300 text-blue-800 hover:bg-blue-600 dark:border-blue-700 dark:text-blue-100 dark:hover:bg-blue-900/40"
+            type="button" (click)="openDocumentation('day-to-day')">
 
-          <!-- ID -->
-          <td hidden>{{ team.idTeam }}</td>
+            <i class="pi pi-mobile"></i>
+            <div class="flex flex-col items-start text-left leading-tight">
+              <span class="font-medium">Usar o app</span>
+              <span class="text-xs opacity-70">Guia do dia a dia</span>
+            </div>
+          </button>
 
-          <!-- Nome da equipe -->
-          <td>
-            <ng-container *ngIf="team.sel; else showTeamName">
-              <input required
-                     [(ngModel)]="team.teamName"
-                     name="teamName{{i}}"
-                     type="text"
-                     placeholder="Insira o nome da equipe"
-                     class="input input-bordered input-sm"
-                     #teamName="ngModel">
-              <div *ngIf="teamName.invalid && (teamName.touched || teamForm.submitted)">
-                <small *ngIf="teamName.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid gap-6 ">
+      <section class="rounded-xl border bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+        <div class="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-800 dark:text-white">
+              Gerenciamento de equipes
+            </h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+              {{ totalTeamsCount }} equipes cadastradas e {{ draftTeamsCount }} rascunhos em preparação.
+            </p>
+          </div>
+
+          <div class="w-full lg:w-auto">
+            <input type="text" class="input input-bordered w-full lg:w-96"
+              placeholder="Pesquisar por equipe, placa, estado, cidade ou região" (input)="filterTeams($event)">
+          </div>
+        </div>
+
+        <form #teamForm="ngForm" (ngSubmit)="submitTeams(teamForm)">
+          <div *ngIf="teams.length === 0"
+            class="rounded-xl border border-dashed p-8 text-center text-sm text-gray-500 dark:text-gray-400">
+            Nenhuma equipe encontrada para a pesquisa informada.
+          </div>
+
+          <div *ngIf="teams.length > 0"
+            class="hidden md:block rounded-xl border border-slate-200 dark:border-slate-800">
+            <table class="w-full min-w-0 table-fixed border-collapse">
+              <thead class="bg-slate-50 dark:bg-slate-800/60">
+                <tr class="text-left text-xs uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
+                  <th class="w-24 px-3 py-3">Ações</th>
+                  <th class="w-[50%] px-3 py-3">Equipe/Caminhão</th>
+                  <th class="w-[12%] px-3 py-3">Placa</th>
+                  <th class="w-[10%] px-3 py-3">UF</th>
+                  <th class="w-[14%] px-3 py-3">Cidade</th>
+                  <th class="w-[14%] px-3 py-3">Região</th>
+                </tr>
+              </thead>
+
+              <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+                <ng-container *ngFor="let team of teams; let i = index">
+                  <tr class="align-top bg-white dark:bg-neutral-900">
+                    <td class="px-3 py-4">
+                      <div class="flex flex-wrap gap-2">
+                        <button class="btn btn-ghost btn-sm"
+                          (click)="team.idTeam !== '' ? team.sel = !team.sel : removeTeam()" type="button">
+                          <i class="pi" [ngClass]="team.sel ? 'pi-times' : 'pi-pencil'"></i>
+                        </button>
+
+                        <button *ngIf="team.sel" class="btn btn-primary btn-sm" type="submit">
+                          <i class="pi pi-save"></i>
+                        </button>
+                      </div>
+                    </td>
+
+                    <td class="px-3 py-4">
+                      <div class="min-w-0">
+                        <p class="truncate font-semibold text-slate-800 dark:text-slate-100">
+                          {{ team.teamName || 'Nova equipe' }}
+                        </p>
+                        <p class="mt-1 text-sm text-slate-700 dark:text-slate-200 whitespace-pre-line">
+                          @if(team.idTeam) {
+                            {{ team.memberNames.join('\n') || 'Nenhum colaborador selecionado' }}
+                          } @else {
+                            Rascunho aguardando salvamento
+                          }
+                        </p>
+                      </div>
+                    </td>
+
+                    <td class="px-3 py-4">
+                      <p class="text-sm text-slate-700 dark:text-slate-200">
+                        {{ team.plate || '-' }}
+                      </p>
+                    </td>
+
+                    <td class="px-3 py-4">
+                      <p class="text-sm text-slate-700 dark:text-slate-200">
+                        {{ team.UFName || '-' }}
+                      </p>
+                    </td>
+
+                    <td class="px-3 py-4">
+                      <p class="text-sm text-slate-700 dark:text-slate-200">
+                        {{ team.cityName || '-' }}
+                      </p>
+                    </td>
+
+                    <td class="px-3 py-4">
+                      <p class="text-sm text-slate-700 dark:text-slate-200">
+                        {{ team.regionName || 'Selecione a cidade' }}
+                      </p>
+                    </td>
+
+                  </tr>
+
+                  <tr *ngIf="team.sel" class="bg-slate-50/80 dark:bg-slate-950/30">
+                    <td colspan="8" class="px-3 py-4">
+                      <div
+                        class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-neutral-900">
+                        <div class="mb-4">
+                          <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                            Editar equipe
+                          </p>
+                          <p class="text-sm text-slate-500 dark:text-slate-400">
+                            Defina os integrantes, a região de atuação e os dados do caminhão vinculado.
+                          </p>
+                        </div>
+
+                        <div class="grid gap-4 xl:grid-cols-2">
+                          <div class="grid gap-3">
+                            <div>
+                              <input required [(ngModel)]="team.teamName" name="teamName{{i}}" type="text"
+                                placeholder="Insira o nome da equipe" class="input input-bordered w-full"
+                                #teamName="ngModel">
+                              <div *ngIf="teamName.invalid && (teamName.touched || teamForm.submitted)">
+                                <small *ngIf="teamName.errors?.['required']" class="text-red-600">Campo
+                                  obrigatório.</small>
+                              </div>
+                            </div>
+
+                            <p-multiselect name="team_{{ team.idTeam || i }}" [options]="users"
+                              [(ngModel)]="team.memberIds" optionLabel="name" optionValue="userId"
+                              placeholder="Selecionar colaboradores" [maxSelectedLabels]="3" appendTo="body"
+                              (onChange)="test(team)" class="w-full">
+                            </p-multiselect>
+
+                            <div>
+                              <input required [(ngModel)]="team.plate" name="plate{{i}}" type="text"
+                                placeholder="Insira a placa do veículo" (input)="utils.formatPlate($event)"
+                                minlength="7" maxlength="7" class="input input-bordered w-full" #plate="ngModel">
+                              <div *ngIf="plate.invalid && (plate.touched || teamForm.submitted)">
+                                <small *ngIf="plate.errors?.['required']" class="text-red-600">Campo
+                                  obrigatório.</small>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="grid gap-3">
+                            <div>
+                              <select class="select select-bordered w-full" [(ngModel)]="team.UFName" name="UFName{{i}}"
+                                required (change)="getCities(team.UFName)" #UFName="ngModel">
+                                <option value="" disabled>Selecione o estado</option>
+                                <option *ngFor="let uf of ufs" [value]="uf.sigla">{{ uf.nome }}</option>
+                              </select>
+                              <div *ngIf="UFName.invalid && (UFName.touched || teamForm.submitted)">
+                                <small *ngIf="UFName.errors?.['required']" class="text-red-600">Campo
+                                  obrigatório.</small>
+                              </div>
+                            </div>
+
+                            <div>
+                              <select (change)="updateRegion($any($event.target).value, i)"
+                                (click)="getCities(team.UFName)" [(ngModel)]="team.cityName"
+                                class="select select-bordered w-full" name="cityName{{i}}" [disabled]="!team.UFName"
+                                #cityName="ngModel" required>
+                                <option value="" disabled>Selecione a cidade</option>
+                                <option *ngFor="let city of cities" [value]="city.nome">{{ city.nome }}</option>
+                              </select>
+                              <div *ngIf="cityName.invalid && (cityName.touched || teamForm.submitted)">
+                                <small *ngIf="cityName.errors?.['required']" class="text-red-600">Campo
+                                  obrigatório.</small>
+                              </div>
+                            </div>
+
+                            <div class="rounded-lg bg-slate-50 px-3 py-3 text-sm dark:bg-slate-800/60">
+                              <p class="font-medium text-slate-800 dark:text-slate-100">
+                                Região: {{ team.regionName || 'Selecione a cidade para preencher' }}
+                              </p>
+                              <p class="mt-1 text-slate-500 dark:text-slate-400">
+                                Caminhão vinculado: {{ team.depositName || 'Será exibido após vinculação' }}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                </ng-container>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="md:hidden flex flex-col gap-4">
+            <div *ngFor="let team of teams; let i = index"
+              class="bg-white dark:bg-neutral-900 rounded-xl p-4 shadow border">
+              <div class="flex justify-between items-center mb-2">
+                <p class="font-semibold">{{ team.teamName || 'Nova equipe' }}</p>
+
+                <div class="flex gap-2">
+                  <button class="btn btn-ghost btn-xs"
+                    (click)="team.idTeam !== '' ? team.sel = !team.sel : removeTeam()" type="button">
+                    <i class="pi" [ngClass]="team.sel ? 'pi-times' : 'pi-pencil'"></i>
+                  </button>
+                </div>
               </div>
-            </ng-container>
-            <ng-template #showTeamName>{{ team.teamName }}</ng-template>
-          </td>
 
-          <!-- Colaboradores -->
-          <td>
-            <ng-container *ngIf="team.sel; else showMembers">
-              <p-multiselect
-                name="team_{{team.idTeam}}"
-                [options]="users"
-                [(ngModel)]="team.memberIds"
-                optionLabel="name"
-                optionValue="userId"
-                placeholder="Selecionar Colaboradores"
-                [maxSelectedLabels]="3"
-                (onChange)="test(team)"
-                class="w-full md:w-80">
-              </p-multiselect>
-            </ng-container>
-            <ng-template #showMembers>
-              {{ team.memberNames.join(', ') }}
-            </ng-template>
-          </td>
+              <ng-container *ngIf="team.sel; else mobileReadOnly">
+                <div class="flex flex-col gap-3">
+                  <div>
+                    <input required [(ngModel)]="team.teamName" name="mobileTeamName{{i}}" type="text"
+                      placeholder="Insira o nome da equipe" class="input input-bordered input-sm w-full">
+                  </div>
 
-          <!-- Placa do caminhão -->
-          <td>
-            <ng-container *ngIf="team.sel; else showPlate">
-              <input required
-                     [(ngModel)]="team.plate"
-                     name="plate{{i}}"
-                     type="text"
-                     placeholder="Insira a placa do veículo"
-                     (input)="utils.formatPlate($event)"
-                     minlength="7"
-                     maxlength="7"
-                     class="input input-bordered input-sm"
-                     #plate="ngModel">
-              <div *ngIf="plate.invalid && (plate.touched || teamForm.submitted)">
-                <small *ngIf="plate.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
-              </div>
-            </ng-container>
-            <ng-template #showPlate>{{ team.plate }}</ng-template>
-          </td>
+                  <div>
+                    <p-multiselect name="mobileTeamMembers{{ team.idTeam || i }}" [options]="users"
+                      [(ngModel)]="team.memberIds" optionLabel="name" optionValue="userId"
+                      placeholder="Selecionar Colaboradores" [maxSelectedLabels]="3" appendTo="body"
+                      (onChange)="test(team)" class="w-full">
+                    </p-multiselect>
+                  </div>
 
-          <!-- Estado -->
-          <td>
-            <ng-container *ngIf="team.sel; else showUF">
-              <select
-                class="select select-bordered select-sm"
-                [(ngModel)]="team.UFName"
-                name="UFName{{i}}"
-                required
-                (change)="getCities(team.UFName)"
-                #UFName="ngModel">
-                <option value="" disabled>Selecione o estado</option>
-                <option *ngFor="let uf of ufs" [value]="uf.sigla">{{ uf.nome }}</option>
-              </select>
-              <div *ngIf="UFName.invalid && (UFName.touched || teamForm.submitted)">
-                <small *ngIf="UFName.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
-              </div>
-            </ng-container>
-            <ng-template #showUF>{{ team.UFName }}</ng-template>
-          </td>
+                  <div>
+                    <input required [(ngModel)]="team.plate" name="mobilePlate{{i}}" type="text"
+                      placeholder="Insira a placa do veículo" (input)="utils.formatPlate($event)" minlength="7"
+                      maxlength="7" class="input input-bordered input-sm w-full">
+                  </div>
 
-          <!-- Cidade -->
-          <td>
-            <ng-container *ngIf="team.sel; else showCity">
-              <select
-                (change)="updateRegion($any($event.target).value, i)"
-                (click)="getCities(team.UFName)"
-                [(ngModel)]="team.cityName"
-                class="select select-sm select-bordered"
-                name="cityName{{i}}"
-                [disabled]="!team.UFName"
-                #cityName="ngModel"
-                required>
-                <option value="" disabled>Selecione a cidade</option>
-                <option *ngFor="let city of cities" [value]="city.nome">{{ city.nome }}</option>
-              </select>
-              <div *ngIf="cityName.invalid && (cityName.touched || teamForm.submitted)">
-                <small *ngIf="cityName.errors?.['required']" class="text-red-600">Campo obrigatório.</small>
-              </div>
-            </ng-container>
-            <ng-template #showCity>{{ team.cityName }}</ng-template>
-          </td>
+                  <div>
+                    <select class="select select-bordered select-sm w-full" [(ngModel)]="team.UFName"
+                      name="mobileUFName{{i}}" required (change)="getCities(team.UFName)">
+                      <option value="" disabled>Selecione o estado</option>
+                      <option *ngFor="let uf of ufs" [value]="uf.sigla">{{ uf.nome }}</option>
+                    </select>
+                  </div>
 
-          <!-- Região -->
-          <td>
-            {{ team.regionName ? team.regionName : 'Selecione a Cidade' }}
-          </td>
+                  <div>
+                    <select (change)="updateRegion($any($event.target).value, i)" (click)="getCities(team.UFName)"
+                      [(ngModel)]="team.cityName" class="select select-sm select-bordered w-full"
+                      name="mobileCityName{{i}}" [disabled]="!team.UFName" required>
+                      <option value="" disabled>Selecione a cidade</option>
+                      <option *ngFor="let city of cities" [value]="city.nome">{{ city.nome }}</option>
+                    </select>
+                  </div>
 
-        </tr>
-      </app-table>
-    </form>
+                  <div class="rounded-lg bg-slate-50 dark:bg-slate-800/60 px-3 py-2">
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Caminhão vinculado</p>
+                    <p class="text-sm font-medium text-gray-800 dark:text-gray-100">
+                      {{ team.depositName || 'Será exibido após vinculação' }}
+                    </p>
+                  </div>
+
+                  <button class="btn btn-primary btn-sm w-full" type="submit">
+                    <i class="pi pi-save"></i>
+                    Salvar equipe
+                  </button>
+                </div>
+              </ng-container>
+
+              <ng-template #mobileReadOnly>
+                <p class="text-sm text-gray-500">Colaboradores</p>
+                <p class="text-sm">{{ team.memberNames.join(', ') || 'Nenhum colaborador selecionado' }}</p>
+
+                <p class="text-sm mt-2">Placa: {{ team.plate || '-' }}</p>
+                <p class="text-sm">Estado: {{ team.UFName || '-' }}</p>
+                <p class="text-sm">Cidade: {{ team.cityName || '-' }}</p>
+                <p class="text-sm">Região: {{ team.regionName || 'Selecione a Cidade' }}</p>
+                <p class="text-sm">Caminhão vinculado: {{ team.depositName || 'Será exibido após vinculação' }}</p>
+              </ng-template>
+            </div>
+
+            <div *ngIf="teams.length === 0"
+              class="bg-white dark:bg-neutral-900 rounded-xl p-4 shadow border text-sm text-gray-500 dark:text-gray-400 text-center">
+              Nenhuma equipe encontrada para a pesquisa informada.
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <!-- <aside class="rounded-xl border bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 h-fit">
+        <div>
+          <h3 class="text-base font-semibold text-gray-800 dark:text-white">
+            Ajuda rápida
+          </h3>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Um apoio lateral para montar a equipe corretamente e orientar a rotina em campo.
+          </p>
+        </div>
+
+        <div class="mt-4 space-y-3">
+          <div class="rounded-lg border border-slate-200 p-4 dark:border-slate-800">
+            <p class="text-sm font-semibold">1. Selecione os colaboradores</p>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              Inclua eletricistas e motoristas que já tenham acesso cadastrado.
+            </p>
+          </div>
+
+          <div class="rounded-lg border border-slate-200 p-4 dark:border-slate-800">
+            <p class="text-sm font-semibold">2. Vincule placa e localização</p>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              Estado, cidade e placa impactam o caminhão e o contexto operacional da equipe.
+            </p>
+          </div>
+
+          <div class="rounded-lg border border-slate-200 p-4 dark:border-slate-800">
+            <p class="text-sm font-semibold">3. Oriente o uso do app</p>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              Use a documentação integrada para preparar a equipe antes da operação em campo.
+            </p>
+          </div>
+        </div>
+
+        <div class="mt-4 flex flex-col gap-2">
+          <button class="btn btn-outline btn-sm justify-start" type="button" (click)="openDocumentation('setup-teams')">
+            <i class="pi pi-users"></i>
+            Abrir guia de equipes
+          </button>
+
+          <button class="btn btn-outline btn-sm justify-start" type="button" (click)="openDocumentation('field-app')">
+            <i class="pi pi-mobile"></i>
+            Abrir guia do app
+          </button>
+        </div>
+      </aside> -->
+    </div>
   </div>
-  <p-toast></p-toast>
 </div>
+
+<div *ngIf="embeddedDocOpen" class="fixed inset-0 z-40 bg-slate-950/35 backdrop-blur-[2px]"
+  (click)="closeDocumentation()"></div>
+
+<section *ngIf="embeddedDocOpen"
+  class="fixed inset-y-0 right-0 z-50 flex h-full w-full max-w-[96vw] flex-col bg-white shadow-2xl dark:bg-slate-900 lg:w-[min(1200px,92vw)]">
+  <div
+    class="flex flex-col gap-3 border-b border-slate-200 px-4 py-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+        Documentação incorporada
+      </p>
+
+      <h3 class="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+        {{ embeddedDocTitle }}
+      </h3>
+
+      <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        {{ embeddedDocDescription }}
+      </p>
+    </div>
+
+    <div class="flex justify-center">
+      <button class="btn btn-outline w-full sm:w-auto mr-2" type="button" (click)="shareDocumentation()">
+        <i class="material-icons">ios_share</i>
+        Compartilhar
+      </button>
+
+      <button class="btn btn-outline w-full sm:w-auto" type="button" (click)="closeDocumentation()">
+        Fechar
+      </button>
+    </div>
+  </div>
+
+  <div class="flex-1 overflow-y-none p-4 sm:p-5" (click)="$event.stopPropagation()">
+    <iframe *ngIf="embeddedDocUrl" [src]="embeddedDocUrl"
+      class="min-h-[85vh] w-full rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950"
+      referrerpolicy="strict-origin-when-cross-origin" title="Documentação incorporada do Lumos">
+    </iframe>
+  </div>
+</section>

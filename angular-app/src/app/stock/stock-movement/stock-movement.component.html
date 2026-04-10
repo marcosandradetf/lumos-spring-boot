@@ -15,18 +15,18 @@
 
   [hasSecondaryLabel]="!hasTruck"
   secondaryLabel="Cadastrar Caminhões"
-  secondaryRoute="/configuracoes/almoxarifados"
+  secondaryRoute="/estoque/caminhoes"
   secondaryIcon="pi pi-truck"
 
   [hasTertiaryLabel]="materials.length === 0 && hasTruck && hasDeposit"
   tertiaryLabel="Cadastrar Materiais"
-  tertiaryRoute="/configuracoes/almoxarifados"
+  tertiaryRoute="/estoque/cadastrar-material"
   tertiaryIcon="pi pi-table"
 ></app-guide-state>
 
 <app-loading *ngIf="(!hasTruck || !hasDeposit || materials.length === 0) && loading"></app-loading>
 
-<div class="h-full w-full p-4 relative" *ngIf="(hasTruck || hasDeposit || materials.length > 0) && !loading">
+<div class="h-full w-full p-4 relative" *ngIf="hasTruck && hasDeposit && materials.length > 0 && !loading">
     <div class="flex justify-center item-center">
         <span (click)="currentDeposit = undefined; loading = true; sendMovement = []; materials = [];"
               class="p-5 cursor-pointer"

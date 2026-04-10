@@ -57,7 +57,7 @@ sidebarSections.sort((a, b) => {
 });
 
 // Get current page slug for highlighting
-const currentSlug = Astro.url.pathname.replace('/docs/', '').replace(/\/$/, '');
+const currentSlug = Astro.url.pathname.replace('/como-usar/', '').replace(/\/$/, '');
 ---
 
 <MarketingLayout title={title} description={description}>
@@ -72,7 +72,7 @@ const currentSlug = Astro.url.pathname.replace('/docs/', '').replace(/\/$/, '');
             type="button"
             class="lg:hidden w-full flex items-center justify-between p-3 mb-4 bg-surface rounded-md text-text"
           >
-            <span class="font-medium">Documentation</span>
+            <span class="font-medium">Documentação</span>
             <Icon name="lucide:chevron-down" class="w-5 h-5" />
           </button>
 
@@ -88,7 +88,7 @@ const currentSlug = Astro.url.pathname.replace('/docs/', '').replace(/\/$/, '');
                       return (
                         <li>
                           <a
-                            href={`/docs/${item.slug}`}
+                            href={`/como-usar/${item.slug}`}
                             class:list={[
                               'block px-3 py-2 text-sm rounded-md transition-colors',
                               isActive

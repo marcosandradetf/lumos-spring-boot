@@ -1,33 +1,47 @@
-import {Component, inject, OnInit} from '@angular/core';
-import {NavigationEnd, Router, RouterOutlet} from '@angular/router';
-import {HeaderComponent} from './shared/components/header/header.component';
-import {FooterComponent} from './shared/components/footer/footer.component';
-import {AuthService} from './core/auth/auth.service';
-import {AsyncPipe, NgClass, NgIf} from '@angular/common';
-import {SidebarComponent} from './shared/components/sidebar/sidebar.component';
-import {filter, Observable, take} from 'rxjs';
-import {UtilsService} from './core/service/utils.service';
-import {SidebarDrawerComponent} from './shared/components/sidebar-drawer/sidebar-drawer.component';
-import {SharedState} from './core/service/shared-state';
-import {NotificationDrawerComponent} from './shared/components/notification-drawer/notification-drawer.component';
-import {AccountDrawerComponent} from './shared/components/account-drawer/account-drawer.component';
-import {FcmService} from './core/service/fcm.service';
-import {Toast} from 'primeng/toast';
-import {NotificationPopupComponent} from './shared/components/notification-popup/notification-popup.component';
-import {DialogService} from 'primeng/dynamicdialog';
-import {MessageService, PrimeTemplate} from 'primeng/api';
-import {getToken} from '@angular/fire/messaging';
-import {LoadingOverlayComponent} from './shared/components/loading-overlay/loading-overlay.component';
+import { Component, inject, OnInit } from '@angular/core';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { HeaderComponent } from './shared/components/header/header.component';
+import { FooterComponent } from './shared/components/footer/footer.component';
+import { AuthService } from './core/auth/auth.service';
+import { AsyncPipe, NgClass, NgIf } from '@angular/common';
+import { SidebarComponent } from './shared/components/sidebar/sidebar.component';
+import { filter, Observable, take } from 'rxjs';
+import { UtilsService } from './core/service/utils.service';
+import { SidebarDrawerComponent } from './shared/components/sidebar-drawer/sidebar-drawer.component';
+import { SharedState } from './core/service/shared-state';
+import { NotificationDrawerComponent } from './shared/components/notification-drawer/notification-drawer.component';
+import { AccountDrawerComponent } from './shared/components/account-drawer/account-drawer.component';
+import { FcmService } from './core/service/fcm.service';
+import { Toast } from 'primeng/toast';
+import { NotificationPopupComponent } from './shared/components/notification-popup/notification-popup.component';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MessageService, PrimeTemplate } from 'primeng/api';
+import { forkJoin } from 'rxjs';
+import { LoadingOverlayComponent } from './shared/components/loading-overlay/loading-overlay.component';
+import { ContractService } from './contract/services/contract.service';
+import { UserService } from './manage/user/user-service.service';
+import { TeamService } from './manage/team/team-service.service';
+import { StockService } from './stock/services/stock.service';
+import { MaterialService } from './stock/services/material.service';
+import { Utils } from './core/service/utils';
+import { DomSanitizer, SafeResourceUrl, Title } from '@angular/platform-browser';
 
 @Component({
     selector: 'app-root',
     standalone: true,
-    imports: [RouterOutlet, HeaderComponent, FooterComponent, AsyncPipe, SidebarComponent, NgClass, NgIf, SidebarDrawerComponent, NotificationDrawerComponent, AccountDrawerComponent, Toast, PrimeTemplate, LoadingOverlayComponent],
+    imports: [
+        RouterOutlet, HeaderComponent, FooterComponent, AsyncPipe, SidebarComponent, NgClass, NgIf, SidebarDrawerComponent, NotificationDrawerComponent, AccountDrawerComponent, Toast, PrimeTemplate, LoadingOverlayComponent],
     templateUrl: './app.component.html',
     styleUrl: './app.component.scss',
 })
 export class AppComponent implements OnInit {
     logoutLoading$: Observable<boolean>;
+    loading = false;
+    embeddedDocOpen = false;
+    embeddedDocTitle = '';
+    embeddedDocDescription = '';
+    embeddedDocUrl: SafeResourceUrl | null = null;
+    readonly notificationGuideUrl = 'https://lumosip.com.br/como-usar/15-web-config/01-enable-notifications/';
 
     constructor(
         public authService: AuthService,
@@ -36,6 +50,14 @@ export class AppComponent implements OnInit {
         private fcmService: FcmService,
         private messageService: MessageService,
         private dialogService: DialogService,
+
+        private contractService: ContractService,
+        private userService: UserService,
+        private teamService: TeamService,
+        private stockService: StockService,
+        private materialService: MaterialService,
+        private sanitizer: DomSanitizer,
+
     ) {
 
         this.logoutLoading$ = this.authService.isLoading$;
@@ -74,11 +96,15 @@ export class AppComponent implements OnInit {
                     key: 'notifications',
                     severity: 'warn',
                     summary: 'Notificações bloqueadas',
-                    detail: 'Você bloqueou notificações do navegador. Para receber alertas, clique no ícone ao lado do endereço do site na barra de navegação, depois em Configurações do site e habilite as notificações..',
+                    detail: 'Você bloqueou notificações do navegador. Para não perder nenhuma atualização importante, é essencial permitir as notificações do Lumos no seu dispositivo.\n\nClique para saber como ativar',
                     life: 8000,
-                    data: {}
+                    data: { openGuide: 'notification' }
                 });
             }, 0);
+        }
+
+        if (!localStorage.getItem('onboarding')) {
+            this.checkState();
         }
 
         this.fcmService.initListen();
@@ -162,12 +188,87 @@ export class AppComponent implements OnInit {
     }
 
     onToastClick(notification: any) {
+        console.log(notification)
         if (notification.uri) {
             void this.router.navigate(notification.uri);
+            this.messageService.clear("notifications");
+        } else if (notification.openGuide === 'notification') {
+            this.openNotificationGuide();
+            this.messageService.clear("notifications");
         } else {
             this.messageService.clear("notifications");
         }
     }
 
+
+    checkState() {
+        this.loading = true;
+        forkJoin({
+            referenceContractItems: this.contractService.getContractReferenceItems(),
+            contracts: this.contractService.getAllContracts(
+                {
+                    contractor: null,
+                    startDate: new Date(new Date().setMonth(new Date().getMonth() - 6)),
+                    endDate: new Date(),
+                    status: null,
+                }
+            ),
+            users: this.userService.getUsers(),
+            teams: this.teamService.getTeams(),
+            stockists: this.stockService.getStockists(),
+            deposits: this.stockService.getDeposits(),
+            materials: this.materialService.getCatalogue(),
+        }).subscribe({
+            next: ({ referenceContractItems, contracts, users, teams, stockists, deposits, materials }) => {
+                const a = referenceContractItems.length;
+                const b = contracts.length;
+                const c = users.length;
+                const d = users.filter(user => {
+                    const roles = user.role.map(r => r.roleName);
+                    return roles.includes('ELETRICISTA') || roles.includes('MOTORISTA')
+                }).length;
+
+                const e = teams.length;
+                const f = stockists.length;
+                const g = deposits.filter(deposit => !deposit.isTruck).length;
+                const h = deposits.filter(deposit => deposit.isTruck).length;
+                const i = materials.length;
+
+                if (a === 0
+                    || b === 0
+                    || c === 0
+                    || d === 0
+                    || e === 0
+                    || f === 0
+                    || g === 0
+                    || h === 0
+                    || i === 0
+                ) {
+                    void this.router.navigate(['/configuracoes/onboarding']);
+                } else {
+                    localStorage.setItem('onboarding', 'finished');
+                }
+                this.loading = false;
+            },
+            error: (err) => {
+                Utils.handleHttpError(err, this.router);
+                this.loading = false;
+            }
+        });
+    }
+
+    openNotificationGuide() {
+        this.embeddedDocTitle = 'Ativando as Notificações';
+        this.embeddedDocDescription = 'Guia para permitir notificações no navegador e receber alertas operacionais do Lumos.';
+        this.embeddedDocUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.notificationGuideUrl);
+        this.embeddedDocOpen = true;
+    }
+
+    closeEmbeddedDoc() {
+        this.embeddedDocOpen = false;
+        this.embeddedDocTitle = '';
+        this.embeddedDocDescription = '';
+        this.embeddedDocUrl = null;
+    }
 
 }

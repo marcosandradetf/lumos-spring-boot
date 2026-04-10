@@ -1,6 +1,7 @@
 package com.lumos.lumosspring.stock.deposit.dto
 
 data class StockistModel(
+    val stockistId: Long?,
     val userId: String,
     val name: String,
     val depositId: Long,

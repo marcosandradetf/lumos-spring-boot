@@ -22,15 +22,21 @@ object ApiExecutor {
 
             } else {
                 val errorBody = response.errorBody()?.string()
-                val errorMessage = try {
-                    JSONObject(errorBody ?: "").optString("error", response.message())
+                val payload = try {
+                    JSONObject(errorBody ?: "")
                 } catch (e: Exception) {
-                    response.message()
+                    null
                 }
+
+                val errorCode = payload?.optString("error")?.takeIf { it.isNotBlank() }
+                val errorMessage = payload?.optString("message")?.takeIf { it.isNotBlank() }
+                    ?: errorCode
+                    ?: response.message()
 
                 RequestResult.ServerError(
                     response.code(),
-                    errorMessage
+                    errorMessage,
+                    errorCode
                 )
             }
 
@@ -55,7 +61,11 @@ sealed class RequestResult<out T> {
     data object SuccessEmptyBody : RequestResult<Nothing>()
     data object NoInternet : RequestResult<Nothing>()
     data object Timeout : RequestResult<Nothing>()
-    data class ServerError(val code: Int, val message: String?) : RequestResult<Nothing>()
+    data class ServerError(
+        val code: Int,
+        val message: String?,
+        val errorCode: String? = null
+    ) : RequestResult<Nothing>()
     data class UnknownError(val error: Throwable) : RequestResult<Nothing>()
 }
 

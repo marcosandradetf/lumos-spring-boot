@@ -1,11 +1,11 @@
-import {Injectable} from '@angular/core';
-import {BehaviorSubject, catchError, from, map, Observable, of, switchMap, tap} from 'rxjs';
-import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
-import {Router} from '@angular/router';
-import {User} from '../../models/user.model';
-import {environment} from '../../../environments/environment';
-import {jwtDecode} from 'jwt-decode';
-import {FcmService} from '../service/fcm.service';
+import { Injectable } from '@angular/core';
+import { BehaviorSubject, catchError, from, map, Observable, of, switchMap, tap } from 'rxjs';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Router } from '@angular/router';
+import { User } from '../../models/user.model';
+import { environment } from '../../../environments/environment';
+import { jwtDecode } from 'jwt-decode';
+import { FcmService } from '../service/fcm.service';
 
 export interface DecodedToken {
     iss: string;
@@ -18,6 +18,19 @@ export interface DecodedToken {
     tenant: string;
     iat: number;
     exp: number;
+    support: boolean;
+}
+
+export interface ActivationRequest {
+    cpf: string;
+    activationCode: string;
+    newPassword: string;
+}
+
+export interface ApiErrorResponse {
+    error?: string;
+    code?: string;
+    message?: string;
 }
 
 
@@ -50,7 +63,8 @@ export class AuthService {
                     userData.fullName,
                     userData.tenant,
                     relatedNotificationTopics,
-                    userData.email
+                    userData.email,
+                    userData.support
                 ); // Converte para uma instância de User
             }
             this.initializeAuthStatus();
@@ -76,7 +90,7 @@ export class AuthService {
 
     login(username: string, password: string) { // Retorna um Observable
         this.isLoading.next(true);
-        return this.http.post<any>(`${this.apiUrl}/login`, {username, password}, {withCredentials: true}).pipe(
+        return this.http.post<any>(`${this.apiUrl}/login`, { username, password }, { withCredentials: true }).pipe(
             tap(response => {
                 this.isLoading.next(false);
                 const decodedToken = jwtDecode<DecodedToken>(response.accessToken);
@@ -87,6 +101,7 @@ export class AuthService {
                 const email = decodedToken.email;
                 const tenant = decodedToken.tenant;
                 const usernameDecoded = decodedToken.username;
+                const support = decodedToken.support;
 
                 this.user.initialize(
                     userId,
@@ -96,9 +111,13 @@ export class AuthService {
                     fullName,
                     tenant,
                     [],
-                    email
+                    email,
+                    support
                 );
-                if (typeof window !== 'undefined' && window.localStorage) localStorage.setItem('user', JSON.stringify(this.user));
+                if (typeof window !== 'undefined' && window.localStorage) {
+                    localStorage.setItem('user', JSON.stringify(this.user));
+                    localStorage.setItem('tenant', tenant);
+                }
                 this.isLoggedInSubject.next(true);
                 void this.fcmService.getPermission(roles);
             }),
@@ -146,6 +165,18 @@ export class AuthService {
         );
     }
 
+    clearStoredSession() {
+        this.user?.clearToken();
+
+        if (typeof window !== 'undefined' && window.localStorage) {
+            localStorage.removeItem('user');
+            localStorage.removeItem('fcmToken');
+        }
+
+        this.isLoggedInSubject.next(false);
+        this.isLoading.next(false);
+    }
+
     refreshToken(): Observable<string | null> {
         if (!this.user) {
             return of(null); // Retorna Observable nulo se não houver usuário logado
@@ -153,7 +184,7 @@ export class AuthService {
 
         return this.http.post<{
             accessToken: string
-        }>(`${this.apiUrl}/refresh-token`, {}, {withCredentials: true}).pipe(
+        }>(`${this.apiUrl}/refresh-token`, {}, { withCredentials: true }).pipe(
             map(response => {
                 if (response && response.accessToken) {
                     this.user?.setToken(response.accessToken); // Atualiza o token do usuário
@@ -189,16 +220,20 @@ export class AuthService {
         return this.user;
     }
 
+    activateFirstAccess(payload: ActivationRequest) {
+        return this.http.post<{ message: string }>(`${this.apiUrl}/activate`, payload, { withCredentials: true });
+    }
+
     forgetPassword(username: string) {
         return this.http.post<{
             message: string
-        }>(`${this.apiUrl}/forgot-password`, {username}, {withCredentials: true});
+        }>(`${this.apiUrl}/forgot-password`, { username }, { withCredentials: true });
     }
 
     loginWithQrCodeToken(token: string) {
         if (this.user) {
             return this.http
-                .post(this.apiUrl + '/logout', {}, {withCredentials: true})
+                .post(this.apiUrl + '/logout', {}, { withCredentials: true })
                 .pipe(
                     switchMap(() => this.callQrcode(token)),
                     catchError(() => this.callQrcode(token))
@@ -210,7 +245,7 @@ export class AuthService {
 
     private callQrcode(token: string) {
         const param = new HttpParams().set("token", token);
-        return this.http.post<any>(`${this.apiUrl}/login-with-qrcode-token`, param, {withCredentials: true}).pipe(
+        return this.http.post<any>(`${this.apiUrl}/login-with-qrcode-token`, param, { withCredentials: true }).pipe(
             tap(response => {
                 const decodedToken = jwtDecode<DecodedToken>(response.accessToken);
 
@@ -220,6 +255,7 @@ export class AuthService {
                 const email = decodedToken.email;
                 const tenant = decodedToken.tenant;
                 const usernameDecoded = decodedToken.username;
+                const support = decodedToken.support;
 
                 this.user.initialize(
                     userId,
@@ -229,7 +265,8 @@ export class AuthService {
                     fullName,
                     tenant,
                     [],
-                    email
+                    email,
+                    support
                 );
                 if (typeof window !== 'undefined' && window.localStorage) localStorage.setItem('user', JSON.stringify(this.user));
                 this.isLoggedInSubject.next(true);

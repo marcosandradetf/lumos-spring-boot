@@ -1,0 +1,165 @@
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.login-shell {
+  isolation: isolate;
+}
+
+.login-card {
+  animation: fadeInUp 0.28s ease-out;
+}
+
+.tab-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 1rem;
+  padding: 0.85rem 0.9rem;
+  color: rgb(148 163 184);
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    color: rgb(241 245 249);
+    transform: translateY(-1px);
+  }
+
+  &.active {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.95), rgba(6, 182, 212, 0.82));
+    color: #ffffff;
+    box-shadow: 0 14px 28px rgba(14, 165, 233, 0.18);
+  }
+}
+
+.login-input-icon {
+  position: absolute;
+  inset: 0 auto 0 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  color: rgb(148 163 184);
+  z-index: 2;
+  pointer-events: none;
+}
+
+::ng-deep {
+  .p-card {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    border-radius: inherit !important;
+
+    .p-card-body {
+      padding: 1.5rem !important;
+    }
+  }
+
+  .login-input,
+  .p-inputtext.login-input,
+  .p-password .p-password-input.login-input {
+    background: rgba(15, 23, 42, 0.58) !important;
+    border: 1px solid rgba(148, 163, 184, 0.22) !important;
+    color: #f8fafc !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease !important;
+  }
+
+  .login-input::placeholder,
+  .p-inputtext.login-input::placeholder,
+  .p-password .p-password-input.login-input::placeholder {
+    color: rgb(100 116 139) !important;
+  }
+
+  .login-input:hover,
+  .p-inputtext.login-input:hover,
+  .p-password .p-password-input.login-input:hover {
+    background: rgba(15, 23, 42, 0.72) !important;
+    border-color: rgba(148, 163, 184, 0.32) !important;
+  }
+
+  .login-input:focus,
+  .p-inputtext.login-input:focus,
+  .p-password .p-password-input.login-input:focus {
+    border-color: rgba(96, 165, 250, 0.9) !important;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.14) !important;
+    background: rgba(15, 23, 42, 0.82) !important;
+  }
+
+  .p-password {
+    width: 100%;
+
+    .p-input-icon-right > .p-icon-wrapper,
+    .p-password-toggle-mask {
+      color: rgb(148 163 184) !important;
+      right: 0.95rem !important;
+    }
+  }
+
+  .p-button {
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+
+    &:not(:disabled):hover {
+      transform: translateY(-1px);
+      box-shadow: 0 18px 32px rgba(37, 99, 235, 0.22) !important;
+      filter: saturate(1.05);
+    }
+
+    &:focus-visible {
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.18) !important;
+    }
+  }
+
+  .p-message {
+    border-left: 4px solid;
+    border-radius: 1rem;
+
+    .p-message-wrapper {
+      align-items: flex-start;
+    }
+
+    .p-message-text {
+      line-height: 1.5;
+    }
+  }
+
+  .p-message.p-message-error {
+    background: rgba(239, 68, 68, 0.11) !important;
+    border-left-color: #ef4444 !important;
+  }
+
+  .p-message.p-message-success {
+    background: rgba(16, 185, 129, 0.12) !important;
+    border-left-color: #10b981 !important;
+  }
+}
+
+:host-context(.dark) {
+  ::ng-deep .p-password .p-password-toggle-mask {
+    color: rgb(203 213 225) !important;
+  }
+}
+
+@media (min-width: 640px) {
+  ::ng-deep .p-card .p-card-body {
+    padding: 2rem !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -117,8 +117,8 @@ class MaintenanceQueryRepository(
             ${if(contractId == null) {
                 """
                         AND m.tenant_id = :tenantId
-                        AND m.date_of_visit >= (now() - INTERVAL '31 day') 
-                        AND m.date_of_visit < (now() + INTERVAL '1 day')
+                        AND m.date_of_visit >= :startDate
+                        AND m.date_of_visit <= :endDate
                     GROUP BY c.contract_id, c.contractor
                     ORDER BY c.contractor
                 """.trimIndent()

@@ -16,7 +16,7 @@ export const announcement: AnnouncementConfig = {
   id: 'lumos-launch-2026',
 
   /** Texto do anúncio focado na plataforma */
-  text: '💡 Conheça o Lumos: A nova era na gestão de iluminação pública.',
+  text: '💡 Conheça o Lumos IP: A nova era na gestão de iluminação pública.',
 
   /** Link para uma demo ou página de funcionalidades */
   href: '/recursos',

@@ -70,6 +70,7 @@ public class StockistService {
                     .getRegionName();
 
             stockistsDto.add(new StockistModel(
+                    stockist.getStockistId(),
                     stockist.getUserId().toString(),
                     user.getCompletedName(),
                     deposit.getIdDeposit(),

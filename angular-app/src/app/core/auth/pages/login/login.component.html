@@ -1,148 +1,299 @@
-<section class="h-screen w-full relative overflow-hidden">
+<section class="login-shell relative min-h-screen w-full overflow-hidden bg-slate-950 text-surface-50">
+  <img src="/public/lumos-login-bg.png" alt="Iluminação pública urbana"
+    class="absolute inset-0 h-full w-full object-cover object-center opacity-20" />
 
-  <!-- BACKGROUND IMAGE -->
-  <img
-    src="/public/lumos-login-bg.png"
-    alt="Iluminação pública urbana"
-    class="absolute inset-0 w-full h-full object-cover object-center"
-  />
+  <div
+    class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.25),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(20,184,166,0.18),_transparent_30%)]">
+  </div>
+  <!-- <div class="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900/[0.96] to-slate-950/[0.92]"></div> -->
 
-  <!-- SOFT OVERLAY -->
-  <div class="absolute inset-0 bg-white/10 dark:bg-surface-900/40"></div>
+  <div class="pointer-events-none absolute -left-24 top-24 h-72 w-72 rounded-full bg-primary/20 blur-3xl"></div>
+  <div class="pointer-events-none absolute bottom-0 right-0 h-80 w-80 rounded-full bg-cyan-400/10 blur-3xl"></div>
 
-  <!-- CONTENT -->
-  <div class="relative z-10 grid lg:grid-cols-2">
+  <div class="relative z-10 flex min-h-screen flex-col lg:flex-row">
+    <aside class="hidden lg:flex lg:w-[54%] lg:items-center lg:justify-center lg:px-12 lg:py-10 xl:px-20">
+      <div class="w-full max-w-xl rounded-[2rem] border border-white/10 bg-black/[0.16] p-10 backdrop-blur-2xl">
+        <div
+          class="mb-8 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-sm text-slate-200">
+          <i class="pi pi-lock text-primary-300"></i>
+          Acesso seguro
+        </div>
 
-    <!-- LEFT / IMAGE TEXT (DESKTOP ONLY) -->
-    <div class="hidden lg:flex items-end px-16 pb-20">
-      <div class="max-w-xl space-y-4 text-surface-100">
+        <div class="space-y-4">
+          <h2 class="text-4xl font-semibold leading-tight text-white xl:text-5xl">
+            Entre na plataforma Lumos.
+          </h2>
+          <p class="max-w-lg text-base leading-7 text-slate-300">
+            Gerencie suas execuções, vincule itens contratuais e consolide suas medições em um ambiente unificado.
+          </p>
+        </div>
 
-        <h2 class="text-4xl font-semibold leading-tight tracking-tight">
-          Gestão inteligente<br />
-          para iluminação pública
-        </h2>
-
-        <p class="text-lg text-surface-200">
-          Modernizando e otimizando a iluminação das cidades.
-        </p>
-
+        <div class="mt-10 grid gap-3">
+          <div
+            class="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4 text-slate-200">
+            <i class="pi pi-check-circle text-primary-300"></i>
+            Gestão de execuções e instalações
+          </div>
+          <div
+            class="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4 text-slate-200">
+            <i class="pi pi-link text-primary-300"></i>
+            Vínculo de itens e regras contratuais
+          </div>
+          <div
+            class="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4 text-slate-200">
+            <i class="pi pi-file-export text-primary-300"></i>
+            Fechamento de medições para faturamento
+          </div>
+        </div>
       </div>
-    </div>
+    </aside>
 
-    <!-- RIGHT / LOGIN -->
-    <div class="flex items-center justify-center px-4 h-screen">
+    <main class="flex min-h-screen items-center justify-center px-4 py-8 sm:px-6 lg:min-h-0 lg:w-[46%] lg:px-10">
+      <div class="w-full max-w-lg">
 
-      <p-card
-        class="w-full max-w-md
-               lg:max-w-96
-               shadow-xl
-               rounded-2xl
-               bg-surface-0/90 dark:bg-surface-800/90
-               backdrop-blur-md">
-
-        <div class="flex flex-col gap-8 px-6 ">
-
-          <!-- BRAND -->
-          <div class="flex flex-col items-center gap-3 text-center">
-            <img ngSrc="/public/icon-192.png"
-                 width="48"
-                 height="48"
-                 alt="Lumos"/>
-
-            <h1 class="text-2xl font-semibold tracking-tight">
-              Lumos<span class="text-primary">™</span>
-            </h1>
-
-            <p class="text-sm text-surface-500 max-w-xs">
-              Gestão operacional em iluminação pública
-            </p>
+        <div class="mb-8 text-center">
+          <div
+            class="mx-auto mb-4 flex h-[4.5rem] w-[4.5rem] items-center justify-center shadow-primary/20 backdrop-blur-xl">
+            <img ngSrc="/public/icon-192.png" width="64" height="64" alt="Lumos" class="drop-shadow-lg" />
           </div>
 
-          <!-- FORM -->
-          <form #form="ngForm"
-                (ngSubmit)="login(form)"
-                class="flex flex-col gap-6">
-
-            <div class="flex flex-col gap-1.5">
-              <label class="text-xs font-medium text-surface-500">
-                Usuário ou CPF
-              </label>
-
-              <input pInputText
-                     name="username"
-                     [(ngModel)]="username"
-                     required
-                     class="w-full rounded-xl
-                            bg-surface-100 dark:bg-surface-700
-                            border border-surface-200 dark:border-surface-600
-                            focus:ring-2 focus:ring-primary/30"/>
-            </div>
-
-            <div class="flex flex-col gap-1.5">
-              <label class="text-xs font-medium text-surface-500">
-                Senha
-              </label>
-
-              <p-password
-                name="password"
-                [(ngModel)]="password"
-                required
-                [toggleMask]="true"
-                [feedback]="false"
-                fluid
-                inputStyleClass="w-full rounded-xl
-                                 bg-surface-100 dark:bg-surface-700
-                                 border border-surface-200 dark:border-surface-600
-                                 focus:ring-2 focus:ring-primary/30">
-              </p-password>
-            </div>
-
-            <p-message *ngIf="authError"
-                       severity="error"
-                       text="{{ authError }}">
-            </p-message>
-
-            <p-button
-              label="Entrar"
-              type="submit"
-              [loading]="authLoading"
-              [disabled]="!username || !password"
-              styleClass="w-full rounded-xl py-3
-                          bg-primary text-white
-                          hover:bg-primary-600">
-            </p-button>
-
-            <div class="flex justify-between items-center text-xs">
-              <button type="button"
-                      class="text-primary hover:underline"
-                      (click)="forgetPassword()">
-                Esqueci minha senha
-              </button>
-
-              <button type="button"
-                      class="text-surface-500 hover:text-primary"
-                      (click)="openDemoModal()">
-                Acessar demonstração
-              </button>
-            </div>
-
-
-            <p-divider layout="horizontal"></p-divider>
-            <p class="text-xs text-surface-500 hover:text-primary cursor-default">Ainda não é cliente?</p>
-            <p-button
-              label="Iniciar Teste Grátis"
-              outlined
-              styleClass="w-full rounded-xl
-                          border-primary text-primary
-                          hover:bg-primary/10"
-              type="button"
-              (click)="openSubscriptionModal()">
-            </p-button>
-
-          </form>
+          <div class="space-y-2">
+            <h1 class="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+              Lumos<span class="text-primary-300">™</span>
+            </h1>
+            <p class="mx-auto max-w-md text-sm leading-6 text-slate-300">
+              Faça login para acessar a plataforma.
+            </p>
+          </div>
         </div>
-      </p-card>
-    </div>
+
+        <div class="mb-6 flex w-full rounded-2xl border border-white/10 bg-black/20 p-1 backdrop-blur-xl" role="tablist"
+          aria-label="Modos de acesso">
+          <button type="button" role="tab" [attr.aria-selected]="activeTab === 'login'" (click)="activeTab = 'login'"
+            [class.active]="activeTab === 'login'"
+            class="tab-pill flex flex-col items-center justify-center gap-1 flex-1 py-3 text-xs sm:text-sm">
+            <i class="pi pi-sign-in text-lg"></i>
+            <span>Entrar</span>
+          </button>
+
+          <button type="button" role="tab" [attr.aria-selected]="activeTab === 'signup'" (click)="activeTab = 'signup'"
+            [class.active]="activeTab === 'signup'"
+            class="tab-pill flex flex-col items-center justify-center gap-1 flex-1 py-3 text-xs sm:text-sm">
+            <i class="pi pi-user-plus text-lg"></i>
+            <span>Teste</span>
+          </button>
+
+          <button type="button" role="tab" [attr.aria-selected]="activeTab === 'demo'" (click)="activeTab = 'demo'"
+            [class.active]="activeTab === 'demo'"
+            class="tab-pill flex flex-col items-center justify-center gap-1 flex-1 py-3 text-xs sm:text-sm">
+            <i class="pi pi-star text-lg"></i>
+            <span>Demo</span>
+          </button>
+        </div>
+
+        <div *ngIf="activeTab === 'login'" class="login-card">
+          <p-card
+            class="block rounded-[2rem] border border-white/10 bg-white/10 shadow-2xl shadow-slate-950/30 backdrop-blur-2xl">
+            <div class="mb-6 space-y-3">
+              <div>
+                <h3 class="text-2xl font-semibold text-white">Acessar conta</h3>
+                <p class="mt-2 text-sm leading-6 text-slate-300">
+                  Use seu usuário ou CPF e sua senha para entrar.
+                </p>
+              </div>
+            </div>
+
+            <form #form="ngForm" (ngSubmit)="login(form)" class="flex flex-col gap-5">
+              <div class="flex flex-col gap-2">
+                <label class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">
+                  Usuário ou CPF
+                </label>
+
+                <div class="relative">
+                  <span class="login-input-icon">
+                    <i class="pi pi-user"></i>
+                  </span>
+                  <input 
+                    (keyup)="$event.key === 'Enter' && username && password && authLoading  ? submitBtn.click() : null"
+                    pInputText type="text" name="username" [(ngModel)]="username" (blur)="normalizeUsername()"
+                    placeholder="Digite seu usuário ou CPF" autocomplete="username" inputmode="text" required
+                    class="login-input w-full rounded-2xl pl-11 pr-4 py-3.5" />
+                </div>
+
+              </div>
+
+              <div class="flex flex-col gap-2">
+                <div class="flex items-center justify-between gap-3">
+                  <label class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">
+                    Senha
+                  </label>
+
+                  <button type="button" (click)="forgetPassword()"
+                    class="text-xs font-medium text-primary-200 transition-colors hover:text-primary-100">
+                    Esqueci minha senha
+                  </button>
+                </div>
+
+                <div class="relative">
+                  <span class="login-input-icon">
+                    <i class="pi pi-key"></i>
+                  </span>
+                  <p-password 
+                    (keyup)="$event.key === 'Enter' && username && password && authLoading  ? submitBtn.click() : null"
+                    name="password" [(ngModel)]="password" placeholder="Digite sua senha"
+                    autocomplete="current-password" required [toggleMask]="true" [feedback]="false" fluid
+                    inputStyleClass="login-input w-full rounded-2xl pl-11 pr-12 py-3.5">
+                  </p-password>
+                </div>
+              </div>
+
+              <p-message *ngIf="finished" severity="success" [text]="message" styleClass="w-full">
+              </p-message>
+
+              <p-message *ngIf="authError" severity="error" [text]="authError" styleClass="w-full">
+              </p-message>
+
+              <button type="button" (click)="router.navigate(['/primeiro-acesso'])"
+                class="text-sm font-medium text-primary-200 transition-colors hover:text-primary-100 text-left">
+                Primeiro acesso? Ative sua conta aqui
+              </button>
+
+              <button type="submit" class="hidden" #submitBtn></button>
+
+              <p-button label="Entrar na plataforma" type="submit" [loading]="authLoading"
+                [disabled]="!username || !password || authLoading"
+                styleClass="w-full !py-3.5 rounded-2xl font-semibold bg-gradient-to-r from-primary to-cyan-500 hover:from-primary-600 hover:to-cyan-500 text-white shadow-lg shadow-primary/20">
+              </p-button>
+            </form>
+
+          </p-card>
+        </div>
+
+        <div *ngIf="activeTab === 'signup'" class="login-card">
+          <p-card
+            class="block rounded-[2rem] border border-white/10 bg-white/10 shadow-2xl shadow-slate-950/30 backdrop-blur-2xl">
+            <div class="space-y-6">
+              <div class="space-y-3">
+                <div
+                  class="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-medium text-primary-100">
+                  <i class="pi pi-star-fill text-[0.75rem]"></i>
+                  Experimente com apoio da equipe
+                </div>
+                <div>
+                  <h3 class="text-2xl font-semibold text-white">Comece um teste gratuito</h3>
+                  <p class="mt-2 text-sm leading-6 text-slate-300">
+                    Valide o Lumos com seu cenário real e conheça os módulos mais relevantes para sua operação.
+                  </p>
+                </div>
+              </div>
+
+              <div class="grid gap-3">
+                <div class="rounded-2xl border border-primary/20 bg-primary/10 p-4">
+                  <div class="flex items-start gap-3">
+                    <i class="pi pi-gift mt-1 text-lg text-primary-200"></i>
+                    <div>
+                      <p class="font-semibold text-white">14 dias para explorar a plataforma</p>
+                      <p class="mt-1 text-sm leading-6 text-slate-300">Teste os fluxos principais sem precisar de cartão
+                        de crédito.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="rounded-2xl border border-white/10 bg-black/10 p-4">
+                  <div class="flex items-start gap-3">
+                    <i class="pi pi-send mt-1 text-lg text-emerald-200"></i>
+                    <div>
+                      <p class="font-semibold text-white">Ativação guiada</p>
+                      <p class="mt-1 text-sm leading-6 text-slate-300">Receba suporte para cadastrar estrutura, equipes
+                        e frentes de trabalho.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="rounded-2xl border border-white/10 bg-black/10 p-4">
+                  <div class="flex items-start gap-3">
+                    <i class="pi pi-shield mt-1 text-lg text-cyan-100"></i>
+                    <div>
+                      <p class="font-semibold text-white">Ambiente seguro desde o primeiro acesso</p>
+                      <p class="mt-1 text-sm leading-6 text-slate-300">Controle de perfis e visibilidade dos dados
+                        durante a avaliação.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <p-button label="Começar teste gratuito" type="button" icon="pi pi-arrow-right"
+                (click)="openSubscriptionModal()"
+                styleClass="mt-4 w-full !py-3.5 rounded-2xl font-semibold bg-gradient-to-r from-primary to-cyan-500 hover:from-primary-600 hover:to-cyan-500 text-white shadow-lg shadow-primary/20">
+              </p-button>
+
+              <p class="text-center text-xs text-slate-400">
+                Já tem conta?
+                <button type="button" (click)="activeTab = 'login'"
+                  class="ml-1 font-semibold text-primary-200 transition-colors hover:text-primary-100">
+                  Entrar agora
+                </button>
+              </p>
+            </div>
+          </p-card>
+        </div>
+
+        <div *ngIf="activeTab === 'demo'" class="login-card">
+          <p-card
+            class="block rounded-[2rem] border border-white/10 bg-white/10 shadow-2xl shadow-slate-950/30 backdrop-blur-2xl">
+            <div class="space-y-6">
+              <div class="space-y-3 text-center">
+                <div
+                  class="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-primary/[0.25] bg-primary/[0.12] text-primary-100">
+                  <i class="pi pi-desktop text-2xl"></i>
+                </div>
+                <div>
+                  <h3 class="text-2xl font-semibold text-white">Veja o Lumos em ação</h3>
+                  <p class="mt-2 text-sm leading-6 text-slate-300">
+                    Agende uma apresentação consultiva para entender como o produto se encaixa na sua operação.
+                  </p>
+                </div>
+              </div>
+
+              <div class="grid gap-3">
+                <div class="rounded-2xl border border-white/10 bg-black/10 px-4 py-4">
+                  <div class="flex items-center gap-3 text-sm text-slate-200">
+                    <i class="pi pi-check text-primary-200"></i>
+                    Apresentação focada nos fluxos mais críticos da sua equipe
+                  </div>
+                </div>
+
+                <div class="rounded-2xl border border-white/10 bg-black/10 px-4 py-4">
+                  <div class="flex items-center gap-3 text-sm text-slate-200">
+                    <i class="pi pi-check text-primary-200"></i>
+                    Discussão sobre implantação, governança e produtividade
+                  </div>
+                </div>
+
+                <div class="rounded-2xl border border-white/10 bg-black/10 px-4 py-4">
+                  <div class="flex items-center gap-3 text-sm text-slate-200">
+                    <i class="pi pi-check text-primary-200"></i>
+                    Próximos passos claros para piloto ou adoção completa
+                  </div>
+                </div>
+              </div>
+
+              <p-button label="Solicitar demonstração" type="button" icon="pi pi-calendar" (click)="openDemoModal()"
+                styleClass="mt-4 w-full !py-3.5 rounded-2xl font-semibold bg-gradient-to-r from-primary to-cyan-500 hover:from-primary-600 hover:to-cyan-500 text-white shadow-lg shadow-primary/20">
+              </p-button>
+
+              <p class="text-center text-xs text-slate-400">
+                Prefere explorar por conta própria?
+                <button type="button" (click)="activeTab = 'signup'"
+                  class="ml-1 font-semibold text-primary-200 transition-colors hover:text-primary-100">
+                  Ativar teste
+                </button>
+              </p>
+            </div>
+          </p-card>
+        </div>
+      </div>
+    </main>
   </div>
 
   <p-toast></p-toast>

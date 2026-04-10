@@ -72,6 +72,7 @@ export interface ContractItem {
     contractItemId: number;
     contractedQuantity: number;
     quantityExecuted: number;
+    factor: number;
     unitPrice?: number | null;
     totalPrice?: number | null;
     referenceItemId: number;

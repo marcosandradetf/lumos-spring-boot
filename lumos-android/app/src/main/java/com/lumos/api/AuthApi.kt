@@ -1,7 +1,9 @@
 package com.lumos.api
 
+import com.lumos.domain.model.ActivateFirstAccessRequest
 import com.lumos.domain.model.LoginRequest
 import com.lumos.domain.model.LoginResponse
+import com.lumos.domain.model.MessageResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.Header
@@ -26,5 +28,11 @@ interface AuthApi {
         @Header("Content-Type") contentType: String = "application/json",
         @Header("Authorization") refreshToken: String? // Token passado no header
     ): Response<Void>
+
+    @POST("api/auth/activate")
+    suspend fun activateFirstAccess(
+        @Header("Content-Type") contentType: String = "application/json",
+        @Body request: ActivateFirstAccessRequest
+    ): Response<MessageResponse>
 
 }

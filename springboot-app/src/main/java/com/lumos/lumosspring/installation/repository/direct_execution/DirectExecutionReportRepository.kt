@@ -21,7 +21,8 @@ class DirectExecutionReportRepository(
                 ci.contract_item_id,
                 ci.unit_price,
                 desi.executed_quantity,
-                cri.description, 
+                cri.description,
+                ci.factor,
                 coalesce(cri.name_for_import, cri.description) as name_for_import
               FROM installation_street_item_view desi
               JOIN installation_street_view des 
@@ -55,7 +56,8 @@ class DirectExecutionReportRepository(
                 'contractor', c.contractor,
                 'cnpj', c.cnpj,
                 'address', c.address,
-                'phone', coalesce(c.phone, '')
+                'phone', coalesce(c.phone, ''),
+                'uses_su_factor', c.uses_su_factor
               ) AS contract,
               
                 (
@@ -63,17 +65,19 @@ class DirectExecutionReportRepository(
                     json_build_object(
                       'description', agg.description,
                       'unit_price', agg.unit_price,
-                      'total_price', ROUND(agg.total_quantity * agg.unit_price, 2),
-                      'quantity_executed', agg.total_quantity
+                      'total_price', ROUND((agg.total_quantity * agg.factor) * agg.unit_price, 2),
+                      'quantity_executed', agg.total_quantity,
+                      'factor', agg.factor
                     )
                   )
                   FROM (
                     SELECT 
                       description,
                       unit_price,
-                      SUM(executed_quantity) AS total_quantity
+                      SUM(executed_quantity) AS total_quantity,
+                      factor
                     FROM items_by_street
-                    GROUP BY description, unit_price
+                    GROUP BY description, unit_price, factor
                     order by description
                   ) AS agg
                 ) AS values,
@@ -145,7 +149,7 @@ class DirectExecutionReportRepository(
             (
                 SELECT 
                     json_build_object(
-                    'total_price', ROUND(SUM((executed_quantity) * unit_price), 2)
+                    'total_price', ROUND(SUM((executed_quantity * factor) * unit_price), 2)
                     )
                 FROM items_by_street
             ) AS total,

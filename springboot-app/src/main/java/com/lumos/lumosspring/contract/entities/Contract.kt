@@ -23,7 +23,7 @@ class Contract : TenantEntity() {
     @Column("created_by_id_user")
     var createdBy: UUID? = null
 
-    var unifyServices : Boolean = false
+    var usesSuFactor : Boolean = false
     var noticeFile : String? = null
     var contractFile : String? = null
     var status : String = ContractStatus.ACTIVE

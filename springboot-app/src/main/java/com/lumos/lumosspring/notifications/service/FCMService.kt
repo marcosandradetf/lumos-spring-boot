@@ -8,6 +8,7 @@ import com.google.firebase.messaging.Message
 import com.google.firebase.messaging.WebpushConfig
 import com.google.firebase.messaging.WebpushFcmOptions
 import com.google.firebase.messaging.WebpushNotification
+import com.lumos.lumosspring.util.Utils
 import org.springframework.stereotype.Service
 import java.time.Instant
 
@@ -29,6 +30,7 @@ class FCMService(
         uri: String? = null,
         relatedId: String? = null,
         subtitle: String? = null,
+        tenant: String
     ) {
         // Criar a mensagem para o tópico
         val messageBuilder = Message.builder()
@@ -38,6 +40,7 @@ class FCMService(
             .putData("time", time.toString())
             .putData("type", type)
             .putData("isWebPopup", isPopUp.toString())
+            .putData("tenant", tenant)
 
         relatedId?.let {
             messageBuilder.putData("relatedId", it)

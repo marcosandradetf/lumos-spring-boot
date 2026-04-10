@@ -33,7 +33,7 @@ export class ContractService {
         contractor: string | null
         startDate: Date | null
         endDate: Date | null
-        status: "ACTIVE" | "ARCHIVED"
+        status: "ACTIVE" | "ARCHIVED" | null
     }) {
         return this.http.post<ContractResponse[]>(this.endpoint + "/get-AllContracts", filters);
     }

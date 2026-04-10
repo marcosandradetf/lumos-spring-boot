@@ -12,6 +12,7 @@ data class ContractReferenceItemDTO(
     var itemDependency : String?,
     var quantity : BigDecimal?,
     var price : BigDecimal,
+    var factor : BigDecimal,
     val contractItemId: Long? = null
 )
 

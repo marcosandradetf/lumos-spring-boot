@@ -82,7 +82,7 @@ function getSectionIcon(section: string): string {
         {
           firstDoc && (
             <a
-              href={`/docs/${firstDoc.id}`}
+              href={`/como-usar/${firstDoc.id}`}
               class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-md bg-primary text-white font-medium hover:bg-primary-dark transition-all"
             >
               <Icon name="lucide:rocket" class="w-5 h-5" />
@@ -105,7 +105,7 @@ function getSectionIcon(section: string): string {
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <a
-          href="/src/pages/como-usar/02-access-management/01-profiles"
+          href="/como-usar/02-access-management/01-profiles"
           class="flex items-center gap-3 p-4 rounded-lg bg-surface hover:bg-surface/80 transition-all group"
         >
           <div
@@ -116,7 +116,7 @@ function getSectionIcon(section: string): string {
           <span class="font-medium text-text">Usuários</span>
         </a>
         <a
-          href="/src/pages/como-usar/03-stock/01-warehouses"
+          href="/como-usar/01-introduction/03-mobile-app-getting-started"
           class="flex items-center gap-3 p-4 rounded-lg bg-surface hover:bg-surface/80 transition-all group"
         >
           <div
@@ -124,10 +124,10 @@ function getSectionIcon(section: string): string {
           >
             <Icon name="lucide:package" class="w-5 h-5" />
           </div>
-          <span class="font-medium text-text">Estoque</span>
+          <span class="font-medium text-text">App Mobile</span>
         </a>
         <a
-          href="/src/pages/como-usar/04-contracts/01-setup"
+          href="/como-usar/01-introduction/02-first-access"
           class="flex items-center gap-3 p-4 rounded-lg bg-surface hover:bg-surface/80 transition-all group"
         >
           <div
@@ -135,10 +135,10 @@ function getSectionIcon(section: string): string {
           >
             <Icon name="lucide:file-text" class="w-5 h-5" />
           </div>
-          <span class="font-medium text-text">Contratos</span>
+          <span class="font-medium text-text">Primeiro Acesso</span>
         </a>
         <a
-          href="/src/pages/como-usar/05-operation/01-os-flow"
+          href="/como-usar/01-introduction/01-general-vision"
           class="flex items-center gap-3 p-4 rounded-lg bg-surface hover:bg-surface/80 transition-all group"
         >
           <div
@@ -146,7 +146,7 @@ function getSectionIcon(section: string): string {
           >
             <Icon name="lucide:zap" class="w-5 h-5" />
           </div>
-          <span class="font-medium text-text">Ordens de Serviço</span>
+          <span class="font-medium text-text">Visão Geral</span>
         </a>
       </div>
     </div>
@@ -167,7 +167,7 @@ function getSectionIcon(section: string): string {
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {section.items.map((doc) => (
                   <a
-                    href={`/docs/${doc.slug}`}
+                    href={`/como-usar/${doc.slug}`}
                     class="block p-6 rounded-lg border border-border bg-background hover:border-primary hover:shadow-lg transition-all group"
                   >
                     <h3 class="font-semibold text-text group-hover:text-primary transition-colors text-lg">
@@ -200,7 +200,7 @@ function getSectionIcon(section: string): string {
       </p>
       <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
         <a
-          href="/src/pages/contato"
+          href="/contato"
           class="bg-primary text-white px-6 py-3 rounded-md font-medium hover:bg-primary-dark transition-all inline-flex items-center gap-2"
         >
           <Icon name="lucide:headphones" class="w-5 h-5" />

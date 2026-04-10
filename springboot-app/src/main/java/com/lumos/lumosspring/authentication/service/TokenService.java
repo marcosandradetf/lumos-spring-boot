@@ -13,9 +13,11 @@ import com.lumos.lumosspring.team.repository.TeamQueryRepository;
 import com.lumos.lumosspring.team.repository.StockistRepository;
 import com.lumos.lumosspring.user.model.AppUser;
 import com.lumos.lumosspring.user.model.Role;
+import com.lumos.lumosspring.user.model.UserStatus;
 import com.lumos.lumosspring.user.repository.RoleRepository;
 import com.lumos.lumosspring.user.repository.UserRepository;
 import com.lumos.lumosspring.user.service.UserService;
+import com.lumos.lumosspring.util.ApiErrorResponse;
 import com.lumos.lumosspring.util.ErrorResponse;
 import com.lumos.lumosspring.util.Utils;
 import jakarta.servlet.http.Cookie;
@@ -79,13 +81,11 @@ public class TokenService {
 //    }
 
     public ResponseEntity<?> forgotPassword(LoginRequest loginRequest) {
-        var user = userService.findUserByUsernameOrCpf(loginRequest.username());
+        return userService.forgotPasswordByUsername(loginRequest.username());
+    }
 
-        if (user.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-
-        return userService.resetPassword(user.get().getUserId().toString());
+    public ResponseEntity<?> activate(com.lumos.lumosspring.authentication.dto.ActivateUserRequest request) {
+        return userService.activateUser(request.cpf(), request.activationCode(), request.newPassword());
     }
 
     private void generateToken(UUID userId) {
@@ -100,16 +100,14 @@ public class TokenService {
                 user,
                 now,
                 expiresIn,
-                scope,
-                bucket
+                scope
         );
 
         var refreshTokenClaims = getTokenClaims(
                 user,
                 now,
                 refreshExpiresIn,
-                scope,
-                bucket
+                scope
         );
 
         accessToken = jwtEncoder.encode(JwtEncoderParameters.from(accessTokenClaims)).getTokenValue();
@@ -193,8 +191,14 @@ public class TokenService {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("Usuário/CPF ou senha incorretos"));
         }
 
-        if (!user.get().getStatus()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("O Usuário informado não possui permissão de acesso."));
+        if (user.get().getStatus() != UserStatus.ACTIVE) {
+            if (user.get().getStatus() == UserStatus.PENDING_ACTIVATION) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new ApiErrorResponse("USER_NOT_ACTIVATED", "User must complete activation"));
+            }
+
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new ApiErrorResponse("USER_BLOCKED", "User is blocked"));
         }
 
         if (isMobile) {
@@ -241,8 +245,8 @@ public class TokenService {
     public ResponseEntity<?> issueTokensForNewUser(UUID userId, HttpServletResponse response, boolean isMobile) {
         var user = userRepository.findByUserId(userId).orElseThrow(() ->
                 new IllegalStateException("Usuário não encontrado para emissão de token"));
-        if (!user.getStatus()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("O Usuário informado não possui permissão de acesso."));
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiErrorResponse("USER_NOT_ACTIVATED", "User must complete activation"));
         }
         if (isMobile) {
             var allowedRoles = new HashSet<>(Set.of(
@@ -310,7 +314,7 @@ public class TokenService {
                 .collect(Collectors.joining(" "));
     }
 
-    private JwtClaimsSet getTokenClaims(AppUser appUser, Instant now, Long expiresIn, String scope, String bucket) {
+    private JwtClaimsSet getTokenClaims(AppUser appUser, Instant now, Long expiresIn, String scope) {
         return JwtClaimsSet.builder()
                 .issuer("LumosSoftware")
                 .subject(appUser.getUserId().toString())
@@ -322,7 +326,7 @@ public class TokenService {
                 .claim("email", appUser.getEmail())
                 .claim("fullname", appUser.getCompletedName())
                 .claim("tenant", appUser.getTenantId())
-                .claim("bucket", bucket)
+                .claim("support", appUser.getSupport())
                 .build();
 
     }

@@ -2,6 +2,7 @@ package com.lumos.lumosspring.user.model;
 
 import com.lumos.lumosspring.authentication.dto.LoginRequest;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -39,7 +40,15 @@ public class AppUser extends TenantEntity implements Persistable<UUID> {
 
     private LocalDate dateOfBirth;
 
-    private Boolean status;
+    private UserStatus status;
+
+    private Boolean mustChangePassword;
+
+    private String activationCodeHash;
+
+    private Instant activationCodeExpiresAt;
+
+    private Integer activationAttemptCount;
 
     private Long teamId;
 
@@ -122,12 +131,44 @@ public class AppUser extends TenantEntity implements Persistable<UUID> {
         this.codeResetPassword = codeResetPassword;
     }
 
-    public Boolean getStatus() {
+    public UserStatus getStatus() {
         return status;
     }
 
-    public void setStatus(Boolean status) {
+    public void setStatus(UserStatus status) {
         this.status = status;
+    }
+
+    public Boolean getMustChangePassword() {
+        return mustChangePassword;
+    }
+
+    public void setMustChangePassword(Boolean mustChangePassword) {
+        this.mustChangePassword = mustChangePassword;
+    }
+
+    public String getActivationCodeHash() {
+        return activationCodeHash;
+    }
+
+    public void setActivationCodeHash(String activationCodeHash) {
+        this.activationCodeHash = activationCodeHash;
+    }
+
+    public Instant getActivationCodeExpiresAt() {
+        return activationCodeExpiresAt;
+    }
+
+    public void setActivationCodeExpiresAt(Instant activationCodeExpiresAt) {
+        this.activationCodeExpiresAt = activationCodeExpiresAt;
+    }
+
+    public Integer getActivationAttemptCount() {
+        return activationAttemptCount;
+    }
+
+    public void setActivationAttemptCount(Integer activationAttemptCount) {
+        this.activationAttemptCount = activationAttemptCount;
     }
 
     public String getCpf() {

@@ -1,150 +1,153 @@
-import {Component} from '@angular/core';
-import {Router} from '@angular/router';
-import {TableComponent} from '../../shared/components/table/table.component';
-import {ButtonComponent} from '../../shared/components/button/button.component';
-import {FormsModule, NgForm, ReactiveFormsModule} from '@angular/forms';
-import {NgClass, NgForOf, NgIf} from '@angular/common';
-import {UserService} from './user-service.service';
-import {catchError, tap, throwError} from 'rxjs';
-import {UtilsService} from '../../core/service/utils.service';
-import {AlertMessageComponent} from '../../shared/components/alert-message/alert-message.component';
-import {ModalComponent} from '../../shared/components/modal/modal.component';
-import {AuthService} from '../../core/auth/auth.service';
-import {Title} from '@angular/platform-browser';
-import {NgxMaskDirective, NgxMaskPipe, provideNgxMask} from 'ngx-mask';
-import {Toast} from 'primeng/toast';
-import {MultiSelect} from 'primeng/multiselect';
-import {LoadingComponent} from '../../shared/components/loading/loading.component';
-import {SharedState} from '../../core/service/shared-state';
-import {Utils} from '../../core/service/utils';
-import {PrimeTemplate} from 'primeng/api';
+import { Component } from '@angular/core';
+import { NgClass, NgForOf, NgIf } from '@angular/common';
+import { DomSanitizer, SafeResourceUrl, Title } from '@angular/platform-browser';
+import { FormsModule, NgForm } from '@angular/forms';
+import { Router } from '@angular/router';
+import { catchError, tap, throwError } from 'rxjs';
+import { NgxMaskDirective, NgxMaskPipe, provideNgxMask } from 'ngx-mask';
+import { Toast } from 'primeng/toast';
+import { MultiSelect } from 'primeng/multiselect';
+import { PrimeTemplate } from 'primeng/api';
+import { ModalComponent } from '../../shared/components/modal/modal.component';
+import { LoadingComponent } from '../../shared/components/loading/loading.component';
+import { UtilsService } from '../../core/service/utils.service';
+import { AuthService } from '../../core/auth/auth.service';
+import { SharedState } from '../../core/service/shared-state';
+import { Utils } from '../../core/service/utils';
+import {
+    ActivationCodeResponse,
+    UserActivationStatus,
+    UserManagementResponse,
+    UserService
+} from './user-service.service';
+
+type ManagedUser = {
+    userId: string;
+    username: string;
+    name: string;
+    lastname: string;
+    email: string;
+    cpf: string;
+    year: string;
+    month: string;
+    day: string;
+    role: string[];
+    status: UserActivationStatus;
+    mustChangePassword: boolean;
+    activationExpiresAt: string | null;
+    sel: boolean;
+    show: boolean;
+};
+
+type RoleOption = {
+    selected: boolean;
+    roleId: string;
+    roleName: string;
+    label: string;
+    description: string;
+};
+
+type EmbeddedDoc = {
+    key: 'invite-users' | 'first-access';
+    title: string;
+    description: string;
+    url: string;
+};
 
 @Component({
     selector: 'app-user',
     standalone: true,
     imports: [
-        TableComponent,
-        ButtonComponent,
         FormsModule,
-        ReactiveFormsModule,
         NgForOf,
         NgIf,
-        AlertMessageComponent,
-        ModalComponent,
+        NgClass,
         NgxMaskDirective,
         NgxMaskPipe,
         Toast,
-        NgClass,
         MultiSelect,
         LoadingComponent,
+        ModalComponent,
         PrimeTemplate
     ],
     providers: [provideNgxMask()],
     templateUrl: './user.component.html',
     styleUrl: './user.component.scss'
 })
-
 export class UserComponent {
+    searchTerm = '';
+    users: ManagedUser[] = [];
+    usersBackup: ManagedUser[] = [];
+    roles: RoleOption[] = [];
+    quickAddMenuOpen = false;
 
+    readonly quickAddOptions = [1, 3, 5];
 
-    change: boolean = false;
-    users: {
-        userId: string;
-        username: string;
-        name: string;
-        lastname: string;
-        email: string;
-        cpf: string;
-        year: string;
-        month: string;
-        day: string;
-        role: any[];
-        status: boolean;
-        sel: boolean;
-        show: boolean;
-    }[] = [];
-
-    usersBackup: {
-        userId: string;
-        username: string;
-        name: string;
-        lastname: string;
-        email: string;
-        cpf: string;
-        year: string;
-        month: string;
-        day: string;
-        role: string[];
-        status: boolean;
-        sel: boolean;
-        show: boolean;
-    }[] = [];
-
-
-    rolesUser: {
-        index: number,
-        role: string,
-    }[] = [];
-
-    roles: {
-        selected: boolean,
-        roleId: string,
-        roleName: string,
-        label: string,
-    }[] = [];
-
-    add: boolean = false;
-
-    months: {
-        number: string,
-        name: string,
-    }[] = [
-        {number: '1', name: "Janeiro"},
-        {number: '2', name: "Fevereiro"},
-        {number: '3', name: "Março"},
-        {number: '4', name: "Abril"},
-        {number: '5', name: "Maio"},
-        {number: '6', name: "Junho"},
-        {number: '7', name: "Julho"},
-        {number: '8', name: "Agosto"},
-        {number: '9', name: "Setembro"},
-        {number: '10', name: "Outubro"},
-        {number: '11', name: "Novembro"},
-        {number: '12', name: "Dezembro"},
+    months = [
+        { number: '1', name: 'Janeiro' },
+        { number: '2', name: 'Fevereiro' },
+        { number: '3', name: 'Março' },
+        { number: '4', name: 'Abril' },
+        { number: '5', name: 'Maio' },
+        { number: '6', name: 'Junho' },
+        { number: '7', name: 'Julho' },
+        { number: '8', name: 'Agosto' },
+        { number: '9', name: 'Setembro' },
+        { number: '10', name: 'Outubro' },
+        { number: '11', name: 'Novembro' },
+        { number: '12', name: 'Dezembro' }
     ];
 
-    formSubmitted: boolean = false;
-    serverMessage: string | null = null;
-    alertType: string | null = null;
-    loading: boolean = false;
-    userId: string = '';
-    openConfirmationModal: boolean = false;
-    usernamePattern: string = '^[a-zA-Z0-9._-]{3,20}$';
-    emailPattern: string = '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$';
-    cpfPattern: string = '^[0-9]{11}$'; // sem pontuação, pois o valor real é só os números
-    private email: string = "";
+    formSubmitted = false;
+    loading = false;
+    activationCodeModalOpen = false;
+    activationModalTitle = '';
+    generatedActivationCode: string | null = null;
+    generatedActivationExpiresAt: string | null = null;
+    isOperational = false;
 
-    getMonth(monthNumber: string) {
-        return this.months.find(m => m.number === monthNumber);
-    }
+    embeddedDocOpen = false;
+    embeddedDocTitle = '';
+    embeddedDocDescription = '';
+    embeddedDocUrl: SafeResourceUrl | null = null;
 
+    readonly docs: EmbeddedDoc[] = [
+        {
+            key: 'invite-users',
+            title: 'Como convidar usuários',
+            description: 'Veja o passo a passo para cadastrar acessos, definir perfis e preparar o convite com segurança.',
+            url: 'https://lumosip.com.br/como-usar/02-access-management/02-invite-users/'
+        },
+        {
+            key: 'first-access',
+            title: 'Como orientar o primeiro acesso',
+            description: 'Abra a orientação que explica como o usuário deve ativar a conta, definir a senha e entrar no sistema.',
+            url: 'https://lumosip.com.br/como-usar/02-access-management/03-first-access-activation/'
+        }
+    ];
 
-    constructor(protected router: Router, private userService: UserService, protected utils: UtilsService,
-                protected authService: AuthService, private titleService: Title) {
+    readonly statusOptions: { label: string; value: UserActivationStatus }[] = [
+        { label: 'Pendente de ativação', value: 'PENDING_ACTIVATION' },
+        { label: 'Ativo', value: 'ACTIVE' },
+        { label: 'Bloqueado', value: 'BLOCKED' }
+    ];
 
-        this.titleService.setTitle("Configurações - Usuários");
-        SharedState.setCurrentPath(["Configurações", "Usuários"]);
+    constructor(
+        protected router: Router,
+        private readonly userService: UserService,
+        protected utils: UtilsService,
+        protected authService: AuthService,
+        private readonly titleService: Title,
+        private readonly sanitizer: DomSanitizer
+    ) {
+        this.titleService.setTitle('Configurações - Usuários');
+        SharedState.setCurrentPath(['Configurações', 'Usuários']);
 
         this.userService.getUsers().subscribe({
             next: users => {
-                this.users = users;
+                this.users = users.map(user => this.normalizeUser(user));
                 this.usersBackup = JSON.parse(JSON.stringify(this.users));
-                this.rolesUser = users.flatMap(user =>
-                    user.role.map(role => ({
-                        index: this.users.findIndex(u => u.userId === user.userId),
-                        role: role
-                    }))
-                );
+                this.applySearch();
             },
             error: err => {
                 Utils.handleHttpError(err, this.router);
@@ -161,272 +164,398 @@ export class UserComponent {
         });
     }
 
-
-    changeUser() {
-        return () => {
-            this.change = true;
-        };
+    get totalUsersCount(): number {
+        return this.usersBackup.length;
     }
 
-    addUser() {
-        return () => {
-            this.add = true;
-        }
+    get pendingActivationCount(): number {
+        return this.usersBackup.filter(user => user.status === 'PENDING_ACTIVATION').length;
     }
 
-    resetView() {
-        return () => {
-            this.change = false;
-            this.add = false;
-            this.users = JSON.parse(JSON.stringify(this.usersBackup));
+    get activeUsersCount(): number {
+        return this.usersBackup.filter(user => user.status === 'ACTIVE').length;
+    }
+
+    get blockedUsersCount(): number {
+        return this.usersBackup.filter(user => user.status === 'BLOCKED').length;
+    }
+
+    get editingUsersCount(): number {
+        return this.users.filter(user => user.sel).length;
+    }
+
+    get draftUsersCount(): number {
+        return this.usersBackup.filter(user => !user.userId).length;
+    }
+
+    get hasDraftUsers(): boolean {
+        return this.draftUsersCount > 0;
+    }
+
+    get canShareActivationCode(): boolean {
+        return typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+    }
+
+    trackByUser(_: number, user: ManagedUser): string {
+        return user.userId || `${user.username}-${user.email}-${user.cpf}`;
+    }
+
+    newUser() {
+        this.addUsersBatch(1);
+    }
+
+    removeUser() {
+        if (!this.hasDraftUsers) {
+            return;
         }
+
+        this.users = this.users.filter(user => user.userId !== '');
+        this.usersBackup = this.usersBackup.filter(user => user.userId !== '');
+        this.applySearch();
+        this.quickAddMenuOpen = false;
+    }
+
+    toggleUserEdit(user: ManagedUser) {
+        if (!user.userId) {
+            this.removeUser();
+            return;
+        }
+
+        user.sel = !user.sel;
+    }
+
+    filterUsers(event: Event) {
+        this.searchTerm = (event.target as HTMLInputElement).value ?? '';
+        this.applySearch();
+    }
+
+    toggleQuickAddMenu() {
+        this.quickAddMenuOpen = !this.quickAddMenuOpen;
+    }
+
+    addUsersBatch(count: number) {
+        for (let index = 0; index < count; index += 1) {
+            const user = this.createDraftUser();
+            this.users.unshift(user);
+            this.usersBackup.unshift(JSON.parse(JSON.stringify(user)));
+        }
+
+        this.quickAddMenuOpen = false;
+        this.applySearch();
     }
 
     submitUsers(form: NgForm) {
         this.formSubmitted = true;
 
         if (form.invalid) {
-            console.log('Formulário inválido');
+            return;
+        }
+
+        if (!this.users.some(user => user.sel)) {
+            this.utils.showMessage('Selecione pelo menos um usuário para salvar as alterações.', 'info', 'Lumos™');
             return;
         }
 
         this.loading = true;
-
-        const someSel = this.users.some(u => u.sel);
-
-        if (someSel) {
-            this.updateUsers();
-        }
-
+        this.updateUsers();
     }
 
-    private updateUsers() {
-        // Verifica se nenhum usuário foi selecionado
-        const noneSelected = this.users.every(u => !u.sel);
-
-        if (noneSelected) {
-            // this.serverMessage = "Nenhum usuário foi selecionado."
-            this.utils.showMessage("Nenhum usuário foi selecionado.", 'info', 'Atenção');
-            this.alertType = "alert-error";
-            this.loading = false;
+    confirmGenerateActivation(user: ManagedUser) {
+        if (!user.userId) {
+            this.utils.showMessage('Salve o usuário antes de gerar o código de ativação.', 'info', 'Lumos™');
             return;
         }
 
-        this.userService.updateUser(this.users)
-            .pipe(tap(r => {
-                    this.utils.showMessage("Caso algum usuário tenha sido cadastrado, a senha foi enviada para o email informado.", 'success', 'Usuários atualizados com sucesso.', true)
-                    this.users = r;
-                    this.usersBackup = JSON.parse(JSON.stringify(this.users));
-                    this.change = false;
-                    this.loading = false;
-                }),
-                catchError(err => {
-                    this.utils.showMessage(err.error.message, 'error', 'Atenção');
-                    this.loading = false;
-                    throw err;
-                })
-            ).subscribe();
-
-    }
-
-    private showMessage(message: string, timeout = 3000) {
-        this.serverMessage = message;
-        setTimeout(() => {
-            this.serverMessage = null;
-        }, timeout);
-    }
-
-    currentPassword: string | null = null
-
-    resetPassword() {
+        this.isOperational = this.isOperationalUser(user);
         this.loading = true;
-        if (this.userId !== '') {
-            this.userService.resetPassword(this.userId).pipe(
-                tap(r => {
-                    this.loading = false;
-                    this.alertType = "alert-success";
-                    this.currentPassword = (r as any).message
-                }),
-                catchError(err => {
-                    this.loading = false;
-                    return throwError(() => err);
-                })
-            ).subscribe();
-        }
+
+        this.userService.generateActivationCode(user.userId).pipe(
+            tap(response => this.openActivationCodeModal('Código de ativação gerado', user.userId, response)),
+            catchError(err => {
+                this.loading = false;
+                this.utils.showMessage(err?.error?.message ?? 'Não foi possível gerar o código de ativação.', 'error', 'Lumos™');
+                return throwError(() => err);
+            })
+        ).subscribe();
     }
 
-    newUser() {
-        const user = {
-            userId: "",
-            username: "",
-            name: "",
-            lastname: "",
-            email: "",
-            cpf: "",
-            year: "",
-            month: "",
-            day: "",
-            role: [],
-            status: true,
-            sel: true,
-            show: false,
-        };
-        this.users.splice(0, 0, user);
-    }
-
-
-    removeUser() {
-        const firstElement = this.users[0];
-        if (firstElement.userId === '') {
-            this.users = this.users.filter(u => u.userId !== firstElement.userId);
-        }
-    }
-
-    changeRole(userIndex: number, nomeRole: string) {
-        if (userIndex === -1) {
-            console.log('Usuário não encontrado');
+    confirmResetActivation(user: ManagedUser) {
+        if (!user.userId) {
+            this.utils.showMessage('Salve o usuário antes de resetar a ativação.', 'info', 'Lumos™');
             return;
         }
 
+        this.isOperational = this.isOperationalUser(user);
+        this.loading = true;
 
-        // Obter todas as roles associadas ao usuário
-        let roles = this.rolesUser.filter(u => u.index === userIndex);
+        this.userService.resetActivation(user.userId).pipe(
+            tap(response => this.openActivationCodeModal('Código de ativação redefinido', user.userId, response)),
+            catchError(err => {
+                this.loading = false;
+                this.utils.showMessage(err?.error?.message ?? 'Não foi possível redefinir a ativação.', 'error', 'Lumos™');
+                return throwError(() => err);
+            })
+        ).subscribe();
+    }
 
-        // Verificar se a role já existe
-        const roleExists = roles.some(role => role.role === nomeRole);
-
-        if (roleExists) {
-            // Se a role já existe, removê-la
-            roles = roles.filter(role => role.role !== nomeRole);
-        } else {
-            // Caso contrário, adicionar a nova role
-            roles.push({index: userIndex, role: nomeRole});
+    copyActivationCode() {
+        if (!this.generatedActivationCode) {
+            return;
         }
 
-        // Atualizar as roles do usuário
-        this.rolesUser = this.rolesUser.filter(u => u.index !== userIndex);
-        // user.role = [];
-        this.users[userIndex].role = [];
-        roles.forEach(role => {
-            this.rolesUser.push(role);
-            // user.role.push(role.role);
-            this.users[userIndex].role.push(role.role);
-        });
-
-
-    }
-
-
-    filterRolesByUserId(index: number) {
-        return this.rolesUser.filter(role => role.index === index);
-    }
-
-    changeRoleFromMulti(userIndex: number, selectedRoles: string[]) {
-        // Zera as roles do usuário
-        this.rolesUser = this.rolesUser.filter(u => u.index !== userIndex);
-        this.users[userIndex].role = [];
-
-        // Reinsere as roles selecionadas
-        selectedRoles.forEach(roleName => {
-            this.rolesUser.push({index: userIndex, role: roleName});
-            this.users[userIndex].role.push(roleName);
+        navigator.clipboard.writeText(this.generatedActivationCode).then(() => {
+            this.utils.showMessage('Código de ativação copiado com sucesso.', 'success', 'Lumos™');
         });
     }
 
-
-    getRolesString(index: number): string {
-        return this.rolesUser
-            .filter(r => r.index === index)
-            .map(r => r.role)
-            .join(', ');
-    }
-
-
-    verifyRole(index: number, nomeRole: string): boolean {
-        const userRoles = this.filterRolesByUserId(index); // Obtém as roles do usuário filtrado
-
-        // Verifica se alguma role no array corresponde ao nomeRole fornecido
-        return userRoles.some(role => role.role === nomeRole);
-    }
-
-
-    handleClick(dropdown: HTMLDetailsElement, month: string, userId: string) {
-        // Fecha o dropdown
-        dropdown.open = false;
-
-        const userIndex = this.users.findIndex(u => u.userId === userId);
-        if (userIndex === -1) {
+    async shareActivationCode() {
+        if (!this.generatedActivationCode) {
             return;
         }
 
-        this.users[userIndex].month = month;
-    }
-
-    handleClickInsert(dropdown: HTMLDetailsElement, month: string, index: number) {
-        // Fecha o dropdown
-        dropdown.open = false;
-
-        if (index === -1) {
+        if (!this.canShareActivationCode) {
+            this.utils.showMessage('O compartilhamento nativo não está disponível neste navegador.', 'info', 'Lumos™');
             return;
         }
 
-        this.users[index].month = month;
-    }
+        const expiration = this.formatActivationExpiration(this.generatedActivationExpiresAt);
 
-    getMaxDay(month: string, year: string): number {
-        const daysInMonth: Record<number, number> = {
-            1: 31, // Janeiro
-            2: this.isLeapYear(year) ? 29 : 28, // Fevereiro
-            3: 31, // Março
-            4: 30, // Abril
-            5: 31, // Maio
-            6: 30, // Junho
-            7: 31, // Julho
-            8: 31, // Agosto
-            9: 30, // Setembro
-            10: 31, // Outubro
-            11: 30, // Novembro
-            12: 31, // Dezembro
-        };
-        return daysInMonth[parseInt(month, 10)] || 31; // Valor padrão para meses inválidos
-    }
-
-    isLeapYear(strYear: string): boolean {
-        const year = parseInt(strYear, 10);
-        return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
-    }
-
-    confirmResetPassword(userId: string, email: string) {
-        if (userId !== '') {
-            this.openConfirmationModal = true;
-            this.userId = userId;
-            this.email = email;
-        } else {
-            this.utils.showMessage("Ação disponível apenas para usuários cadastrados.", "info", "Lumos™");
-        }
-
-    }
-
-    copyPassword() {
-        if (this.currentPassword) {
-            navigator.clipboard.writeText(this.currentPassword ?? '').then(() => {
-                this.openConfirmationModal = false;
-                this.currentPassword = null;
-                this.utils.showMessage("Senha copiada com sucesso", "success", "Lumos™");
+        try {
+            await navigator.share({
+                title: 'Acesso ao Lumos IP™',
+                text: `Olá! Você foi convidado para acessar o Lumos IP™.\n\nCódigo de ativação: ${this.generatedActivationCode}\nValidade: ${expiration}\n\n${this.isOperational
+                    ? 'Use o app Lumos OP, toque em "Primeiro acesso", informe seu CPF, o código acima e crie sua senha.'
+                    : 'Acesse https://app.lumosip.com.br/primeiro-acesso, informe seu CPF, o código acima e crie sua senha.'
+                    }\n\nEste código é pessoal e expira automaticamente.`
             });
+        } catch (error: any) {
+            if (error?.name !== 'AbortError') {
+                this.utils.showMessage('Não foi possível compartilhar o código de ativação.', 'error', 'Lumos™');
+            }
         }
     }
 
+    openDocumentation(docKey: EmbeddedDoc['key']) {
+        const doc = this.docs.find(item => item.key === docKey);
+        if (!doc) {
+            return;
+        }
+
+        this.embeddedDocTitle = doc.title;
+        this.embeddedDocDescription = doc.description;
+        this.embeddedDocUrl = this.sanitizer.bypassSecurityTrustResourceUrl(doc.url);
+        this.embeddedDocOpen = true;
+    }
+
+    closeDocumentation() {
+        this.embeddedDocOpen = false;
+        this.embeddedDocUrl = null;
+        this.embeddedDocTitle = '';
+        this.embeddedDocDescription = '';
+    }
+
+    closeActivationModal() {
+        this.activationCodeModalOpen = false;
+        this.generatedActivationCode = null;
+        this.generatedActivationExpiresAt = null;
+    }
+
+    getMonth(monthNumber: string) {
+        return this.months.find(month => month.number === monthNumber);
+    }
+
+    getRoleLabel(roleName: string): string {
+        return this.roles.find(role => role.roleName === roleName)?.label ?? roleName;
+    }
+
+    getAllRoles(roles: string[]): string {
+        return roles.map(role => this.getRoleLabel(role)).join(', ');
+    }
+
+    getUserDisplayName(user: ManagedUser): string {
+        const fullName = `${user.name ?? ''} ${user.lastname ?? ''}`.trim();
+        return fullName || user.username || 'Novo usuário';
+    }
+
+    getUserInitials(user: ManagedUser): string {
+        return this.getUserDisplayName(user)
+            .split(' ')
+            .filter(Boolean)
+            .slice(0, 2)
+            .map(part => part[0]?.toUpperCase() ?? '')
+            .join('');
+    }
+
+    getStatusLabel(status: UserActivationStatus): string {
+        return this.statusOptions.find(option => option.value === status)?.label ?? status;
+    }
+
+    getStatusBadgeClass(status: UserActivationStatus): string {
+        if (status === 'ACTIVE') {
+            return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200';
+        }
+
+        if (status === 'BLOCKED') {
+            return 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-200';
+        }
+
+        return 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-200';
+    }
+
+    getActivationSummary(user: ManagedUser): string {
+        if (user.status === 'ACTIVE') {
+            return 'Acesso liberado';
+        }
+
+        if (user.status === 'BLOCKED') {
+            return 'Acesso bloqueado';
+        }
+
+        if (user.activationExpiresAt) {
+            return `Código ativo até ${this.formatActivationExpiration(user.activationExpiresAt)}`;
+        }
+
+        return 'Aguardando geração do código';
+    }
+
+    formatActivationExpiration(value: string | null): string {
+        if (!value) {
+            return 'Sem código ativo';
+        }
+
+        return new Intl.DateTimeFormat('pt-BR', {
+            dateStyle: 'short',
+            timeStyle: 'short'
+        }).format(new Date(value));
+    }
 
     protected getBadge(roleName: string): string {
         if (roleName === 'ADMIN') {
             return 'Acesso total';
-        } else if (['ANALISTA', 'RESPONSAVEL_TECNICO'].includes(roleName)) {
-            return 'Acesso alto';
-        } else if (['ESTOQUISTA', 'ESTOQUISTA_CHEFE'].includes(roleName)) {
-            return 'Acesso médio';
-        } else {
-            return 'Baixo acesso';
         }
+
+        if (['ANALISTA', 'RESPONSAVEL_TECNICO'].includes(roleName)) {
+            return 'Acesso alto';
+        }
+
+        if (['ESTOQUISTA', 'ESTOQUISTA_CHEFE'].includes(roleName)) {
+            return 'Acesso médio';
+        }
+
+        return 'Baixo acesso';
+    }
+
+    isOperationalUser(user: ManagedUser): boolean {
+        return user.role.includes('MOTORISTA') || user.role.includes('ELETRICISTA');
+    }
+
+    private createDraftUser(): ManagedUser {
+        return {
+            userId: '',
+            username: '',
+            name: '',
+            lastname: '',
+            email: '',
+            cpf: '',
+            year: '',
+            month: '',
+            day: '',
+            role: [],
+            status: 'PENDING_ACTIVATION',
+            mustChangePassword: false,
+            activationExpiresAt: null,
+            sel: true,
+            show: false
+        };
+    }
+
+    private applySearch() {
+        const value = this.searchTerm.trim().toLowerCase();
+
+        if (!value) {
+            this.users = JSON.parse(JSON.stringify(this.usersBackup));
+            return;
+        }
+
+        this.users = this.usersBackup.filter(user => {
+            const roleNames = (user.role ?? []).map(role => this.getRoleLabel(role)).join(' ');
+
+            const searchableFields = [
+                user.username,
+                user.name,
+                user.lastname,
+                `${user.name} ${user.lastname}`,
+                user.email,
+                user.cpf,
+                roleNames,
+                this.getStatusLabel(user.status)
+            ];
+
+            return searchableFields.some(field =>
+                (field ?? '').toString().toLowerCase().includes(value)
+            );
+        }).map(user => JSON.parse(JSON.stringify(user)));
+    }
+
+    private updateUsers() {
+        this.userService.updateUser(this.users).pipe(
+            tap(response => {
+                this.utils.showMessage('Usuários atualizados com sucesso.', 'success', 'Lumos™', true);
+                this.users = response.map(user => this.normalizeUser(user));
+                this.usersBackup = JSON.parse(JSON.stringify(this.users));
+                this.applySearch();
+                this.loading = false;
+            }),
+            catchError(err => {
+                this.utils.showMessage(err?.error?.message ?? 'Não foi possível atualizar os usuários.', 'error', 'Lumos™');
+                this.loading = false;
+                return throwError(() => err);
+            })
+        ).subscribe();
+    }
+
+    private normalizeUser(user: UserManagementResponse): ManagedUser {
+        const status = typeof user.status === 'boolean'
+            ? (user.status ? 'ACTIVE' : 'BLOCKED')
+            : user.status;
+
+        return {
+            userId: user.userId,
+            username: user.username,
+            name: user.name,
+            lastname: user.lastname,
+            email: user.email,
+            cpf: user.cpf,
+            year: `${user.year ?? ''}`,
+            month: `${user.month ?? ''}`,
+            day: `${user.day ?? ''}`,
+            role: (user.role ?? []).map((role: any) => typeof role === 'string' ? role : role?.roleName).filter(Boolean),
+            status,
+            mustChangePassword: user.mustChangePassword ?? false,
+            activationExpiresAt: user.activationExpiresAt ?? null,
+            sel: user.sel ?? false,
+            show: user.show ?? false
+        };
+    }
+
+    private openActivationCodeModal(title: string, userId: string, response: ActivationCodeResponse) {
+        this.loading = false;
+        this.activationModalTitle = title;
+        this.generatedActivationCode = response.activationCode;
+        this.generatedActivationExpiresAt = response.expiresAt;
+        this.activationCodeModalOpen = true;
+        this.users = this.users.map(user => user.userId === userId ? {
+            ...user,
+            status: 'PENDING_ACTIVATION',
+            mustChangePassword: true,
+            activationExpiresAt: response.expiresAt
+        } : user);
+        this.usersBackup = this.usersBackup.map(user => user.userId === userId ? {
+            ...user,
+            status: 'PENDING_ACTIVATION',
+            mustChangePassword: true,
+            activationExpiresAt: response.expiresAt
+        } : user);
+        this.utils.showMessage(response.message, 'success', 'Lumos™');
     }
 }

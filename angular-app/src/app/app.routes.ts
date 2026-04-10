@@ -1,12 +1,13 @@
 // app/app.routes.ts
-import {Routes} from '@angular/router';
-import {AuthGuard} from './core/auth/auth.guard';
-import {ServiceRequestMapComponent} from './maintenance/request/service-request-map.component';
+import { Routes } from '@angular/router';
+import { AuthGuard } from './core/auth/auth.guard';
+import { ServiceRequestMapComponent } from './maintenance/request/service-request-map.component';
 import {
     ContractReferenceItemFormComponent
 } from './contract/contract-reference-item-form/contract-reference-item-form.component';
-import {MaterialFormComponent} from './stock/material-form/material-form.component';
-import {ServerErrorComponent} from './server-error/server-error.component';
+import { MaterialFormComponent } from './stock/material-form/material-form.component';
+import { ServerErrorComponent } from './server-error/server-error.component';
+import { StockistsComponent } from './stock/stockists/stockists.component';
 
 
 export const routes: Routes = [
@@ -14,6 +15,10 @@ export const routes: Routes = [
     {
         path: 'auth/login',
         loadComponent: () => import('./core/auth/pages/login/login.component').then(m => m.LoginComponent)
+    },
+    {
+        path: 'primeiro-acesso',
+        loadComponent: () => import('./core/auth/pages/first-access/first-access.component').then(m => m.FirstAccessComponent)
     },
     // end
 
@@ -27,7 +32,7 @@ export const routes: Routes = [
         path: 'acesso-negado/:section',
         loadComponent: () => import('./shared/components/no-access/no-access.component').then(n => n.NoAccessComponent),
         canActivate: [AuthGuard],
-        data: {role: [''], path: ''},
+        data: { role: [''], path: '' },
     },
 
     // start billing paths
@@ -35,13 +40,13 @@ export const routes: Routes = [
         path: 'cobranca',
         loadComponent: () => import('./billing/billing.component').then(m => m.BillingComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN'], path: 'cobranca'},
+        data: { role: ['ADMIN'], path: 'cobranca' },
     },
     {
         path: 'acesso-indisponivel',
         loadComponent: () => import('./billing/unavailable-access.component').then(m => m.UnavailableAccessComponent),
         canActivate: [AuthGuard],
-        data: {role: [], path: 'acesso-indisponivel'},
+        data: { role: [], path: 'acesso-indisponivel' },
     },
     // end billing paths
 
@@ -50,81 +55,81 @@ export const routes: Routes = [
         path: 'estoque/cadastrar-material',
         loadComponent: () => import('./stock/material-form/material-form.component').then(m => m.MaterialFormComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'estoque'},
+        data: { role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'estoque' },
     },
     {
         path: 'estoque/editar-material',
         loadComponent: () => import('./stock/material-form/material-form.component').then(m => m.MaterialFormComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'estoque'},
+        data: { role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'estoque' },
     },
     {
         path: 'estoque/catalogo-materiais',
         loadComponent: () => import('./stock/material/material-page.component').then(m => m.MaterialPageComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'estoque'},
+        data: { role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'estoque' },
     },
     {
         path: 'estoque/grupos',
         loadComponent: () => import('./stock/groups/groups.component').then(m => m.GroupsComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque'},
+        data: { role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque' },
     },
     {
         path: 'estoque/tipos',
         loadComponent: () => import('./stock/types/types.component').then(m => m.TypesComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN'], path: 'estoque'},
+        data: { role: ['ADMIN'], path: 'estoque' },
     },
     {
         path: 'estoque/movimentar-estoque',
         loadComponent: () => import('./stock/stock-movement/stock-movement.component').then(m => m.StockMovementComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque'},
+        data: { role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque' },
     },
     {
         path: 'estoque/movimentar-estoque-pendente',
         loadComponent: () => import('./stock/stock-movement-pending/stock-movement-pending.component').then(m => m.StockMovementPendingComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ESTOQUISTA_CHEFE'], path: 'estoque'},
+        data: { role: ['ADMIN', 'ESTOQUISTA_CHEFE'], path: 'estoque' },
     },
     {
         path: 'estoque/movimentar-estoque-aprovado',
         loadComponent: () => import('./stock/stock-movement-approvated/stock-movement-approvated.component').then(m => m.StockMovementApprovatedComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque'},
+        data: { role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque' },
     },
     {
         path: 'estoque/almoxarifados',
         loadComponent: () => import('./stock/deposits/deposits.component').then(m => m.DepositsComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ANALISTA', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque'},
+        data: { role: ['ADMIN', 'ANALISTA', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque' },
     },
 
     {
         path: 'estoque/caminhoes',
         loadComponent: () => import('./stock/truck-deposits/deposits.component').then(d => d.TruckDepositComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ANALISTA', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque'},
+        data: { role: ['ADMIN', 'ANALISTA', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque' },
     },
     {
         path: 'configuracoes/importar-planilha',
         loadComponent: () => import('./stock/import-materials/import-materials.component').then(m => m.ImportMaterialsComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque'},
+        data: { role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque' },
     },
 
 
-    {path: 'estoque', redirectTo: 'estoque/materiais'},
+    { path: 'estoque', redirectTo: 'estoque/materiais' },
     // end
 
     // start contract paths
-    {path: 'contratos', redirectTo: 'contratos/dashboard'},
+    { path: 'contratos', redirectTo: 'contratos/dashboard' },
     {
         path: 'contratos/dashboard',
         loadComponent: () => import('./contract/pages/dashboard/dashboard.component').then(m => m.DashboardComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ANALISTA'], path: 'contratos'},
+        data: { role: ['ADMIN', 'ANALISTA'], path: 'contratos' },
     },
     {
         path: 'contratos/itens-contratuais/cadastro',
@@ -136,71 +141,117 @@ export const routes: Routes = [
             }
         ],
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ANALISTA'], path: 'contratos'},
+        data: { role: ['ADMIN', 'ANALISTA'], path: 'contratos' },
     },
     {
         path: 'contratos/criar',
         loadComponent: () => import('./contract/pages/create/create.component').then(m => m.CreateComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ANALISTA'], path: 'contratos'},
+        data: { role: ['ADMIN', 'ANALISTA'], path: 'contratos' },
     },
     {
         path: 'contratos/editar',
         loadComponent: () => import('./contract/pages/create/create.component').then(m => m.CreateComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ANALISTA'], path: 'contratos'},
+        data: { role: ['ADMIN', 'ANALISTA'], path: 'contratos' },
     },
     {
         path: 'contratos/listar',
         loadComponent: () => import('./contract/pages/list/contract-list/contract-list.component').then(c => c.ContractListComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ANALISTA'], path: 'contratos'},
+        data: { role: ['ADMIN', 'ANALISTA'], path: 'contratos' },
     },
 
     {
         path: 'contratos/instalacoes-pendentes',
         loadComponent: () => import('./contract/pending-executions/pending-executions.component').then(e => e.PendingExecutionsComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
+        data: { role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes' },
     },
     {
         path: 'contratos/validar-execucao/:id',
         loadComponent: () => import('./contract/validate-execution/execution-no-work-service.component').then(e => e.ExecutionNoWorkServiceComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
+        data: { role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes' },
     },
     // end
 
     // start settings path
     {
-        path: 'configuracoes/dashboard',
+        path: 'configuracoes/onboarding',
         loadComponent: () => import('./manage/settings/settings.component').then(s => s.SettingsComponent),
+        children: [
+            {
+                path: 'usuarios',
+                loadComponent: () => import('./manage/user/user.component').then(m => m.UserComponent),
+            },
+            {
+                path: 'equipes',
+                loadComponent: () => import('./manage/team/team.component').then(m => m.TeamComponent),
+            },
+            {
+                path: 'estoquistas',
+                component: StockistsComponent,
+            },
+            {
+                path: 'almoxarifados',
+                loadComponent: () => import('./stock/deposits/deposits.component').then(m => m.DepositsComponent),
+            },
+            {
+                path: 'caminhoes',
+                loadComponent: () => import('./stock/truck-deposits/deposits.component').then(d => d.TruckDepositComponent),
+            },
+            {
+                path: 'cadastrar-material',
+                loadComponent: () => import('./stock/material-form/material-form.component').then(m => m.MaterialFormComponent),
+            },
+            {
+                path: 'itens-contratuais',
+                component: ContractReferenceItemFormComponent,
+                children: [
+                    {
+                        path: 'material-create',
+                        component: MaterialFormComponent
+                    }
+                ]
+            },
+            {
+                path: 'criar-contrato',
+                loadComponent: () => import('./contract/pages/create/create.component').then(m => m.CreateComponent),
+            }
+        ],
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ANALISTA'], path: 'configuracoes'},
+        data: { role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'configuracoes' },
     },
     {
         path: 'configuracoes/usuarios',
         loadComponent: () => import('./manage/user/user.component').then(m => m.UserComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN'], path: 'configuracoes'},
+        data: { role: ['ADMIN'], path: 'configuracoes' },
     },
     {
         path: 'configuracoes/equipes',
         loadComponent: () => import('./manage/team/team.component').then(m => m.TeamComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ANALISTA'], path: 'configuracoes'},
+        data: { role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'configuracoes' },
+    },
+    {
+        path: 'configuracoes/estoquistas',
+        component: StockistsComponent,
+        canActivate: [AuthGuard],
+        data: { role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'configuracoes' },
     },
     {
         path: 'configuracoes/empresa',
         loadComponent: () => import('./manage/team/team.component').then(m => m.TeamComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ANALISTA'], path: 'configuracoes'},
+        data: { role: ['ADMIN'], path: 'configuracoes' },
     },
     {
         path: 'configuracoes/conta',
         loadComponent: () => import('./manage/account/account.component').then(a => a.AccountComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN',], path: 'conta'},
+        data: { role: [], path: 'conta' },
     },
     // end
 
@@ -209,31 +260,31 @@ export const routes: Routes = [
         path: 'pre-medicao/:status',
         loadComponent: () => import('./pre-measurement/pre-measurement-home/pre-measurement.component').then(p => p.PreMeasurementComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
+        data: { role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes' },
     },
     {
         path: 'pre-medicao/relatorio/:id/:step',
         loadComponent: () => import('./pre-measurement/pre-measurement-report/pre-measurement-report.component').then(p => p.PreMeasurementReportComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
+        data: { role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes' },
     },
     {
         path: 'pre_medicao/editar',
         loadComponent: () => import('./pre-measurement/pre-measurement-edit/pre-measurement-edit.component').then(p => p.PreMeasurementEditComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
+        data: { role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes' },
     },
     {
         path: 'pre-medicao/importar/contrato/:id',
         loadComponent: () => import('./pre-measurement/import-pre-measurements/import-pre-measurements.component').then(p => p.ImportPreMeasurementsComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
+        data: { role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes' },
     },
     {
         path: 'pre_medicao/visualizar',
         loadComponent: () => import('./pre-measurement/pre-measurement-view/pre-measurement-view.component').then(p => p.PreMeasurementViewComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
+        data: { role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes' },
     },
     //
 
@@ -242,21 +293,21 @@ export const routes: Routes = [
         path: 'execucao/pre-medicao/:id',
         loadComponent: () => import('./executions/pre-measurement-available/measurement-details.component').then(m => m.MeasurementDetailsComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
+        data: { role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes' },
     },
 
     {
         path: 'ordens-de-servico/nova',
         loadComponent: () => import('./executions/execution-no-pre-measurement/execution-no-pre-measurement.component').then(e => e.ExecutionNoPreMeasurementComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
+        data: { role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes' },
     },
 
     {
         path: 'execucoes/:status',
         loadComponent: () => import('./executions/execution-progress/execution-progress.component').then(e => e.ExecutionProgressComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
+        data: { role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes' },
     },
     //end
 
@@ -265,19 +316,19 @@ export const routes: Routes = [
         path: 'requisicoes/instalacoes/gerenciamento-estoque',
         loadComponent: () => import('./requests/reservation-management/reservation-management.component').then(r => r.ReservationManagementComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas'},
+        data: { role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas' },
     },
     {
         path: 'requisicoes/gerenciamento/execucao',
         loadComponent: () => import('./requests/reservation-management-select/reservation-management-select.component').then(r => r.ReservationManagementSelectComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN','ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas'},
+        data: { role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas' },
     },
     {
         path: 'requisicoes',
         loadComponent: () => import('./requests/reservation-pending/reservation-pending.component').then(r => r.ReservationPendingComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN','ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas'},
+        data: { role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas' },
     },
     //end
 
@@ -287,7 +338,7 @@ export const routes: Routes = [
         loadComponent: () => import('./reports/execution/manage/report-manage.component').then(r => r.ReportManageComponent),
         canActivate: [AuthGuard],
         data: {
-            role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ANALISTA', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'],
+            role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ANALISTA',],
             path: 'relatorios'
         },
     },
@@ -304,7 +355,7 @@ export const routes: Routes = [
         path: 'relatorios/instalacoes',
         loadComponent: () => import('./reports/execution/installation/installation.component').then(r => r.InstallationComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ANALISTA',], path: 'relatorios'},
+        data: { role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ANALISTA',], path: 'relatorios' },
     },
     {
         path: 'relatorios/estoque/saida-saldo-instalacao',
@@ -319,7 +370,7 @@ export const routes: Routes = [
         path: 'relatorios/execucoes/analitico-de-operacoes',
         loadComponent: () => import('./reports/execution/operation/operation.component').then(r => r.OperationComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ANALISTA'], path: 'relatorios'},
+        data: { role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ANALISTA'], path: 'relatorios' },
     },
 
     // out
@@ -335,38 +386,38 @@ export const routes: Routes = [
         path: 'dashboard',
         loadComponent: () => import('./dashboard/home/dashboard.component').then(d => d.DashboardComponent),
         canActivate: [AuthGuard],
-        data: {role: [], path: 'dashboard'},
+        data: { role: [], path: 'dashboard' },
     },
 
     {
         path: 'dashboard/mapa-execucoes',
         loadComponent: () => import('./dashboard/map/map.component').then(d => d.MapComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ANALISTA', 'SUPPORT'], path: 'dashboard'},
+        data: { role: ['ADMIN', 'ANALISTA', 'SUPPORT', 'RESPONSAVEL_TECNICO'], path: 'dashboard' },
     },
     {
         path: 'dashboard/visao-executiva',
         loadComponent: () => import('./dashboard/executive/executive.component').then(d => d.ExecutiveComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ANALISTA', 'SUPPORT'], path: 'dashboard'},
+        data: { role: ['ADMIN', 'ANALISTA', 'SUPPORT', 'RESPONSAVEL_TECNICO'], path: 'dashboard' },
     },
     {
         path: 'dashboard/produtividade-equipe',
         loadComponent: () => import('./dashboard/team/team-operational-dashboard.component').then(d => d.TeamOperationalDashboardComponent),
         canActivate: [AuthGuard],
-        data: {role: ['ADMIN', 'ANALISTA', 'SUPPORT'], path: 'dashboard'},
+        data: { role: ['ADMIN', 'ANALISTA', 'SUPPORT', 'RESPONSAVEL_TECNICO'], path: 'dashboard' },
     },
 
     {
         path: 'abrir-chamado',
         component: ServiceRequestMapComponent,
-        data: {mode: 'manual'}
+        data: { mode: 'manual' }
     },
 
     {
         path: 'modo-ronda',
         component: ServiceRequestMapComponent,
-        data: {mode: 'round'}
+        data: { mode: 'round' }
     },
 
 

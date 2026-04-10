@@ -18,6 +18,7 @@ import com.lumos.lumosspring.util.ExecutionStatus
 import com.lumos.lumosspring.util.Utils
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
+import java.time.OffsetDateTime
 import java.util.*
 
 
@@ -55,8 +56,8 @@ class DirectExecutionViewService(
         return ResponseEntity.ok().body(executions)
     }
 
-    fun getGroupedInstallations(): List<Map<String, JsonNode>> {
-        return viewRepository.getGroupedInstallations()
+    fun getGroupedInstallations(startDate: OffsetDateTime, endDate: OffsetDateTime): List<Map<String, JsonNode>> {
+        return viewRepository.getGroupedInstallations(startDate, endDate)
     }
 
     fun getInstallationsWaitingValidation(): ResponseEntity<Any> {

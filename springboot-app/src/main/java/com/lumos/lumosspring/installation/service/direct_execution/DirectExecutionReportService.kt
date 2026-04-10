@@ -71,6 +71,12 @@ class DirectExecutionReportService(
             """.trimIndent()
         }
 
+
+        val usesSuFactor = contract["uses_su_factor"]!!.asBoolean()
+        val factorUsApply = if(!usesSuFactor) {
+            ""
+        } else "<th style=\"text-align: center; font-weight: bold\">FATOR US<br>APICADO</th>"
+
         val replacements = mapOf(
             "TITLE" to "RELATÓRIO DE INSTALAÇÃO DE LEDS - " + contract["contract_number"].asText(),
             "CONTRACT_NUMBER" to contract["contract_number"].asText(),
@@ -84,6 +90,7 @@ class DirectExecutionReportService(
             "CONTRACTOR_PHONE" to contract["phone"].asText(),
             "LOGO_IMAGE" to companyLogoUrl,
             "TOTAL_VALUE" to formatMoney(total["total_price"].asDouble()),
+            "US_FACTOR" to factorUsApply,
         )
 
         templateHtml = templateHtml.replacePlaceholders(replacements)
@@ -95,6 +102,7 @@ class DirectExecutionReportService(
                         <td style="text-align: left;">${line["description"].asText()}</td>
                         <td style="text-align: right;">${formatMoney(line["unit_price"].asDouble())}</td>
                         <td style="text-align: right;">${line["quantity_executed"].asText()}</td>
+                        <td style="text-align: right;">${line["factor"].asText()}</td>
                         <td style="text-align: right;">${formatMoney(line["total_price"].asDouble())}</td>
                     </tr>
                 """.trimIndent()

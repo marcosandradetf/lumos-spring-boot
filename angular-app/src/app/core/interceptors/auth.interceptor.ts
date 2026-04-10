@@ -34,6 +34,7 @@ export class AuthInterceptor implements HttpInterceptor {
         if (request.url.includes('/login')
             || request.url.includes('/logout')
             || request.url.includes('/refresh-token')
+            || request.url.includes('/activate')
             || request.url.includes('https://servicodados.ibge.gov.br')
             || request.url.includes('/forgot-password')
             || request.url.includes('/public')) {
@@ -46,6 +47,13 @@ export class AuthInterceptor implements HttpInterceptor {
         return next.handle(request).pipe(
             tap(() => isLoggedIn = true),
             catchError(error => {
+                const activationErrorCode = error?.error?.error ?? error?.error?.code;
+                if (activationErrorCode === 'USER_NOT_ACTIVATED') {
+                    authService.clearStoredSession();
+                    void router.navigate(['/first-access']);
+                    return EMPTY;
+                }
+
                 if (error instanceof HttpErrorResponse && error.status === 401) {
                     //const tokenExpired = error.headers.get('token-expired');
                     // if (tokenExpired) {

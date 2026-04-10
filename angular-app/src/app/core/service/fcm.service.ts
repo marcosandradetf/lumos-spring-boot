@@ -1,15 +1,17 @@
-import {Injectable, inject, NgZone} from '@angular/core';
-import {Messaging, onMessage, getToken} from '@angular/fire/messaging';
-import {HttpClient, HttpParams} from '@angular/common/http';
-import {DialogService, DynamicDialogRef} from 'primeng/dynamicdialog';
-import {NotificationPopupComponent} from '../../shared/components/notification-popup/notification-popup.component';
-import {environment} from '../../../environments/environment';
-import {BehaviorSubject, firstValueFrom, Observable} from 'rxjs';
-import {openDB} from 'idb';
-import {MessageService} from 'primeng/api';
-import {UtilsService} from './utils.service';
+import { Injectable, inject, NgZone } from '@angular/core';
+import { Messaging, onMessage, getToken } from '@angular/fire/messaging';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { NotificationPopupComponent } from '../../shared/components/notification-popup/notification-popup.component';
+import { environment } from '../../../environments/environment';
+import { BehaviorSubject, firstValueFrom, Observable } from 'rxjs';
+import { openDB } from 'idb';
+import { MessageService } from 'primeng/api';
+import { UtilsService } from './utils.service';
 
-@Injectable({providedIn: 'root'})
+const version = 5;
+
+@Injectable({ providedIn: 'root' })
 export class FcmService {
     private messaging = inject(Messaging);
     private dialogService = inject(DialogService);
@@ -25,6 +27,7 @@ export class FcmService {
     hasNotifications$ = this.hasNotifications.asObservable()
 
     ref: DynamicDialogRef | undefined;
+    private tenant = localStorage.getItem('tenant') ?? '';
 
     constructor() {
         void this.zone.run(async () => {
@@ -61,24 +64,50 @@ export class FcmService {
 
     // No fcm.service.ts
     async getHistory() {
-        // É crucial passar a versão (1) e o bloco de upgrade aqui também!
-        const db = await openDB('lumos_db', 1, {
-            upgrade(db) {
+        // É crucial passar a versão e o bloco de upgrade aqui também!
+        const db = await openDB('lumos_db', version, {
+            upgrade(db, oldVersion, newVersion, transaction) {
+                let store;
+
+                // 1. Garante que a store existe
                 if (!db.objectStoreNames.contains('notifications')) {
-                    const store = db.createObjectStore('notifications', {
+                    store = db.createObjectStore('notifications', {
                         keyPath: 'id',
                         autoIncrement: true
                     });
-                    store.createIndex('by_time', 'time');
-                    store.createIndex('by_read', 'read');
-                    store.createIndex('by_read_type_time', ['read', 'type', 'time']);
+                } else {
+                    // Se já existe, pegamos a store da transação de upgrade
+                    store = transaction.objectStore('notifications');
                 }
+
+                // 2. Cria os índices um por um, verificando se já não existem
+                const indices = [
+                    { name: 'by_time', key: 'time' },
+                    { name: 'by_read', key: 'read' },
+                    { name: 'by_tenant', key: 'tenant' },
+                    { name: 'by_tenant_time', key: ['tenant', 'time'] },
+                    { name: 'by_tenant_read_type_time', key: ['tenant', 'read', 'type', 'time'] }
+                ];
+
+                indices.forEach(idx => {
+                    if (!store.indexNames.contains(idx.name)) {
+                        store.createIndex(idx.name, idx.key);
+                        console.log(`Índice ${idx.name} criado com sucesso.`);
+                    }
+                });
             },
         });
 
         try {
             // Agora o 'db' está garantido com a store 'notifications'
-            const items = await db.getAllFromIndex('notifications', 'by_time');
+            // const items = await db.getAllFromIndex('notifications', 'by_time');
+
+            // Definimos o intervalo: apenas este tenant, de qualquer tempo (0 a Infinito)
+            const range = IDBKeyRange.bound([this.tenant, 0], [this.tenant, Infinity]);
+
+            // A busca já retorna os itens ordenados pelo índice (tenant primeiro, depois time)
+            const items = await db.getAllFromIndex('notifications', 'by_tenant_time', range);
+
             return items.reverse();
         } catch (error) {
             console.error("Erro ao buscar histórico:", error);
@@ -88,17 +117,36 @@ export class FcmService {
 
     private async saveToIndexedDB(notification: any) {
         // Adicionamos o bloco 'upgrade' aqui também!
-        const db = await openDB('lumos_db', 1, {
-            upgrade(db) {
+        const db = await openDB('lumos_db', version, {
+            upgrade(db, oldVersion, newVersion, transaction) {
+                let store;
+
+                // 1. Garante que a store existe
                 if (!db.objectStoreNames.contains('notifications')) {
-                    const store = db.createObjectStore('notifications', {
+                    store = db.createObjectStore('notifications', {
                         keyPath: 'id',
                         autoIncrement: true
                     });
-                    store.createIndex('by_time', 'time');
-                    store.createIndex('by_read', 'read')
-                    store.createIndex('by_read_type_time', ['read', 'type', 'time']);
+                } else {
+                    // Se já existe, pegamos a store da transação de upgrade
+                    store = transaction.objectStore('notifications');
                 }
+
+                // 2. Cria os índices um por um, verificando se já não existem
+                const indices = [
+                    { name: 'by_time', key: 'time' },
+                    { name: 'by_read', key: 'read' },
+                    { name: 'by_tenant', key: 'tenant' },
+                    { name: 'by_tenant_time', key: ['tenant', 'time'] },
+                    { name: 'by_tenant_read_type_time', key: ['tenant', 'read', 'type', 'time'] }
+                ];
+
+                indices.forEach(idx => {
+                    if (!store.indexNames.contains(idx.name)) {
+                        store.createIndex(idx.name, idx.key);
+                        console.log(`Índice ${idx.name} criado com sucesso.`);
+                    }
+                });
             },
         });
 
@@ -116,6 +164,7 @@ export class FcmService {
     initListen() {
         onMessage(this.messaging, (payload) => {
             const data = payload.data;
+            const tenant = data?.['tenant'];
             const newNotification = {
                 title: data?.['title'] || 'Nova Notificação',
                 subtitle: data?.['subtitle'] || 'Nova Notificação',
@@ -125,8 +174,14 @@ export class FcmService {
                 uri: data?.['uri'],
                 time: Date.now(),
                 timeIso: new Date().toISOString(),
-                read: 0
+                read: 0,
+                tenant: tenant
             };
+
+            if (tenant) {
+                localStorage.setItem('tenant', tenant);
+                this.tenant = tenant;
+            }
 
             void this.saveToIndexedDB(newNotification);
 
@@ -233,7 +288,7 @@ export class FcmService {
                         this.unSubscribeOnTopic(token, roles)
                     );
                 }
-            } catch(err) {
+            } catch (err) {
                 console.error('Erro ao pegar token FCM:', err);
             }
         } else {
@@ -246,7 +301,7 @@ export class FcmService {
         const params = new HttpParams().set('roles', roles.join(','));
         console.log("subscribe")
 
-        this.http.post(`${environment.springboot}/api/fcm/subscribe`, {token}, {params})
+        this.http.post(`${environment.springboot}/api/fcm/subscribe`, { token }, { params })
             .subscribe();
 
         localStorage.setItem('fcmToken', token);
@@ -267,16 +322,29 @@ export class FcmService {
     }
 
     async clearAll() {
-        const db = await openDB('lumos_db', 1);
-        // Abre uma transação de escrita e limpa a store
-        await db.clear('notifications');
+        const db = await openDB('lumos_db', version);
 
-        // Zera o contador reativo para o sino atualizar na hora
+        // Precisamos de uma transação de 'readwrite' para deletar
+        const tx = db.transaction('notifications', 'readwrite');
+        const index = tx.store.index('by_tenant');
+
+        // Filtramos apenas as notificações do tenant específico
+        let cursor = await index.openCursor(IDBKeyRange.only(this.tenant));
+
+        while (cursor) {
+            await cursor.delete();
+            cursor = await cursor.continue();
+        }
+
+        // Aguarda a transação ser finalizada no banco
+        await tx.done;
+
+        // Atualiza o contador (idealmente você buscaria o count real do banco aqui)
         this.notificationCount.next(0);
     }
 
     async markAsRead(notificationId: number) {
-        const db = await openDB('lumos_db', 1);
+        const db = await openDB('lumos_db', version);
 
         // 1. Busca a notificação original
         const notification = await db.get('notifications', notificationId);
@@ -298,29 +366,48 @@ export class FcmService {
 
     async getBanner(type: string) {
 
-        const db = await openDB('lumos_db', 1, {
-            upgrade(db) {
+        const db = await openDB('lumos_db', version, {
+            upgrade(db, oldVersion, newVersion, transaction) {
+                let store;
+
+                // 1. Garante que a store existe
                 if (!db.objectStoreNames.contains('notifications')) {
-                    const store = db.createObjectStore('notifications', {
+                    store = db.createObjectStore('notifications', {
                         keyPath: 'id',
                         autoIncrement: true
                     });
-                    store.createIndex('by_time', 'time');
-                    store.createIndex('by_read', 'read');
-                    store.createIndex('by_read_type_time', ['read', 'type', 'time']);
+                } else {
+                    // Se já existe, pegamos a store da transação de upgrade
+                    store = transaction.objectStore('notifications');
                 }
+
+                // 2. Cria os índices um por um, verificando se já não existem
+                const indices = [
+                    { name: 'by_time', key: 'time' },
+                    { name: 'by_read', key: 'read' },
+                    { name: 'by_tenant', key: 'tenant' },
+                    { name: 'by_tenant_time', key: ['tenant', 'time'] },
+                    { name: 'by_tenant_read_type_time', key: ['tenant', 'read', 'type', 'time'] }
+                ];
+
+                indices.forEach(idx => {
+                    if (!store.indexNames.contains(idx.name)) {
+                        store.createIndex(idx.name, idx.key);
+                        console.log(`Índice ${idx.name} criado com sucesso.`);
+                    }
+                });
             },
         });
 
         try {
             // Agora o 'db' está garantido com a store 'notifications'
             const tx = db.transaction('notifications');
-            const index = tx.store.index('by_read_type_time');
+            const index = tx.store.index('by_tenant_read_type_time');
 
             const cursor = await index.openCursor(
                 IDBKeyRange.bound(
-                    [0, type, -Infinity],
-                    [0, type, Infinity]
+                    [this.tenant, 0, type, -Infinity],
+                    [this.tenant, 0, type, Infinity]
                 ),
                 'prev'
             );

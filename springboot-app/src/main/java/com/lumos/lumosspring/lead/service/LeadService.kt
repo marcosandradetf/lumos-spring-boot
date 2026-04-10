@@ -9,6 +9,7 @@ import com.lumos.lumosspring.lead.repository.LeadRequestRepository
 import com.lumos.lumosspring.notifications.service.EmailService
 import com.lumos.lumosspring.user.model.AppUser
 import com.lumos.lumosspring.user.model.Role
+import com.lumos.lumosspring.user.model.UserStatus
 import com.lumos.lumosspring.user.repository.UserRepository
 import com.lumos.lumosspring.util.ErrorResponse
 import jakarta.servlet.http.HttpServletResponse
@@ -93,7 +94,8 @@ class LeadService(
             this.lastName = lastName.trim()
             this.email = emailNorm
             this.cpf = cpf
-            status = true
+            status = UserStatus.ACTIVE
+            mustChangePassword = false
             support = false
             tenantId = newTenantId
             createdAt = now

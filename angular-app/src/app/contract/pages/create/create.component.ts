@@ -1,31 +1,34 @@
-import {Component, OnInit} from '@angular/core';
-import {FormsModule} from '@angular/forms';
-import {CurrencyPipe, DecimalPipe, formatNumber, NgClass, NgForOf, NgIf} from '@angular/common';
-import {ContractService} from '../../services/contract.service';
-import {UtilsService} from '../../../core/service/utils.service';
-import {FileService} from '../../../core/service/file-service.service';
-import {Router} from '@angular/router';
-import {ContractReferenceItemsDTO, ContractResponse, CreateContractDTO} from '../../contract-models';
-import {Toast} from 'primeng/toast';
-import {Title} from '@angular/platform-browser';
-import {Step, StepList, StepPanel, StepPanels, Stepper} from 'primeng/stepper';
-import {Button} from 'primeng/button';
-import {InputText} from 'primeng/inputtext';
+import { Component, HostListener, inject, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { AsyncPipe, CurrencyPipe, DecimalPipe, formatNumber, NgClass, NgForOf, NgIf } from '@angular/common';
+import { ContractService } from '../../services/contract.service';
+import { UtilsService } from '../../../core/service/utils.service';
+import { FileService } from '../../../core/service/file-service.service';
+import { Router } from '@angular/router';
+import { ContractReferenceItemsDTO, ContractResponse, CreateContractDTO } from '../../contract-models';
+import { Toast } from 'primeng/toast';
+import { DomSanitizer, SafeResourceUrl, Title } from '@angular/platform-browser';
+import { Step, StepList, StepPanel, StepPanels, Stepper } from 'primeng/stepper';
+import { Button } from 'primeng/button';
+import { InputText } from 'primeng/inputtext';
 import {
     PrimeConfirmDialogComponent
 } from '../../../shared/components/prime-confirm-dialog/prime-confirm-dialog.component';
-import {Select} from 'primeng/select';
-import {Dialog} from 'primeng/dialog';
-import {LoadingOverlayComponent} from '../../../shared/components/loading-overlay/loading-overlay.component';
-import {CompanyService} from '../../../company/service/company.service';
-import {CompanyResponse} from '../../../company/dto/company.dto';
-import {SharedState} from '../../../core/service/shared-state';
-import {InputNumber} from 'primeng/inputnumber';
-import {TableModule} from 'primeng/table';
-import {Message} from 'primeng/message';
-import {Popover} from 'primeng/popover';
-import {GuideStateComponent} from '../../../guide-state/guide-state.component';
-import {LoadingComponent} from '../../../shared/components/loading/loading.component';
+import { Select } from 'primeng/select';
+import { Dialog } from 'primeng/dialog';
+import { LoadingOverlayComponent } from '../../../shared/components/loading-overlay/loading-overlay.component';
+import { CompanyService } from '../../../company/service/company.service';
+import { CompanyResponse } from '../../../company/dto/company.dto';
+import { SharedState } from '../../../core/service/shared-state';
+import { InputNumber } from 'primeng/inputnumber';
+import { TableModule } from 'primeng/table';
+import { Popover } from 'primeng/popover';
+import { GuideStateComponent } from '../../../guide-state/guide-state.component';
+import { LoadingComponent } from '../../../shared/components/loading/loading.component';
+import { forkJoin } from 'rxjs';
+import { Utils } from '../../../core/service/utils';
+import { Divider } from 'primeng/divider';
+import { FcmService } from '../../../core/service/fcm.service';
 
 
 @Component({
@@ -52,16 +55,24 @@ import {LoadingComponent} from '../../../shared/components/loading/loading.compo
         DecimalPipe,
         InputNumber,
         TableModule,
-        Message,
         Popover,
         GuideStateComponent,
-        LoadingComponent
+        LoadingComponent,
+        Divider,
+        AsyncPipe
     ],
     templateUrl: './create.component.html',
     styleUrl: './create.component.scss'
 })
 export class CreateComponent implements OnInit {
     selectedIndex: number | null = null;
+    isMobileView = false;
+    embeddedDocOpen = false;
+    embeddedDocTitle = '';
+    embeddedDocDescription = '';
+    embeddedDocUrl: SafeResourceUrl | null = null;
+    readonly notificationGuideUrl = 'https://lumosip.com.br/como-usar/15-web-config/01-enable-notifications/';
+    protected hasNotifications$ = inject(FcmService).hasNotifications$;
 
     contract: CreateContractDTO = {
         contractId: null,
@@ -97,17 +108,20 @@ export class CreateComponent implements OnInit {
     };
 
     constructor(protected contractService: ContractService,
-                protected utils: UtilsService,
-                private fileService: FileService,
-                protected router: Router,
-                private companyService: CompanyService,
-                private title: Title,) {
+        protected utils: UtilsService,
+        private fileService: FileService,
+        protected router: Router,
+        private companyService: CompanyService,
+        private title: Title,
+        private sanitizer: DomSanitizer,) {
     }
 
     currentUrl = "";
     step = 1;
 
     ngOnInit() {
+        this.loading = true;
+        this.updateViewportFlags();
         this.currentUrl = this.router.url;
 
         if (this.currentUrl === '/contratos/editar') {
@@ -120,6 +134,7 @@ export class CreateComponent implements OnInit {
             if (state?.contract && state?.items) {
                 const contract = state.contract;
                 const items = state.items;
+                const unifyServices = items.some(i => i.factor !== 1);
 
                 this.contract = {
                     contractId: contract.contractId,
@@ -128,7 +143,7 @@ export class CreateComponent implements OnInit {
                     address: contract.address,
                     phone: contract.phone,
                     cnpj: contract.cnpj,
-                    unifyServices: false,
+                    unifyServices: unifyServices,
                     noticeFile: null,
                     contractFile: contract.contractFile,
                     items: items,
@@ -141,9 +156,11 @@ export class CreateComponent implements OnInit {
 
             } else {
                 void this.router.navigate(['/contratos/listar'], {
-                    queryParams: {for: 'view'}
+                    queryParams: { for: 'view' }
                 });
             }
+
+            this.normalizeFactors();
 
             SharedState.setCurrentPath(['Contratos', 'Editar']);
         } else {
@@ -153,23 +170,39 @@ export class CreateComponent implements OnInit {
 
         this.title.setTitle('Cadastrar Contrato');
 
-        this.contractService.getContractReferenceItems()
-            .subscribe({
-                next: result => {
-                    result.forEach(item => {
-                        const index = this.contract.items.findIndex(i => i.contractReferenceItemId === item.contractReferenceItemId);
 
-                        if (index !== -1) {
-                            return;
-                        } else {
-                            this.items.push(item);
-                        }
-                    });
-                }
-            });
+        forkJoin({
+            referenceItems: this.contractService.getContractReferenceItems(),
+            companies: this.companyService.getCompanies()
+        }).subscribe({
+            next: (data) => {
+                data.referenceItems.forEach(item => {
+                    const index = this.contract.items.findIndex(i => i.contractReferenceItemId === item.contractReferenceItemId);
 
-        this.companyService.getCompanies()
-            .subscribe(companies => this.companies = companies);
+                    if (index !== -1) {
+                        return;
+                    } else {
+                        this.items.push(item);
+                    }
+                });
+
+                this.companies = data.companies;
+                this.loading = false;
+            },
+            error: (err) => {
+                Utils.handleHttpError(err, this.router);
+                this.loading = false;
+            }
+        });
+    }
+
+    @HostListener('window:resize')
+    onWindowResize() {
+        this.updateViewportFlags();
+    }
+
+    private updateViewportFlags() {
+        this.isMobileView = window.innerWidth < 768;
     }
 
 
@@ -222,6 +255,7 @@ export class CreateComponent implements OnInit {
             items: [],
             companyId: null
         };
+        this.normalizeFactors();
         this.loading = false;
         this.finish = true;
     }
@@ -249,8 +283,11 @@ export class CreateComponent implements OnInit {
         index: number
     ) {
         console.log(item);
-        if (item.price === 0 || !item.price || item.quantity === 0 || !item.quantity) {
-            this.utils.showMessage("Para adicionar este item preencha o valor unitário e a quantidade.", 'warn', "Atenção");
+        if (!this.isItemValid(item)) {
+            const message = this.contract.unifyServices
+                ? 'Para adicionar este item preencha o valor unitário, a quantidade e um fator maior que zero.'
+                : 'Para adicionar este item preencha o valor unitário e a quantidade.';
+            this.utils.showMessage(message, 'warn', "Atenção");
             return;
         }
 
@@ -295,9 +332,8 @@ export class CreateComponent implements OnInit {
 
     getTotalValue() {
         let totalInCents = this.contract.items.reduce((sum, item) => {
-            const price = item.price;
-
-            const quantity = item.quantity || 0;
+            const price = item.price || 0;
+            const quantity = this.getCalculatedQuantity(item);
 
             // Convertendo para centavos e somando
             const itemTotal = Math.round(price * 100) * quantity;
@@ -307,6 +343,55 @@ export class CreateComponent implements OnInit {
 
         // Depois de tudo, converter de volta para reais
         return (totalInCents / 100);
+    }
+
+    getEffectiveFactor(item: ContractReferenceItemsDTO): number {
+        if (!this.contract.unifyServices) {
+            return 1;
+        }
+
+        const factor = Number(item.factor ?? 1);
+        return factor > 0 ? factor : 1;
+    }
+
+    getCalculatedQuantity(item: ContractReferenceItemsDTO): number {
+        const quantity = Number(item.quantity ?? 0);
+        return quantity * this.getEffectiveFactor(item);
+    }
+
+    getItemTotalValue(item: ContractReferenceItemsDTO): number {
+        const price = Number(item.price ?? 0);
+        return price * this.getCalculatedQuantity(item);
+    }
+
+    toggleUnifyServices() {
+        this.contract.unifyServices = !this.contract.unifyServices;
+        this.normalizeFactors();
+    }
+
+    private normalizeFactors() {
+        const normalize = (items: ContractReferenceItemsDTO[]) => {
+            items.forEach(item => {
+                if (!this.contract.unifyServices) {
+                    item.factor = 1;
+                    return;
+                }
+
+                const factor = Number(item.factor ?? 1);
+                item.factor = factor > 0 ? factor : 1;
+            });
+        };
+
+        normalize(this.items);
+        normalize(this.contract.items);
+    }
+
+    private isItemValid(item: ContractReferenceItemsDTO): boolean {
+        const hasPrice = Number(item.price ?? 0) > 0;
+        const hasQuantity = Number(item.quantity ?? 0) > 0;
+        const hasFactor = !this.contract.unifyServices || Number(item.factor ?? 0) > 0;
+
+        return hasPrice && hasQuantity && hasFactor;
     }
 
 
@@ -373,19 +458,6 @@ export class CreateComponent implements OnInit {
         }
     }
 
-
-    styleField(unify: HTMLSpanElement) {
-        if (unify.classList.contains('btn-outline')) {
-            unify.classList.remove('btn-outline');
-            unify.innerText = 'Desativar Serviço Unificado';
-            this.contract.unifyServices = true;
-        } else {
-            unify.classList.add('btn-outline');
-            this.contract.unifyServices = false;
-            unify.innerText = 'Clique para Ativar Serviço Unificado';
-        }
-    }
-
     openConfirmModal() {
         if (!this.validateContractItems()) return;
         if (!this.validateContractFields()) return;
@@ -406,7 +478,7 @@ export class CreateComponent implements OnInit {
     }
 
     validateContractFields(): boolean {
-        const {number, contractor, address, phone, cnpj, companyId} = this.contract;
+        const { number, contractor, address, phone, cnpj, companyId } = this.contract;
 
         if (!number && !contractor && !address && !phone && !cnpj) {
             this.utils.showMessage(
@@ -453,13 +525,13 @@ export class CreateComponent implements OnInit {
     }
 
     private validateContractItems(): boolean {
-        const hasInvalidItem = this.contract.items.some(item =>
-            item.price === 0 || !item.price || item.quantity === 0 || !item.quantity
-        );
+        const hasInvalidItem = this.contract.items.some(item => !this.isItemValid(item));
 
         if (hasInvalidItem) {
             this.utils.showMessage(
-                'Existem itens no contrato com quantidade ou valor unitário igual a zero ou vazio. Corrija esses dados antes de continuar.',
+                this.contract.unifyServices
+                    ? 'Existem itens no contrato com quantidade, fator ou valor unitário inválidos. Corrija esses dados antes de continuar.'
+                    : 'Existem itens no contrato com quantidade ou valor unitário igual a zero ou vazio. Corrija esses dados antes de continuar.',
                 'warn',
                 'Atenção'
             );
@@ -549,6 +621,20 @@ export class CreateComponent implements OnInit {
 
     protected readonly formatNumber = formatNumber;
 
+    openNotificationGuide() {
+        this.embeddedDocTitle = 'Ativando as Notificações';
+        this.embeddedDocDescription = 'Guia para permitir notificações no navegador e receber alertas operacionais do Lumos.';
+        this.embeddedDocUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.notificationGuideUrl);
+        this.embeddedDocOpen = true;
+    }
+
+    closeEmbeddedDoc() {
+        this.embeddedDocOpen = false;
+        this.embeddedDocTitle = '';
+        this.embeddedDocDescription = '';
+        this.embeddedDocUrl = null;
+    }
+
     checkMin(item: any, model: any, pop: any, input: any) {
         const min = this.getTotalReservedAndExecutedValue(item, 1);
 
@@ -574,7 +660,7 @@ export class CreateComponent implements OnInit {
     getTotalReservedAndExecutedValue(item: ContractReferenceItemsDTO, defaultValue = 0): number {
         const reservedQuantity = this.getTotalReserved(item.contractItemId ?? -1);
         const value = (item.totalExecuted ?? 0) + reservedQuantity;
-        if(value === 0) return defaultValue;
+        if (value === 0) return defaultValue;
         return value;
     }
 }

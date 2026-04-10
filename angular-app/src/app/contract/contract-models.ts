@@ -71,6 +71,7 @@ export interface ContractReferenceItemsDTO {
     itemDependency: string;
     quantity: number;
     price: number;
+    factor: number;
     contractItemId: number | null;
     executedQuantity: {
         installationId: number,
@@ -92,6 +93,7 @@ export interface ContractItemsResponseWithExecutionsSteps {
     description: string;
     unitPrice: number;
     contractedQuantity: number;
+    factor: number,
     executedQuantity: {
         installationId: number,
         step: number,

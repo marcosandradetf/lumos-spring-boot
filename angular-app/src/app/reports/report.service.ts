@@ -35,12 +35,20 @@ export class ReportService {
         );
     }
 
-    public getFinishedMaintenances() {
-        return this.http.get<any[]>(`${this.endpoint}/api/maintenance/get-finished`);
+    public getFinishedMaintenances(startDate: Date, endDate: Date) {
+        const params = new HttpParams()
+            .set('startDate', startDate.toISOString())
+            .set('endDate', endDate.toISOString());
+
+        return this.http.get<any[]>(`${this.endpoint}/api/maintenance/get-finished`, {params});
     }
 
-    public getFinishedInstallations() {
-        return this.http.get<any[]>(`${this.endpoint}/api/execution/get-finished`);
+    public getFinishedInstallations(startDate: Date, endDate: Date) {
+        const params = new HttpParams()
+            .set('startDate', startDate.toISOString())
+            .set('endDate', endDate.toISOString());
+
+        return this.http.get<any[]>(`${this.endpoint}/api/execution/get-finished`, {params});
     }
 
 
@@ -108,6 +116,5 @@ export class ReportService {
             }
         );
     }
-
 
 }

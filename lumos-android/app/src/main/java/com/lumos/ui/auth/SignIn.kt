@@ -80,6 +80,7 @@ import kotlinx.coroutines.launch
 fun LoginScreen(
     viewModel: AuthViewModel,
     onTestClick: () -> Unit = {},
+    onNavigateToFirstAccess: () -> Unit = {},
     context: Context
 ) {
     var step by remember { mutableIntStateOf(1) }
@@ -308,6 +309,13 @@ fun LoginScreen(
                 modifier = Modifier.height(45.dp)
             ) {
                 Text("Esqueceu a senha?")
+            }
+
+            TextButton(
+                onClick = onNavigateToFirstAccess,
+                modifier = Modifier.height(45.dp)
+            ) {
+                Text("Primeiro acesso? Ative sua conta")
             }
         }
 

@@ -1,38 +1,27 @@
 <app-loading *ngIf="loading"></app-loading>
 
-<app-guide-state
-  *ngIf="items.length === 0 && !loading"
-  icon="pi pi-file"
-  title="Antes de cadastrar contratos..."
-  subtitle="Você precisa preparar a base do sistema antes de continuar."
-  [steps]="[
+<app-guide-state *ngIf="items.length === 0 && !loading" icon="pi pi-file" title="Antes de cadastrar contratos..."
+  subtitle="Você precisa preparar a base do sistema antes de continuar." [steps]="[
     [true,'Cadastrar itens contratuais'],
     [true,'Vincular materiais aos itens'],
     [true,'Definir estrutura do contrato']
-  ]"
+  ]" [hasButtonLabel]="true" buttonLabel="Cadastrar itens contratuais"
+  buttonRoute="/contratos/itens-contratuais/cadastro" buttonIcon="pi pi-plus"></app-guide-state>
 
-  [hasButtonLabel]="true"
-  buttonLabel="Cadastrar itens contratuais"
-  buttonRoute="/contratos/itens-contratuais/cadastro"
-  buttonIcon="pi pi-plus"
-></app-guide-state>
-
-<div
-  *ngIf="items.length > 0  && !loading"
-  class="flex relative" #top xmlns="http://www.w3.org/1999/html">
+<div *ngIf="items.length > 0  && !loading" class="flex relative" #top xmlns="http://www.w3.org/1999/html">
   <div class="w-full">
 
     <app-loading-overlay [loading]="loading"></app-loading-overlay>
 
 
-    <p-stepper [(value)]="step" class="basis-[50rem]" *ngIf="!finish">
-      <p-step-list class="px-10">
+    <p-stepper [(value)]="step" class="basis-[50rem] create-stepper" *ngIf="!finish">
+      <p-step-list class="px-4 sm:px-10">
         <p-step [value]="1">{{ currentUrl === '/contratos/editar' ? 'Editar dados' : 'Inserir dados' }}</p-step>
-        <p-step [value]="2"
-                (click)="selectedIndex = null;">{{ currentUrl === '/contratos/editar' ? 'Adicionar Itens' : 'Selecionar Itens' }}
+        <p-step [value]="2" (click)="selectedIndex = null;">{{ currentUrl === '/contratos/editar' ? 'Adicionar Itens' :
+          'Selecionar Itens' }}
         </p-step>
-        <p-step [value]="3"
-                (click)="selectedIndex = null;">{{ currentUrl === '/contratos/editar' ? 'Editar Itens' : 'Revisão' }}
+        <p-step [value]="3" (click)="selectedIndex = null;">{{ currentUrl === '/contratos/editar' ? 'Editar Itens' :
+          'Revisão' }}
         </p-step>
       </p-step-list>
       <p-step-panels>
@@ -48,39 +37,23 @@
               <!-- Número do contrato -->
               <div class="flex flex-col gap-1">
                 <label class="text-sm font-medium text-surface-700 dark:text-surface-300">N.º Contrato*</label>
-                <input [(ngModel)]="contract.number"
-                       id="number"
-                       type="text"
-                       pInputText
-                       autocomplete="off"
-                       placeholder="Digite o número"
-                       (input)="utils.formatContractNumber($event)"
-                       required/>
+                <input [(ngModel)]="contract.number" id="number" type="text" pInputText autocomplete="off"
+                  placeholder="Digite o número" (input)="utils.formatContractNumber($event)" required />
               </div>
 
               <!-- Contratante -->
               <div class="flex flex-col gap-1">
                 <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Contratante*</label>
-                <input [(ngModel)]="contract.contractor"
-                       id="contractor"
-                       type="text"
-                       pInputText
-                       autocomplete="off"
-                       placeholder="Ex. Prefeitura de Belo Horizonte"
-                       required/>
+                <input [(ngModel)]="contract.contractor" id="contractor" type="text" pInputText autocomplete="off"
+                  placeholder="Ex. Prefeitura de Belo Horizonte" required />
               </div>
 
               <!-- Endereço -->
               <div class="flex flex-col gap-1">
                 <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Endereço do
                   contratante*</label>
-                <input [(ngModel)]="contract.address"
-                       id="address"
-                       type="text"
-                       pInputText
-                       autocomplete="off"
-                       placeholder="Digite o endereço"
-                       required/>
+                <input [(ngModel)]="contract.address" id="address" type="text" pInputText autocomplete="off"
+                  placeholder="Digite o endereço" required />
               </div>
 
               <!-- Telefone e CNPJ - lado a lado no desktop -->
@@ -88,52 +61,28 @@
                 <div class="flex flex-col gap-1 w-full">
                   <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Telefone do
                     Contratante*</label>
-                  <input [(ngModel)]="contract.phone"
-                         id="phone"
-                         type="text"
-                         pInputText
-                         autocomplete="off"
-                         (input)="utils.formatPhone($event)"
-                         minlength="14"
-                         maxlength="15"
-                         placeholder="Ex. (31) 99999-9999"
-                         required/>
+                  <input [(ngModel)]="contract.phone" id="phone" type="text" pInputText autocomplete="off"
+                    (input)="utils.formatPhone($event)" minlength="14" maxlength="15" placeholder="Ex. (31) 99999-9999"
+                    required />
                 </div>
 
                 <div class="flex flex-col gap-1 w-full">
                   <label class="text-sm font-medium text-surface-700 dark:text-surface-300">CNPJ do Contratante*</label>
-                  <input [(ngModel)]="contract.cnpj"
-                         id="cnpj"
-                         type="text"
-                         pInputText
-                         autocomplete="off"
-                         minlength="18"
-                         maxlength="18"
-                         (input)="utils.formatCNPJ($event)"
-                         placeholder="Ex. 99.997.090/0001-99"
-                         required/>
+                  <input [(ngModel)]="contract.cnpj" id="cnpj" type="text" pInputText autocomplete="off" minlength="18"
+                    maxlength="18" (input)="utils.formatCNPJ($event)" placeholder="Ex. 99.997.090/0001-99" required />
                 </div>
               </div>
 
               <!-- Empresa contratada -->
               <div class="flex flex-col gap-1">
                 <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Empresa contratada*</label>
-                <p-select id="companyId"
-                          [options]="companies"
-                          [(ngModel)]="contract.companyId"
-                          optionLabel="socialReason"
-                          optionValue="idCompany"
-                          placeholder="Selecione a Empresa Prestadora"
-                          class="w-full">
+                <p-select id="companyId" [options]="companies" [(ngModel)]="contract.companyId"
+                  optionLabel="socialReason" optionValue="idCompany" placeholder="Selecione a Empresa Prestadora"
+                  class="w-full">
                   <ng-template #footer>
                     <div class="p-3">
-                      <p-button label="Adicionar Nova Empresa"
-                                icon="pi pi-plus"
-                                text
-                                size="small"
-                                fluid
-                                severity="secondary"
-                                (click)="visible = true; utils.playSound('pop')"/>
+                      <p-button label="Adicionar Nova Empresa" icon="pi pi-plus" text size="small" fluid
+                        severity="secondary" (click)="visible = true; utils.playSound('pop')" />
                     </div>
                   </ng-template>
                 </p-select>
@@ -149,33 +98,24 @@
                   <div
                     class="rounded-lg border border-dashed border-surface-300 dark:border-surface-600 bg-surface-0 dark:bg-surface-900 p-3 sm:p-4">
                     <!-- input file escondido -->
-                    <input
-                      #fileInput
-                      type="file"
-                      multiple
-                      accept=".pdf,.zip,application/pdf,application/zip"
-                      (change)="onFilesSelected($event)"
-                      class="hidden"
-                      [attr.maxFileSize]="maxFileSize"
-                    />
+                    <input #fileInput type="file" multiple accept=".pdf,.zip,application/pdf,application/zip"
+                      (change)="onFilesSelected($event)" class="hidden" [attr.maxFileSize]="maxFileSize" />
 
                     <!-- botão custom -->
-                    <button
-                      type="button"
+                    <button type="button"
                       class="p-button p-component p-button-sm p-button-success w-full flex items-center justify-center gap-2"
-                      (click)="fileInput.click()"
-                    >
+                      (click)="fileInput.click()">
                       <i class="pi pi-paperclip"></i>
                       Selecionar arquivos
                     </button>
 
                     <!-- feedback dos arquivos selecionados -->
                     <div *ngIf="selectedFiles.length === 0"
-                         class="mt-2 text-xs text-center text-surface-500 dark:text-surface-400">
+                      class="mt-2 text-xs text-center text-surface-500 dark:text-surface-400">
                       Aceita PDF ou ZIP • até 10MB
                     </div>
                     <ul *ngIf="selectedFiles.length > 0"
-                        class="mt-2 text-xs text-surface-700 dark:text-surface-300 list-disc list-inside">
+                      class="mt-2 text-xs text-surface-700 dark:text-surface-300 list-disc list-inside">
                       <li *ngFor="let file of selectedFiles">
                         {{ file.name }} ({{ (file.size / 1024 / 1024) | number:'1.1-2' }} MB)
                       </li>
@@ -183,24 +123,30 @@
                   </div>
                 </div>
 
-
                 <div class="flex flex-col gap-1 w-full ">
-                  <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Serviço Unificado</label>
-                  <span type="button"
-                        class="btn btn-outline btn-primary btn-sm text-xs h-12 w-full flex items-center justify-center"
-                        #unify
-                        (click)="styleField(unify)">
-                    Clique para ativar serviço unificado
+                  <label class="text-sm font-medium text-surface-700 dark:text-surface-300">O contrato utiliza fator
+                    US?</label>
+                  <span type="button" [ngClass]="!contract.unifyServices ? 'btn-outline' : ''"
+                    class="btn btn-primary btn-sm text-xs h-12 w-full flex items-center justify-center"
+                    (click)="toggleUnifyServices()">
+                    {{!contract.unifyServices ? 'Ativar fator US' : 'Desativar fator US'}}
                   </span>
+                  <div
+                    class="rounded-lg border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-900 px-3 py-2 text-xs text-surface-600 dark:text-surface-300">
+                    @if (contract.unifyServices) {
+                    O valor de cada item sera calculado como:
+                    <strong>valor unitario x (quantidade x fator)</strong>.
+                    } @else {
+                    Com o fator US desativado, o calculo usa apenas:
+                    <strong>valor unitario x quantidade</strong>.
+                    }
+                  </div>
                 </div>
 
               </div>
 
               <div class="flex justify-end pt-6">
-                <p-button label="Continuar"
-                          icon="pi pi-arrow-right"
-                          iconPos="right"
-                          (onClick)="activateCallback(2)"/>
+                <p-button label="Continuar" icon="pi pi-arrow-right" iconPos="right" (onClick)="activateCallback(2)" />
               </div>
             </div>
           </ng-template>
@@ -210,137 +156,218 @@
         <p-step-panel [value]="2">
           <ng-template #content let-activateCallback="activateCallback">
             <div>
-              <p-table
-                class="mt-4 text-sm"
-                [value]="items"
-                dataKey="contractItemId"
-                editMode="row"
-                responsiveLayout="scroll"
-              >
-                <ng-template pTemplate="header">
-                  <tr class="text-left">
-                    <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 text-center"></th>
-                    <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-left">
-                      Descrição
-                    </th>
-                    <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-center">
-                      Quantidade
-                    </th>
-                    <th class="w-48 px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-center">
-                      Valor
-                      unitário
-                    </th>
-                  </tr>
-                </ng-template>
-                <ng-template pTemplate="body" let-item let-editing="editing" let-i="rowIndex">
-                  <tr [class.fade-out]="removingIndex === i"
+              <div *ngIf="contract.unifyServices"
+                class="mx-4 mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100">
+                O fator US esta ativo. O total por item sera calculado com:
+                <strong>valor unitario x (quantidade x fator)</strong>.
+              </div>
+              <div *ngIf="!isMobileView">
+                <p-table class="mt-4 text-sm" [value]="items" dataKey="contractItemId" editMode="row"
+                  responsiveLayout="scroll">
+                  <ng-template pTemplate="header">
+                    <tr class="text-left">
+                      <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 text-center"></th>
+                      <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-left">
+                        Descrição
+                      </th>
+                      <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-center">
+                        Quantidade
+                      </th>
+                      <th *ngIf="contract.unifyServices"
+                        class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-center">
+                        Fator US
+                      </th>
+                      <th
+                        class="w-48 px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-center">
+                        Valor unitário
+                      </th>
+                      <th
+                        class="w-48 px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-center">
+                        Total do item
+                      </th>
+                    </tr>
+                  </ng-template>
+                  <ng-template pTemplate="body" let-item let-editing="editing" let-i="rowIndex">
+                    <tr [class.fade-out]="removingIndex === i"
                       [ngClass]="selectedIndex === i ? 'bg-[#ecfdf5] font-semibold text-[#047857] dark:bg-[#1c362f] dark:text-white' : ''"
                       (click)="selectedIndex = i"
-                      [class]="item.type === 'SERVIÇO' && contract.unifyServices ? 'disabled' : ''"
-                      [title]="item.type === 'SERVIÇO' && contract.unifyServices ? 'Serviço unificado ativado, este item foi desabilitado' : ''"
                       class="transition-all duration-400 hover:bg-[#ecfdf5] hover:dark:bg-[#1c362f] cursor-pointer">
-                    <td class="px-4 py-2 text-center">
-                      <button
-                        type="button"
-                        [disabled]="item.type === 'SERVIÇO' && contract.unifyServices"
-                        aria-label="Adicionar item"
-                        class="flex items-center justify-center
+                      <td class="px-4 py-2 text-center">
+                        <button type="button" aria-label="Adicionar item" class="flex items-center justify-center
                                text-white bg-blue-600
                                hover:bg-blue-700 active:bg-blue-800
                                rounded-full p-2
                                transition-all transform hover:scale-110
-                               focus:outline-none focus:ring-2 focus:ring-blue-400"
-                        (click)="addItem(item, i)">
+                               focus:outline-none focus:ring-2 focus:ring-blue-400" (click)="addItem(item, i)">
 
-                        <span class="material-icons text-sm">
-                          add
-                        </span>
-                      </button>
-                    </td>
+                          <span class="material-icons text-sm">
+                            add
+                          </span>
+                        </button>
+                      </td>
 
 
-                    <td class="px-4 py-2 text-base">{{ item.description }}</td>
+                      <td class="px-4 py-2 text-base">{{ item.description }}</td>
 
-                    <td [pEditableColumn]="item.quantity" pEditableColumnField="quantity">
-                      <p-cellEditor>
-                        <!-- INPUT -->
-                        <ng-template pTemplate="input">
-                          <p-inputNumber
-                            name="quantity{{i}}"
-                            required
-                            placeholder="Ex.: 12"
-                            [(ngModel)]="item.quantity"
-                            mode="decimal"
-                            locale="pt-BR"
-                            [minFractionDigits]="0"
-                            [maxFractionDigits]="2"
-                            inputStyleClass="w-24 text-right">
-                          </p-inputNumber>
-                        </ng-template>
+                      <td [pEditableColumn]="item.quantity" pEditableColumnField="quantity">
+                        <p-cellEditor>
+                          <!-- INPUT -->
+                          <ng-template pTemplate="input">
+                            <p-inputNumber name="quantity{{i}}" required placeholder="Ex.: 12"
+                              [(ngModel)]="item.quantity" mode="decimal" locale="pt-BR" [minFractionDigits]="0"
+                              [maxFractionDigits]="2" inputStyleClass="w-24 text-right">
+                            </p-inputNumber>
+                          </ng-template>
 
-                        <ng-template pTemplate="output">
-                          <div class="group flex justify-end items-center gap-2 px-2 py-1 rounded-md
+                          <ng-template pTemplate="output">
+                            <div class="group flex justify-end items-center gap-2 px-2 py-1 rounded-md
                                       cursor-pointer transition-all duration-200
                                       hover:bg-blue-50 hover:ring-1 hover:ring-blue-400
                                       dark:hover:bg-blue-500/10 dark:hover:ring-blue-400/40">
                               <span class="text-gray-800 dark:text-gray-100">
                                 {{ item.quantity }}
                               </span>
-                            <i class="pi pi-pencil text-xs
+                              <i class="pi pi-pencil text-xs
                               text-gray-400 dark:text-gray-500
                               opacity-0 group-hover:opacity-100
                               transition-opacity duration-200"></i>
-                          </div>
-                        </ng-template>
-                      </p-cellEditor>
-                    </td>
+                            </div>
+                          </ng-template>
+                        </p-cellEditor>
+                      </td>
+
+                      <td *ngIf="contract.unifyServices" [pEditableColumn]="item.quantity"
+                        pEditableColumnField="factor">
+                        <p-cellEditor>
+                          <!-- INPUT -->
+                          <ng-template pTemplate="input">
+                            <p-inputNumber name="factor{{i}}" required placeholder="Ex.: 12" [(ngModel)]="item.factor"
+                              mode="decimal" locale="pt-BR" [minFractionDigits]="0" [maxFractionDigits]="2"
+                              inputStyleClass="w-24 text-right">
+                            </p-inputNumber>
+                          </ng-template>
+
+                          <ng-template pTemplate="output">
+                            <div class="group flex justify-end items-center gap-2 px-2 py-1 rounded-md
+                                      cursor-pointer transition-all duration-200
+                                      hover:bg-blue-50 hover:ring-1 hover:ring-blue-400
+                                      dark:hover:bg-blue-500/10 dark:hover:ring-blue-400/40">
+                              <span class="text-gray-800 dark:text-gray-100">
+                                {{ item.factor }}
+                              </span>
+                              <i class="pi pi-pencil text-xs
+                              text-gray-400 dark:text-gray-500
+                              opacity-0 group-hover:opacity-100
+                              transition-opacity duration-200"></i>
+                            </div>
+                          </ng-template>
+                        </p-cellEditor>
+                      </td>
 
 
-                    <td [pEditableColumn]="item.price" pEditableColumnField="price" class="text-center">
-                      <p-cellEditor>
-                        <!-- INPUT -->
-                        <ng-template pTemplate="input">
-                          <p-inputNumber
-                            name="price{{i}}"
-                            required
-                            placeholder="Ex.: 12"
-                            [(ngModel)]="item.price"
-                            mode="decimal"
-                            locale="pt-BR"
-                            [minFractionDigits]="2"
-                            [maxFractionDigits]="2"
-                            inputStyleClass="w-24 text-center">
-                          </p-inputNumber>
-                        </ng-template>
+                      <td [pEditableColumn]="item.price" pEditableColumnField="price" class="text-center">
+                        <p-cellEditor>
+                          <!-- INPUT -->
+                          <ng-template pTemplate="input">
+                            <p-inputNumber name="price{{i}}" required placeholder="Ex.: 12" [(ngModel)]="item.price"
+                              mode="decimal" locale="pt-BR" [minFractionDigits]="2" [maxFractionDigits]="2"
+                              inputStyleClass="w-24 text-center">
+                            </p-inputNumber>
+                          </ng-template>
 
-                        <ng-template pTemplate="output">
-                          <div class="group flex justify-end items-center gap-2 px-2 py-1 rounded-md
+                          <ng-template pTemplate="output">
+                            <div class="group flex justify-end items-center gap-2 px-2 py-1 rounded-md
                                       cursor-pointer transition-all duration-200
                                       hover:bg-blue-50 hover:ring-1 hover:ring-blue-400
                                       dark:hover:bg-blue-500/10 dark:hover:ring-blue-400/40">
                               <span class="text-gray-800 dark:text-gray-100">
                                 {{ item.price | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
                               </span>
-                            <i class="pi pi-pencil text-xs
+                              <i class="pi pi-pencil text-xs
                               text-gray-400 dark:text-gray-500
                               opacity-0 group-hover:opacity-100
                               transition-opacity duration-200"></i>
-                          </div>
-                        </ng-template>
-                      </p-cellEditor>
-                    </td>
+                            </div>
+                          </ng-template>
+                        </p-cellEditor>
+                      </td>
 
-                  </tr>
-                </ng-template>
-              </p-table>
+                      <td class="px-4 py-2 text-right font-semibold text-gray-800 dark:text-gray-100">
+                        {{ getItemTotalValue(item) | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+                        <div *ngIf="contract.unifyServices"
+                          class="text-[11px] font-normal text-gray-500 dark:text-gray-400">
+                          {{ item.quantity }} x {{ getEffectiveFactor(item) }} = {{ getCalculatedQuantity(item) }}
+                        </div>
+                      </td>
+
+                    </tr>
+                  </ng-template>
+                </p-table>
+              </div>
+
+              <div *ngIf="isMobileView" class="px-4 pb-2 pt-4 space-y-4">
+                <div *ngFor="let item of items; let i = index"
+                  class="rounded-2xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-900 p-4 shadow-sm">
+                  <div class="flex items-start justify-between gap-3">
+                    <div>
+                      <div class="text-base font-semibold text-surface-900 dark:text-surface-0">{{ item.description }}
+                      </div>
+                      <div class="text-xs text-surface-500 dark:text-surface-400 mt-1">
+                        Toque nos campos abaixo para ajustar os valores.
+                      </div>
+                    </div>
+                    <button type="button" aria-label="Adicionar item"
+                      class="shrink-0 flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white transition-all hover:bg-blue-700 active:bg-blue-800"
+                      (click)="addItem(item, i)">
+                      <span class="material-icons text-sm">add</span>
+                    </button>
+                  </div>
+
+                  <div class="mt-4 grid grid-cols-1 gap-3">
+                    <div class="mobile-field">
+                      <label>Quantidade</label>
+                      <p-inputNumber name="quantityMobile{{i}}" placeholder="Ex.: 12" [(ngModel)]="item.quantity"
+                        mode="decimal" locale="pt-BR" [minFractionDigits]="0" [maxFractionDigits]="2"
+                        inputStyleClass="w-full text-right">
+                      </p-inputNumber>
+                    </div>
+
+                    <div *ngIf="contract.unifyServices" class="mobile-field">
+                      <label>Fator US</label>
+                      <p-inputNumber name="factorMobile{{i}}" placeholder="Ex.: 1" [(ngModel)]="item.factor"
+                        mode="decimal" locale="pt-BR" [minFractionDigits]="0" [maxFractionDigits]="2"
+                        inputStyleClass="w-full text-right">
+                      </p-inputNumber>
+                    </div>
+
+                    <div class="mobile-field">
+                      <label>Valor unitário</label>
+                      <p-inputNumber name="priceMobile{{i}}" placeholder="Ex.: 12" [(ngModel)]="item.price"
+                        mode="decimal" locale="pt-BR" [minFractionDigits]="2" [maxFractionDigits]="2"
+                        inputStyleClass="w-full text-right">
+                      </p-inputNumber>
+                    </div>
+                  </div>
+
+                  <div class="mt-4 rounded-xl bg-surface-50 dark:bg-surface-800 px-3 py-3">
+                    <div class="text-xs uppercase tracking-wide text-surface-500 dark:text-surface-400">Total do item
+                    </div>
+                    <div class="mt-1 text-lg font-bold text-surface-900 dark:text-surface-0">
+                      {{ getItemTotalValue(item) | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+                    </div>
+                    <div *ngIf="contract.unifyServices" class="mt-1 text-xs text-surface-500 dark:text-surface-400">
+                      {{ item.quantity }} x {{ getEffectiveFactor(item) }} = {{ getCalculatedQuantity(item) }}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
 
-            <div class="flex pt-6 justify-between px-10">
-              <p-button label="Voltar" severity="secondary" icon="pi pi-arrow-left"
-                        (onClick)="activateCallback(1)"/>
+            <div class="flex pt-6 justify-between px-4 sm:px-10 mobile-actions">
+              <p-button label="Voltar" severity="secondary" icon="pi pi-arrow-left" (onClick)="activateCallback(1)" />
               <p-button label="Próximo" icon="pi pi-arrow-right" iconPos="right"
-                        (onClick)="activateCallback(3); selectedIndex = null;"/>
+                (onClick)="activateCallback(3); selectedIndex = null;" />
             </div>
 
           </ng-template>
@@ -350,69 +377,71 @@
           <ng-template #content let-activateCallback="activateCallback">
 
             @if (contract.items.length > 0) {
-              <div>
-                <div class="flex justify-between mx-10">
-                  <div class="text-xl font-semibold">Revise os itens adicionados</div>
-                  <div class="flex flex-col">
-                      <span class="uppercase tracking-wide text-sm font-semibold opacity-80">
-                      Valor Total
-                    </span>
-                    <h2 class="text-3xl sm:text-3xl font-extrabold leading-tight drop-shadow-md">
-                      {{ getTotalValue() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
-                    </h2>
-                  </div>
+            <div>
+              <div class="flex justify-between mx-4 sm:mx-10 review-header">
+                <div class="text-xl font-semibold">Revise os itens adicionados</div>
+                <div class="flex flex-col">
+                  <span class="uppercase tracking-wide text-sm font-semibold opacity-80">
+                    Valor Total
+                  </span>
+                  <h2 class="text-3xl sm:text-3xl font-extrabold leading-tight drop-shadow-md">
+                    {{ getTotalValue() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+                  </h2>
                 </div>
+              </div>
 
-                <p-table
-                  #dt
-                  class="mt-4 text-sm"
-                  [value]="contract.items"
-                  dataKey="contractItemId"
-                  editMode="row"
-                  responsiveLayout="scroll"
-                >
+              <div *ngIf="contract.unifyServices"
+                class="mx-4 sm:mx-10 mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100">
+                O fator US esta ativo neste contrato. O total considera:
+                <strong>valor unitario x (quantidade x fator)</strong>.
+              </div>
+
+              <div *ngIf="!isMobileView">
+                <p-table #dt class="mt-4 text-sm" [value]="contract.items" dataKey="contractItemId" editMode="row"
+                  responsiveLayout="scroll">
                   <ng-template pTemplate="header">
                     <tr>
-                      <th
-                        class="text-left px-3 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base"></th>
+                      <th class="text-left px-3 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base"></th>
                       <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-left">
                         Descrição
                       </th>
                       <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-center">
                         Quantidade
                       </th>
-                      <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-right"
-                          *ngIf="currentUrl === '/contratos/editar'">Qtde. Executada
+                      <th *ngIf="contract.unifyServices"
+                        class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-center">
+                        Fator US
                       </th>
                       <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-right"
-                          *ngIf="currentUrl === '/contratos/editar'">Qtde. Reservada
+                        *ngIf="currentUrl === '/contratos/editar'">Qtde. Executada
+                      </th>
+                      <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-right"
+                        *ngIf="currentUrl === '/contratos/editar'">Qtde. Reservada
                       </th>
                       <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-center">
                         Valor unitário
+                      </th>
+                      <th class="px-4 py-2 text-gray-700 dark:text-neutral-100 font-semibold text-base text-center">
+                        Total do item
                       </th>
                     </tr>
                   </ng-template>
                   <ng-template pTemplate="body" let-item let-editing="editing" let-i="rowIndex">
                     <tr
                       [ngClass]="selectedIndex === i ? 'bg-[#ecfdf5] font-semibold text-[#047857] dark:bg-[#1c362f] dark:text-white' : ''"
-                      (click)="selectedIndex = i"
-                      [class.fade-out]="removingIndexContract === i"
+                      (click)="selectedIndex = i" [class.fade-out]="removingIndexContract === i"
                       class="transition-all duration-400 hover:bg-[#ecfdf5] hover:dark:bg-[#1c362f] cursor-pointer">
                       <td class="px-4 py-2 text-center">
-                        <button
-                          type="button"
-                          aria-label="Remover item"
-                          class="flex items-center justify-center
+                        <button type="button" aria-label="Remover item" class="flex items-center justify-center
                         text-white bg-red-600
                         hover:bg-red-700 active:bg-red-800
                           rounded-full p-2
                           transition-all transform hover:scale-110
-                          focus:outline-none focus:ring-2 focus:ring-red-400"
-                          (click)="removeItem(item, i)">
+                          focus:outline-none focus:ring-2 focus:ring-red-400" (click)="removeItem(item, i)">
 
-                        <span class="material-icons text-xs">
-                          delete
-                        </span>
+                          <span class="material-icons text-xs">
+                            delete
+                          </span>
                         </button>
                       </td>
 
@@ -422,30 +451,19 @@
                         <p-cellEditor>
                           <!-- INPUT -->
                           <ng-template pTemplate="input">
-                            <p-inputNumber
-                              #inputRef
-                              name="quantity{{i}}"
-                              required
-                              placeholder="Ex.: 12"
-                              mode="decimal"
-                              locale="pt-BR"
-                              [minFractionDigits]="0"
-                              [maxFractionDigits]="2"
-                              [(ngModel)]="item.quantity"
-                              #quantityModel="ngModel"
-                              [min]="getTotalReservedAndExecutedValue(item, 1)"
+                            <p-inputNumber #inputRef name="quantity{{i}}" required placeholder="Ex.: 12" mode="decimal"
+                              locale="pt-BR" [minFractionDigits]="0" [maxFractionDigits]="2" [(ngModel)]="item.quantity"
+                              #quantityModel="ngModel" [min]="getTotalReservedAndExecutedValue(item, 1)"
                               (ngModelChange)="checkMin(item, quantityModel, pop, inputRef)"
                               inputStyleClass="w-24 text-right">
                             </p-inputNumber>
-                            <p-popover
-                              #pop
-                              [dismissable]="true"
-                              [showCloseIcon]="false">
+                            <p-popover #pop [dismissable]="true" [showCloseIcon]="false">
                               <p class="text-xs text-error">
                                 @if (getTotalReservedAndExecutedValue(item) > 0) {
-                                  A quantidade mínima é {{ getTotalReservedAndExecutedValue(item) }} total já executado ou reservado em O.S.).
+                                A quantidade mínima é {{ getTotalReservedAndExecutedValue(item) }} total já executado ou
+                                reservado em O.S.).
                                 } @else {
-                                  A quantidade mínima é 1
+                                A quantidade mínima é 1
                                 }
                               </p>
                             </p-popover>
@@ -469,33 +487,48 @@
                         </p-cellEditor>
                       </td>
 
-                      <td
-                        class="text-right relative cursor-pointer"
-                        (mouseenter)="op.show($event, anchor)"
-                        (mouseleave)="op.hide()">
+                      <td *ngIf="contract.unifyServices" [pEditableColumn]="item.factor" pEditableColumnField="factor"
+                        class="text-center">
+                        <p-cellEditor>
+                          <ng-template pTemplate="input">
+                            <p-inputNumber name="factorReview{{i}}" required placeholder="Ex.: 1"
+                              [(ngModel)]="item.factor" mode="decimal" locale="pt-BR" [min]="1" [minFractionDigits]="0"
+                              [maxFractionDigits]="2" inputStyleClass="w-24 text-right">
+                            </p-inputNumber>
+                          </ng-template>
 
-                        <span
-                          #anchor
-                          class="inline-block">
+                          <ng-template pTemplate="output">
+                            <div class="group flex justify-end items-center gap-2 px-2 py-1 rounded-md
+                                      cursor-pointer transition-all duration-200
+                                      hover:bg-blue-50 hover:ring-1 hover:ring-blue-400
+                                      dark:hover:bg-blue-500/10 dark:hover:ring-blue-400/40">
+                              <span class="text-gray-800 dark:text-gray-100">
+                                {{ getEffectiveFactor(item) }}
+                              </span>
+                              <i class="pi pi-pencil text-xs
+                              text-gray-400 dark:text-gray-500
+                              opacity-0 group-hover:opacity-100
+                              transition-opacity duration-200"></i>
+                            </div>
+                          </ng-template>
+                        </p-cellEditor>
+                      </td>
+
+                      <td *ngIf="currentUrl === '/contratos/editar'" class="text-right relative cursor-pointer"
+                        (mouseenter)="op.show($event, anchor)" (mouseleave)="op.hide()">
+
+                        <span #anchor class="inline-block">
                           {{ item.totalExecuted }}
                         </span>
 
-                        <p-popover
-                          #op
-                          [dismissable]="false"
-                          [showCloseIcon]="false"
-                          appendTo="body"
-                        >
-                          <div
-                            class="flex flex-col gap-2 min-w-[180px] text-smtext-gray-800 dark:text-gray-100">
+                        <p-popover #op [dismissable]="false" [showCloseIcon]="false" appendTo="body">
+                          <div class="flex flex-col gap-2 min-w-[180px] text-smtext-gray-800 dark:text-gray-100">
 
                             <span class="text-gray-500 dark:text-gray-400" *ngIf="item.executedQuantity.length === 0">
                               Nenhuma execução
                             </span>
 
-                            <div
-                              *ngFor="let step of item.executedQuantity; let i = index"
-                              class="flex justify-between">
+                            <div *ngFor="let step of item.executedQuantity; let i = index" class="flex justify-between">
                               <span class="text-gray-500 dark:text-gray-400">
                                 {{ i + 1 }}ª Etapa
                               </span>
@@ -508,33 +541,21 @@
 
                       </td>
 
-                      <td
-                        class="text-right relative cursor-pointer"
-                        (mouseenter)="op2.show($event, anchorR)"
-                        (mouseleave)="op2.hide()">
+                      <td *ngIf="currentUrl === '/contratos/editar'" class="text-right relative cursor-pointer"
+                        (mouseenter)="op2.show($event, anchorR)" (mouseleave)="op2.hide()">
 
-                        <span
-                          #anchorR
-                          class="inline-block">
+                        <span #anchorR class="inline-block">
                           {{ getTotalReserved(item.contractItemId) }}
                         </span>
 
-                        <p-popover
-                          #op2
-                          [dismissable]="false"
-                          [showCloseIcon]="false"
-                          appendTo="body"
-                        >
+                        <p-popover #op2 [dismissable]="false" [showCloseIcon]="false" appendTo="body">
                           <div class="flex flex-col gap-2 min-w-[180px] text-smtext-gray-800 dark:text-gray-100">
 
-                          <span class="text-gray-500 dark:text-gray-400" *ngIf="item.reservedQuantity.length === 0">
-                            Nenhuma reserva
-                          </span>
+                            <span class="text-gray-500 dark:text-gray-400" *ngIf="item.reservedQuantity.length === 0">
+                              Nenhuma reserva
+                            </span>
 
-                            <div
-                              *ngFor="let step of item.reservedQuantity; let i = index"
-                              class="flex justify-between"
-                            >
+                            <div *ngFor="let step of item.reservedQuantity; let i = index" class="flex justify-between">
                               <span class="text-gray-500 dark:text-gray-400">
                                 {{ i + 1 }}ª Etapa
                               </span>
@@ -551,15 +572,8 @@
                         <p-cellEditor>
                           <!-- INPUT -->
                           <ng-template pTemplate="input">
-                            <p-inputNumber
-                              name="price{{i}}"
-                              required
-                              placeholder="Ex.: 2,00"
-                              [(ngModel)]="item.price"
-                              mode="decimal"
-                              locale="pt-BR"
-                              [minFractionDigits]="2"
-                              [maxFractionDigits]="2"
+                            <p-inputNumber name="price{{i}}" required placeholder="Ex.: 2,00" [(ngModel)]="item.price"
+                              mode="decimal" locale="pt-BR" [minFractionDigits]="2" [maxFractionDigits]="2"
                               inputStyleClass="w-24 text-center">
                             </p-inputNumber>
                           </ng-template>
@@ -581,77 +595,199 @@
                         </p-cellEditor>
                       </td>
 
+                      <td class="px-4 py-2 text-right font-semibold text-gray-800 dark:text-gray-100">
+                        {{ getItemTotalValue(item) | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+                        <div *ngIf="contract.unifyServices"
+                          class="text-[11px] font-normal text-gray-500 dark:text-gray-400">
+                          {{ item.quantity }} x {{ getEffectiveFactor(item) }} = {{ getCalculatedQuantity(item) }}
+                        </div>
+                      </td>
+
                     </tr>
                   </ng-template>
 
                 </p-table>
               </div>
-            } @else {
-              <div
-                class="w-full max-w-md mx-auto bg-green-100 border border-green-400 text-orange-800 p-4 rounded-lg
-                shadow-md flex flex-col items-center text-center gap-4">
-                <div class="flex items-center gap-3">
-                  <i class="fa-solid fa-xmark"></i>
-                  <div>
-                    <p class="text-sm">Nenhum item adicionado</p>
+
+              <div *ngIf="isMobileView" class="px-4 pb-2 pt-4 space-y-4">
+                <div *ngFor="let item of contract.items; let i = index"
+                  class="rounded-2xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-900 p-4 shadow-sm">
+                  <div class="flex items-start justify-between gap-3">
+                    <div>
+                      <div class="text-base font-semibold text-surface-900 dark:text-surface-0">{{ item.description }}
+                      </div>
+                      <div class="text-xs text-surface-500 dark:text-surface-400 mt-1">
+                        Revise os valores e remova o item se necessario.
+                      </div>
+                    </div>
+                    <button type="button" aria-label="Remover item"
+                      class="shrink-0 flex h-10 w-10 items-center justify-center rounded-full bg-red-600 text-white transition-all hover:bg-red-700 active:bg-red-800"
+                      (click)="removeItem(item, i)">
+                      <span class="material-icons text-xs">delete</span>
+                    </button>
+                  </div>
+
+                  <div class="mt-4 grid grid-cols-1 gap-3">
+                    <div class="mobile-field">
+                      <label>Quantidade</label>
+                      <p-inputNumber #inputRefMobile name="quantityReviewMobile{{i}}" placeholder="Ex.: 12"
+                        mode="decimal" locale="pt-BR" [minFractionDigits]="0" [maxFractionDigits]="2"
+                        [(ngModel)]="item.quantity" #quantityModelMobile="ngModel"
+                        [min]="getTotalReservedAndExecutedValue(item, 1)"
+                        (ngModelChange)="checkMin(item, quantityModelMobile, popMobile, inputRefMobile)"
+                        inputStyleClass="w-full text-right">
+                      </p-inputNumber>
+                      <p-popover #popMobile [dismissable]="true" [showCloseIcon]="false">
+                        <p class="text-xs text-error">
+                          @if (getTotalReservedAndExecutedValue(item) > 0) {
+                          A quantidade minima e {{ getTotalReservedAndExecutedValue(item) }} total ja executado ou
+                          reservado em O.S.).
+                          } @else {
+                          A quantidade minima e 1
+                          }
+                        </p>
+                      </p-popover>
+                    </div>
+
+                    <div *ngIf="contract.unifyServices" class="mobile-field">
+                      <label>Fator US</label>
+                      <p-inputNumber name="factorReviewMobile{{i}}" placeholder="Ex.: 1" [(ngModel)]="item.factor"
+                        mode="decimal" locale="pt-BR" [min]="1" [minFractionDigits]="0" [maxFractionDigits]="2"
+                        inputStyleClass="w-full text-right">
+                      </p-inputNumber>
+                    </div>
+
+                    <div class="mobile-field">
+                      <label>Valor unitário</label>
+                      <p-inputNumber name="priceReviewMobile{{i}}" placeholder="Ex.: 2,00" [(ngModel)]="item.price"
+                        mode="decimal" locale="pt-BR" [minFractionDigits]="2" [maxFractionDigits]="2"
+                        inputStyleClass="w-full text-right">
+                      </p-inputNumber>
+                    </div>
+                  </div>
+
+                  <div *ngIf="currentUrl === '/contratos/editar'" class="mt-4 grid grid-cols-2 gap-3">
+                    <div class="rounded-xl bg-surface-50 dark:bg-surface-800 px-3 py-3">
+                      <div class="text-xs uppercase tracking-wide text-surface-500 dark:text-surface-400">Executada
+                      </div>
+                      <div class="mt-1 text-base font-semibold text-surface-900 dark:text-surface-0">
+                        {{ item.totalExecuted }}
+                      </div>
+                    </div>
+                    <div class="rounded-xl bg-surface-50 dark:bg-surface-800 px-3 py-3">
+                      <div class="text-xs uppercase tracking-wide text-surface-500 dark:text-surface-400">Reservada
+                      </div>
+                      <div class="mt-1 text-base font-semibold text-surface-900 dark:text-surface-0">
+                        {{ getTotalReserved(item.contractItemId ?? 0) }}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mt-4 rounded-xl bg-surface-50 dark:bg-surface-800 px-3 py-3">
+                    <div class="text-xs uppercase tracking-wide text-surface-500 dark:text-surface-400">Total do item
+                    </div>
+                    <div class="mt-1 text-lg font-bold text-surface-900 dark:text-surface-0">
+                      {{ getItemTotalValue(item) | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+                    </div>
+                    <div *ngIf="contract.unifyServices" class="mt-1 text-xs text-surface-500 dark:text-surface-400">
+                      {{ item.quantity }} x {{ getEffectiveFactor(item) }} = {{ getCalculatedQuantity(item) }}
+                    </div>
                   </div>
                 </div>
               </div>
+            </div>
+            } @else {
+            <div class="w-full max-w-md mx-auto bg-green-100 border border-green-400 text-orange-800 p-4 rounded-lg
+                shadow-md flex flex-col items-center text-center gap-4">
+              <div class="flex items-center gap-3">
+                <i class="fa-solid fa-xmark"></i>
+                <div>
+                  <p class="text-sm">Nenhum item adicionado</p>
+                </div>
+              </div>
+            </div>
             }
 
-            <div class="flex pt-6 justify-between px-10">
+            <div class="flex pt-6 justify-between px-4 sm:px-10 mobile-actions">
               <p-button label="Voltar" icon="pi pi-arrow-left" iconPos="right"
-                        (onClick)="activateCallback(2); selectedIndex = null"/>
+                (onClick)="activateCallback(2); selectedIndex = null" />
 
               <p-button label="Salvar" icon="pi pi-save" iconPos="left" severity="info"
-                        *ngIf="contract.items.length > 0"
-                        (onClick)="openConfirmModal()"/>
+                *ngIf="contract.items.length > 0" (onClick)="openConfirmModal()" />
             </div>
           </ng-template>
         </p-step-panel>
       </p-step-panels>
     </p-stepper>
 
-    <app-prime-confirm-dialog
-      *ngIf="openModal"
-      [message]="'Confirma o salvamento do contrato?'"
-      (action)="handleAction($event)"
-      type="confirm">
+    <app-prime-confirm-dialog *ngIf="openModal" [message]="'Confirma o salvamento do contrato?'"
+      (action)="handleAction($event)" type="confirm">
     </app-prime-confirm-dialog>
 
-    <div *ngIf="finish" class="flex flex-col justify-center items-center h-[calc(100vh-500px)]">
-      <div *ngIf="finish"
-           class="w-full max-w-md mx-auto bg-green-100 border border-green-400 text-green-800 p-4 rounded-lg shadow-md flex flex-col items-center text-center gap-4">
-        <div class="flex items-center gap-3">
-          <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
-               xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
-          </svg>
-          <div>
-            <h3 class="text-lg font-semibold">Sucesso!</h3>
-            @if (currentUrl === '/contratos/editar') {
-              <p class="text-sm">O contrato foi atualizado com sucesso.</p>
-            } @else {
-              <p class="text-sm">O contrato foi criado com sucesso.</p>
-            }
-          </div>
+    <div *ngIf="finish" class="flex flex-col items-center justify-center min-h-[60vh] px-4">
+
+      <!-- Card de sucesso -->
+      <div
+        [ngClass]="currentUrl === '/contratos/editar' ? 'border-green-200 dark:border-green-800' : 'border-blue-200 dark:border-blue-800'"
+        class="w-full max-w-md bg-white dark:bg-neutral-900 border rounded-2xl shadow-lg p-6 flex flex-col items-center text-center gap-4">
+        <!-- Ícone -->
+        <div
+          [ngClass]="currentUrl === '/contratos/editar' ? 'bg-green-100 dark:bg-green-900/40' : 'bg-blue-100 dark:bg-blue-900/40'"
+          class="w-14 h-14 flex items-center justify-center rounded-full">
+          <i class="pi" [ngClass]="currentUrl === '/contratos/editar' ? 'pi-check' : 'pi-clock'"></i>
         </div>
+
+        <!-- Texto -->
+        <div class="flex flex-col gap-1">
+          <h3 class="text-xl font-semibold text-gray-800 dark:text-white">
+            {{currentUrl === '/contratos/editar' ? 'Contrato atualizado com sucesso' : 'Contrato registrado com
+            sucesso.'}}
+          </h3>
+
+          <p class="text-sm text-gray-600 dark:text-gray-300">
+            {{currentUrl === '/contratos/editar' ? 'Contrato atualizado com sucesso' : 'Nossa equipe fará a análise e
+            você receberá um retorno em até 2 horas.'}}
+          </p>
+
+          @if (currentUrl !== '/contratos/editar') {
+          @let hasNotification = (hasNotifications$ | async) ?? true;
+          @if (!hasNotification) {
+          <p-divider></p-divider>
+          <p class="text-sm text-gray-600 dark:text-gray-300">
+            Garanta que as notificações estejam ativadas
+          </p>
+          <p class="text-xs mb-1">Precisa de ajuda?</p>
+          <p-button label="Guia para ativar notificações" variant="outlined" severity="secondary" icon="pi pi-book"
+            size="small" (onClick)="openNotificationGuide()" />
+          }
+          }
+
+        </div>
+
       </div>
 
-      <div class="flex flex-col gap-2 mt-10">
-        <button (click)="finish=false" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-          Criar Novo Contrato
+      <!-- Ações -->
+      <div class="flex flex-col gap-3 mt-8 w-full max-w-md">
+
+        <!-- CTA principal -->
+        <button (click)="finish=false"
+          class="w-full bg-blue-600 text-white px-4 py-2.5 rounded-lg font-medium hover:bg-blue-700 transition shadow-sm">
+          <i class="pi pi-plus mr-2 text-sm"></i>Criar outro contrato
         </button>
-        <button class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition"
-                (click)="router.navigate(['contratos/listar'],{ queryParams: { for: 'view' } });">
-          Ver Contratos Criados
+
+        <!-- CTA secundário -->
+        <button
+          class="w-full border border-gray-300 dark:border-neutral-700 text-gray-700 dark:text-gray-200 px-4 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800 transition"
+          (click)="router.navigate(['contratos/listar'],{ queryParams: { for: 'view' } });">
+          <i class="pi pi-book mr-2 text-sm"></i>Ver contratos criados
         </button>
+
       </div>
 
     </div>
 
 
-    <p-toast/>
+    <p-toast />
 
     <!--    Cadastrar empresa-->
     <p-dialog [(visible)]="visible" [modal]="false" [style]="{ width: '35rem' }" position="left">
@@ -669,139 +805,121 @@
         <div class="flex flex-col gap-1">
           <label for="socialReason" [class.text-red-500]="companyFormSubmit && socialReasonCtrl.invalid">Razão
             Social*</label>
-          <input [(ngModel)]="company.socialReason"
-                 (input)="company.socialReason = company.socialReason.toUpperCase()"
-                 #socialReasonCtrl="ngModel"
-                 id="socialReason"
-                 type="text"
-                 pInputText
-                 autocomplete="off"
-                 placeholder="Digite a razão social"
-                 required
-                 [ngClass]="{'ng-invalid ng-dirty': companyFormSubmit && socialReasonCtrl.invalid}"/>
+          <input [(ngModel)]="company.socialReason" (input)="company.socialReason = company.socialReason.toUpperCase()"
+            #socialReasonCtrl="ngModel" id="socialReason" type="text" pInputText autocomplete="off"
+            placeholder="Digite a razão social" required
+            [ngClass]="{'ng-invalid ng-dirty': companyFormSubmit && socialReasonCtrl.invalid}" />
         </div>
 
         <!-- Nome Fantasia -->
         <div class="flex flex-col gap-1">
           <label for="fantasyName" [class.text-red-500]="companyFormSubmit && fantasyNameCtrl.invalid">Nome
             Fantasia*</label>
-          <input [(ngModel)]="company.fantasyName"
-                 (input)="company.fantasyName = company.fantasyName.toUpperCase()"
-                 #fantasyNameCtrl="ngModel"
-                 id="fantasyName"
-                 type="text"
-                 pInputText
-                 autocomplete="off"
-                 placeholder="Digite o nome fantasia"
-                 required
-                 [ngClass]="{'ng-invalid ng-dirty': companyFormSubmit && fantasyNameCtrl.invalid}"/>
+          <input [(ngModel)]="company.fantasyName" (input)="company.fantasyName = company.fantasyName.toUpperCase()"
+            #fantasyNameCtrl="ngModel" id="fantasyName" type="text" pInputText autocomplete="off"
+            placeholder="Digite o nome fantasia" required
+            [ngClass]="{'ng-invalid ng-dirty': companyFormSubmit && fantasyNameCtrl.invalid}" />
         </div>
 
         <!-- CNPJ -->
         <div class="flex flex-col gap-1">
           <label for="companyCnpj" [class.text-red-500]="companyFormSubmit && cnpjCtrl.invalid">CNPJ*</label>
-          <input [(ngModel)]="company.companyCnpj"
-                 #cnpjCtrl="ngModel"
-                 id="companyCnpj"
-                 type="text"
-                 pInputText
-                 autocomplete="off"
-                 placeholder="Digite o CNPJ"
-                 minlength="18"
-                 maxlength="18"
-                 (input)="utils.formatCNPJ($event)"
-                 required
-                 [ngClass]="{'ng-invalid ng-dirty': companyFormSubmit && cnpjCtrl.invalid}"/>
+          <input [(ngModel)]="company.companyCnpj" #cnpjCtrl="ngModel" id="companyCnpj" type="text" pInputText
+            autocomplete="off" placeholder="Digite o CNPJ" minlength="18" maxlength="18"
+            (input)="utils.formatCNPJ($event)" required
+            [ngClass]="{'ng-invalid ng-dirty': companyFormSubmit && cnpjCtrl.invalid}" />
         </div>
 
         <!-- Telefone -->
         <div class="flex flex-col gap-1">
           <label for="companyPhone" [class.text-red-500]="companyFormSubmit && phoneCtrl.invalid">Telefone*</label>
-          <input [(ngModel)]="company.companyPhone"
-                 #phoneCtrl="ngModel"
-                 id="companyPhone"
-                 type="text"
-                 pInputText
-                 autocomplete="off"
-                 minlength="14"
-                 maxlength="15"
-                 placeholder="(00) 00000-0000"
-                 (input)="utils.formatPhone($event)"
-                 required
-                 [ngClass]="{'ng-invalid ng-dirty': companyFormSubmit && phoneCtrl.invalid}"/>
+          <input [(ngModel)]="company.companyPhone" #phoneCtrl="ngModel" id="companyPhone" type="text" pInputText
+            autocomplete="off" minlength="14" maxlength="15" placeholder="(00) 00000-0000"
+            (input)="utils.formatPhone($event)" required
+            [ngClass]="{'ng-invalid ng-dirty': companyFormSubmit && phoneCtrl.invalid}" />
         </div>
 
         <!-- Contato -->
         <div class="flex flex-col gap-1">
           <label for="companyContact" [class.text-red-500]="companyFormSubmit && contactCtrl.invalid">Contato*</label>
-          <input [(ngModel)]="company.companyContact"
-                 #contactCtrl="ngModel"
-                 id="companyContact"
-                 type="text"
-                 pInputText
-                 autocomplete="off"
-                 placeholder="Nome do responsável"
-                 required
-                 [ngClass]="{'ng-invalid ng-dirty': companyFormSubmit && contactCtrl.invalid}"/>
+          <input [(ngModel)]="company.companyContact" #contactCtrl="ngModel" id="companyContact" type="text" pInputText
+            autocomplete="off" placeholder="Nome do responsável" required
+            [ngClass]="{'ng-invalid ng-dirty': companyFormSubmit && contactCtrl.invalid}" />
         </div>
 
         <!-- E-mail -->
         <div class="flex flex-col gap-1">
           <label for="companyEmail" [class.text-red-500]="companyFormSubmit && emailCtrl.invalid">E-mail*</label>
-          <input [(ngModel)]="company.companyEmail"
-                 #emailCtrl="ngModel"
-                 required
-                 id="companyEmail"
-                 type="email"
-                 pInputText
-                 [ngClass]="{'ng-invalid ng-dirty': companyFormSubmit && emailCtrl.invalid}"
-                 autocomplete="off"
-                 placeholder="exemplo@empresa.com"/>
+          <input [(ngModel)]="company.companyEmail" #emailCtrl="ngModel" required id="companyEmail" type="email"
+            pInputText [ngClass]="{'ng-invalid ng-dirty': companyFormSubmit && emailCtrl.invalid}" autocomplete="off"
+            placeholder="exemplo@empresa.com" />
         </div>
 
         <!-- Endereço -->
         <div class="flex flex-col gap-1">
           <label for="companyAddress" [class.text-red-500]="companyFormSubmit && addressCtrl.invalid">Endereço*</label>
-          <input [(ngModel)]="company.companyAddress"
-                 #addressCtrl="ngModel"
-                 id="companyAddress"
-                 type="text"
-                 pInputText
-                 autocomplete="off"
-                 placeholder="Rua, número, bairro, cidade"
-                 required
-                 [ngClass]="{'ng-invalid ng-dirty': companyFormSubmit && addressCtrl.invalid}"/>
+          <input [(ngModel)]="company.companyAddress" #addressCtrl="ngModel" id="companyAddress" type="text" pInputText
+            autocomplete="off" placeholder="Rua, número, bairro, cidade" required
+            [ngClass]="{'ng-invalid ng-dirty': companyFormSubmit && addressCtrl.invalid}" />
         </div>
 
         <!-- Logo da Empresa -->
         <div class="flex flex-col gap-1 mt-5 mr-4">
-          <input type="file"
-                 class="file-input file-input-sm hidden"
-                 accept=".png,.jpg"
-                 #inputLogo
-                 (change)="onLogoSelected($event)"/>
+          <input type="file" class="file-input file-input-sm hidden" accept=".png,.jpg" #inputLogo
+            (change)="onLogoSelected($event)" />
 
           <label for="contractFile" [class.text-red-500]="companyFormSubmit && !logoFile">Logo da Empresa*</label>
-          <span
-            (click)="inputLogo.click()"
-            type="button"
-            [class.btn-outline]="!logoFile"
+          <span (click)="inputLogo.click()" type="button" [class.btn-outline]="!logoFile"
             [ngClass]="{'ng-invalid ng-dirty border border-red-500': companyFormSubmit && !logoFile}"
             class="btn btn-accent btn-sm text-xs w-full h-12 flex items-center justify-center gap-2">
-      <span class="material-icons" *ngIf="logoFile === null">cloud_upload</span>
+            <span class="material-icons" *ngIf="logoFile === null">cloud_upload</span>
             {{ logoFile?.name || 'Clique para selecionar' }}
-    </span>
+          </span>
         </div>
 
       </div>
 
 
       <ng-template #footer>
-        <p-button label="Cancelar" [text]="true" severity="secondary" (click)="visible = false; resetCompanyForm();"/>
-        <p-button label="Salvar" [outlined]="true" severity="secondary" [loading]="btnLoading" (click)="saveCompany()"/>
+        <p-button label="Cancelar" [text]="true" severity="secondary" (click)="visible = false; resetCompanyForm();" />
+        <p-button label="Salvar" [outlined]="true" severity="secondary" [loading]="btnLoading"
+          (click)="saveCompany()" />
       </ng-template>
     </p-dialog>
 
   </div>
 </div>
 
+<div *ngIf="embeddedDocOpen" class="fixed inset-0 z-40 bg-slate-950/35 backdrop-blur-[2px]"
+  (click)="closeEmbeddedDoc()"></div>
+
+<section *ngIf="embeddedDocOpen"
+  class="fixed inset-y-0 right-0 z-50 flex h-full w-full max-w-[96vw] flex-col bg-white shadow-2xl dark:bg-slate-900 lg:w-[min(1200px,92vw)]">
+  <div
+    class="flex flex-col gap-3 border-b border-slate-200 px-4 py-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+        Documentação incorporada
+      </p>
+
+      <h3 class="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+        {{ embeddedDocTitle }}
+      </h3>
+
+      <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        {{ embeddedDocDescription }}
+      </p>
+    </div>
+
+    <button class="btn btn-outline w-full sm:w-auto" type="button" (click)="closeEmbeddedDoc()">
+      Fechar
+    </button>
+  </div>
+
+  <div class="flex-1 overflow-y-none p-4 sm:p-5" (click)="$event.stopPropagation()">
+    <iframe *ngIf="embeddedDocUrl" [src]="embeddedDocUrl"
+      class="min-h-[85vh] w-full rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950"
+      referrerpolicy="strict-origin-when-cross-origin" title="Documentação incorporada do Lumos">
+    </iframe>
+  </div>
+</section>

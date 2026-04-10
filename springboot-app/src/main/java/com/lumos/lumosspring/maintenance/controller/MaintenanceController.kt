@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
+import java.time.Instant
 import java.util.*
 
 @Controller
@@ -33,8 +34,17 @@ class MaintenanceController(
     }
 
     @GetMapping("/maintenance/get-finished")
-    fun getGroupedMaintenances(): ResponseEntity<List<Map<String, JsonNode>>> =
-        ResponseEntity.ok(maintenanceService.getGroupedMaintenances())
+    fun getGroupedMaintenances(
+        @RequestParam startDate: Instant,
+        @RequestParam endDate: Instant
+    ): ResponseEntity<List<Map<String, JsonNode>>> =
+        ResponseEntity.ok(
+            maintenanceService.getGroupedMaintenances(
+                startDate = startDate.atOffset(java.time.ZoneOffset.UTC).truncatedTo(java.time.temporal.ChronoUnit.DAYS),
+                endDate = endDate.atOffset(java.time.ZoneOffset.UTC)
+                    .withHour(23).withMinute(59).withSecond(59).withNano(999_999_999)
+            )
+        )
 
     @PostMapping("/maintenance/generate-report/{type}/{maintenanceId}")
     fun generateReport(

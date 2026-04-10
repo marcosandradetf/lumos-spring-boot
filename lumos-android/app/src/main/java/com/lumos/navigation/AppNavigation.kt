@@ -48,6 +48,7 @@ import com.lumos.repository.StockRepository
 import com.lumos.repository.TeamRepository
 import com.lumos.repository.ViewRepository
 import com.lumos.ui.auth.LoginScreen
+import com.lumos.ui.auth.FirstAccessScreen
 import com.lumos.ui.components.SplashScreen
 import com.lumos.ui.directexecution.DirectExecutionHomeScreen
 import com.lumos.ui.directexecution.StreetInstallationNoWorkOrder
@@ -103,6 +104,7 @@ enum class BottomBar(val value: Int) {
 object Routes {
     const val AUTH_FLOW = "auth-flow"
     const val LOGIN = "login"
+    const val FIRST_ACCESS = "first-access"
     const val MAIN = "main"
     const val HOME = "home"
     const val NO_ACCESS = "no-access"
@@ -152,6 +154,8 @@ fun AppNavigation(
     val loggedOut by SessionManager.loggedOut.collectAsState()
     val sessionExpired by SessionManager.sessionExpired.collectAsState()
     val checkingSession by SessionManager.checkingSession.collectAsState()
+    val activationRequired by SessionManager.activationRequired.collectAsState()
+    val pendingActivationCpf by SessionManager.pendingActivationCpf.collectAsState()
     val notificationManager = remember { NotificationManager() }
     val isLocked by secureStorage.appLocked.collectAsState()
 
@@ -293,6 +297,7 @@ fun AppNavigation(
         if (loggedIn) {
             SessionManager.setSessionExpired(false)
             SessionManager.setLoggedOut(false)
+            SessionManager.setActivationRequired(false)
             SessionManager.setCheckingSession(false)
             NotificationsBadge._notificationBadge.value = notificationViewModel.countNotifications()
         }
@@ -314,8 +319,18 @@ fun AppNavigation(
             SessionManager.setLoggedIn(false)
             SessionManager.setLoggedOut(false)
             SessionManager.setSessionExpired(false)
+            SessionManager.setActivationRequired(false)
             secureStorage.clearAll()
             notificationManager.unsubscribeFromAllTopics()
+        }
+    }
+
+    LaunchedEffect(activationRequired) {
+        if (activationRequired) {
+            navController.navigate(Routes.FIRST_ACCESS) {
+                popUpTo(Routes.AUTH_FLOW) { inclusive = false }
+                launchSingleTop = true
+            }
         }
     }
 
@@ -427,7 +442,32 @@ fun AppNavigation(
                     LoginScreen(
                         viewModel = vm,
                         context = context,
-                        onTestClick = {}
+                        onTestClick = {},
+                        onNavigateToFirstAccess = {
+                            SessionManager.setActivationRequired(true)
+                        }
+                    )
+                }
+
+                composable(Routes.FIRST_ACCESS) { backStackEntry ->
+                    val parentEntry = remember(backStackEntry) {
+                        navController.getBackStackEntry(Routes.AUTH_FLOW)
+                    }
+
+                    val vm: AuthViewModel = viewModel(parentEntry) {
+                        AuthViewModel(authRepository, parentEntry.savedStateHandle)
+                    }
+
+                    FirstAccessScreen(
+                        viewModel = vm,
+                        initialCpf = pendingActivationCpf,
+                        onNavigateBackToLogin = {
+                            SessionManager.setActivationRequired(false)
+                            navController.navigate(Routes.LOGIN) {
+                                popUpTo(Routes.FIRST_ACCESS) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        }
                     )
                 }
 

@@ -4,6 +4,7 @@ import com.lumos.lumosspring.notifications.repository.EmailQueueRepository
 import com.lumos.lumosspring.notifications.service.EmailService
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Primary
 import org.springframework.scheduling.TaskScheduler
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
@@ -15,6 +16,7 @@ class SchedulerConfig(
 ) {
 
     @Bean
+    @Primary
     fun taskScheduler(): TaskScheduler {
         val scheduler = ThreadPoolTaskScheduler()
         scheduler.poolSize = 5

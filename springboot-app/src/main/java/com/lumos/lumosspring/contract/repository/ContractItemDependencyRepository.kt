@@ -6,11 +6,11 @@ import org.springframework.data.repository.CrudRepository
 import java.math.BigDecimal
 
 interface ContractItemDependencyRepository: CrudRepository<ContractItemDependency, Long> {
-    data class ContractItemDependencyRow(val contractItemId: Long, val factor: BigDecimal)
+    data class ContractItemDependencyRow(val contractItemId: Long)
 
     @Query("""
         select 
-            dei.contract_item_id, cid.factor
+            dei.contract_item_id
         from contract_reference_item cri
         join contract_item ci on ci.contract_item_reference_id = cri.contract_reference_item_id
         join contract_item_dependency cid on cid.contract_item_reference_id = cri.contract_reference_item_id
@@ -22,7 +22,7 @@ interface ContractItemDependencyRepository: CrudRepository<ContractItemDependenc
 
 
     @Query("""
-        select ci2.contract_item_id, cid.factor
+        select ci2.contract_item_id
         from contract_reference_item cri
                  join contract_item ci on ci.contract_item_reference_id = cri.contract_reference_item_id
                  join contract_item_dependency cid on cid.contract_item_reference_id = cri.contract_reference_item_id
@@ -33,7 +33,7 @@ interface ContractItemDependencyRepository: CrudRepository<ContractItemDependenc
 
     @Query("""
         select 
-            psi.contract_item_id, cid.factor
+            psi.contract_item_id
         from contract_reference_item cri
         join contract_item ci on ci.contract_item_reference_id = cri.contract_reference_item_id
         join contract_item_dependency cid on cid.contract_item_reference_id = cri.contract_reference_item_id

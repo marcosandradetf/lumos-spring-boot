@@ -13,6 +13,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
 import java.math.BigDecimal
 import java.sql.Timestamp
+import java.time.OffsetDateTime
 import java.util.*
 
 @Repository
@@ -101,7 +102,7 @@ class DirectExecutionViewRepository(
             }
     }
 
-    fun getGroupedInstallations(): List<Map<String, JsonNode>> {
+    fun getGroupedInstallations(startDate: OffsetDateTime, endDate: OffsetDateTime): List<Map<String, JsonNode>> {
         val sql = """
             SELECT
               json_build_object(
@@ -144,13 +145,17 @@ class DirectExecutionViewRepository(
             ) execs ON TRUE
             WHERE de.status = 'FINISHED'
                 AND de.tenant_id = :tenantId
-                    AND de.available_at >= (now() - INTERVAL '90 day') 
-                    AND de.available_at < (now() + INTERVAL '1 day')
+                    AND de.available_at >= :startDate
+                    AND de.available_at <= :endDate
             GROUP BY c.contract_id, c.contractor
             ORDER BY c.contractor;         
         """.trimIndent()
 
-        return namedJdbc.query(sql, mapOf("tenantId" to Utils.getCurrentTenantId())) { rs, _ ->
+        return namedJdbc.query(sql, mapOf(
+            "tenantId" to Utils.getCurrentTenantId(),
+            "startDate" to startDate,
+            "endDate" to endDate
+        )) { rs, _ ->
             val contractorJson = rs.getString("contract")
             val stepsJson = rs.getString("steps")
 

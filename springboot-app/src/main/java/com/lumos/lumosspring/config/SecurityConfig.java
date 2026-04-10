@@ -85,12 +85,15 @@ public class SecurityConfig {
 
     @Bean
     @Order(2)
-    SecurityFilterChain securedChain(HttpSecurity http, BillingSubscriptionAccessFilter billingSubscriptionAccessFilter) throws Exception {
+    SecurityFilterChain securedChain(HttpSecurity http,
+                                     BillingSubscriptionAccessFilter billingSubscriptionAccessFilter,
+                                     UserActivationAccessFilter userActivationAccessFilter) throws Exception {
         http
                 .securityMatcher("/api/**")
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(withDefaults()))
+                .addFilterAfter(userActivationAccessFilter, BearerTokenAuthenticationFilter.class)
                 .addFilterAfter(billingSubscriptionAccessFilter, BearerTokenAuthenticationFilter.class)
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session ->

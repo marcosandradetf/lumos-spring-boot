@@ -10,7 +10,6 @@ import com.lumos.lumosspring.contract.repository.ContractItemsQuantitativeReposi
 import com.lumos.lumosspring.contract.repository.ContractReferenceItemRepository
 import com.lumos.lumosspring.contract.repository.ContractRepository
 import com.lumos.lumosspring.notifications.service.FCMService
-import com.lumos.lumosspring.notifications.service.Routes
 import com.lumos.lumosspring.s3.service.S3Service
 import com.lumos.lumosspring.system.entities.Log
 import com.lumos.lumosspring.system.repository.LogRepository
@@ -100,7 +99,7 @@ class ContractService(
         contract.contractor = contractDTO.contractor
         contract.cnpj = Utils.normalizeCnpj(contractDTO.cnpj)
         contract.address = contractDTO.address
-        contract.unifyServices = contractDTO.unifyServices
+        contract.usesSuFactor = contractDTO.unifyServices
         contract.lastUpdatedBy = user.userId
 
         contract.ibgeCode = contractDTO.ibgeCode
@@ -242,6 +241,7 @@ class ContractService(
             ci.referenceItemId = item.contractReferenceItemId
             ci.contractId = contractId
             ci.contractedQuantity = item.quantity!!
+            ci.factor = item.factor
             ci.setPrices(item.price)
             contractItemsQuantitativeRepository.save(ci)
         }
@@ -263,7 +263,7 @@ class ContractService(
             address = contractDTO.address
             phone = contractDTO.phone
             createdBy = user.userId
-            unifyServices = contractDTO.unifyServices
+            usesSuFactor = contractDTO.unifyServices
             contractFile = if ((contractDTO.contractFile?.length ?: 0) > 0) contractDTO.contractFile else null
             companyId = contractDTO.companyId
             ibgeCode = contractDTO.ibgeCode
@@ -282,11 +282,11 @@ class ContractService(
                 referenceItemId = item.contractReferenceItemId
                 contractId = contract.contractId
                 contractedQuantity = item.quantity ?: BigDecimal.ZERO
+                factor = item.factor
                 setPrices(item.price)
             }
             contractItemsQuantitativeRepository.save(ci)
         }
-
 
         fcmService.sendNotificationForTopic(
             title = "Novo contrato pendente para Validação",

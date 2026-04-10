@@ -32,8 +32,9 @@ class AuthInterceptor(
             url.startsWith("/spring/api/mobile/auth")
 
         val isAuthEndpointDebug = url.startsWith("/api/mobile/auth")
+        val isFirstAccessEndpoint = url.startsWith("/api/auth/activate")
 
-        if (isAuthEndpoint || isAuthEndpointDebug) {
+        if (isAuthEndpoint || isAuthEndpointDebug || isFirstAccessEndpoint) {
             return chain.proceed(chain.request())
         }
 
@@ -43,6 +44,21 @@ class AuthInterceptor(
             .build()
 
         val response = chain.proceed(request)
+
+        if (response.code == 403) {
+            val rawBody = response.peekBody(Long.MAX_VALUE).string()
+            val errorCode = try {
+                JSONObject(rawBody).optString("error")
+            } catch (e: Exception) {
+                null
+            }
+
+            if (errorCode == "USER_NOT_ACTIVATED") {
+                secureStorage.clearAll()
+                SessionManager.setActivationRequired(true)
+                SessionManager.setLoggedIn(false)
+            }
+        }
 
         if (response.code == 401) {
             response.close()

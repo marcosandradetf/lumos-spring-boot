@@ -21,7 +21,7 @@ export class TeamService {
             userId: string,
             name: string,
             lastname: string,
-            role: string[],
+            role: any[],
         }[]>(`${environment.springboot}/api/user/get-users`);
     }
 

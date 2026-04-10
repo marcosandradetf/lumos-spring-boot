@@ -4,7 +4,6 @@ import {ButtonComponent} from "../../shared/components/button/button.component";
 import {FormsModule, NgForm} from "@angular/forms";
 import {ModalComponent} from "../../shared/components/modal/modal.component";
 import {NgForOf, NgIf} from "@angular/common";
-import {TableComponent} from "../../shared/components/table/table.component";
 import {Router} from '@angular/router';
 import {UserService} from '../user/user-service.service';
 import {UtilsService} from '../../core/service/utils.service';
@@ -50,7 +49,7 @@ export class AccountComponent {
         year: string;
         month: string;
         day: string;
-        role: string[],
+        role: any[],
         status: boolean
         sel: boolean
     } = {
