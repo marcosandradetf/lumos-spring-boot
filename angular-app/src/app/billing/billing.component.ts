@@ -23,6 +23,7 @@ import { TabViewModule } from 'primeng/tabview';
 import { DividerModule } from 'primeng/divider';
 import { TagModule } from 'primeng/tag';
 import {DatePipe} from '@angular/common';
+import { Utils } from '../core/service/utils';
 
 @Component({
     selector: 'app-billing',
@@ -87,6 +88,10 @@ export class BillingComponent implements OnInit, OnDestroy {
     this.upgradeForm = this.fb.group({
       targetPlanName: ['', Validators.required]
     });
+  }
+
+  openSupportEmail(): void {
+    Utils.openEmail('support@lumos.com', 'Suporte Lumos', 'Olá, preciso de suporte com minha assinatura.');
   }
 
   ngOnInit(): void {
@@ -261,4 +266,3 @@ export class BillingComponent implements OnInit, OnDestroy {
     this.showRenewForm = false;
   }
 }
-

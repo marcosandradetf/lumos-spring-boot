@@ -1,6 +1,54 @@
 import {Router} from '@angular/router';
+import {SharedState} from './shared-state';
+import {ShareRequest} from './share.models';
 
 export class Utils {
+    static isMobileDevice(): boolean {
+        if (typeof navigator === 'undefined') return false;
+        const ua = navigator.userAgent ?? '';
+        return /Android|iPhone|iPad|iPod/i.test(ua);
+    }
+
+    static isShareAvailable(): boolean {
+        return typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+    }
+
+    static async shareMessage(message: string, options: Omit<ShareRequest, 'message'> = {}): Promise<void> {
+        const payload: ShareRequest = { message, ...options };
+
+        if (Utils.isMobileDevice() && Utils.isShareAvailable()) {
+            const shareData: ShareData = {
+                title: payload.title ?? 'Compartilhar',
+                text: payload.message,
+            };
+
+            if (payload.file) {
+                const canShare = typeof navigator.canShare === 'function'
+                    ? navigator.canShare({ files: [payload.file] })
+                    : true;
+                if (canShare) {
+                    shareData.files = [payload.file];
+                }
+            }
+
+            await navigator.share(shareData);
+            return;
+        }
+
+        SharedState.openShareModal(payload);
+    }
+
+    static async copyToClipboard(text: string): Promise<boolean> {
+        if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) return false;
+        await navigator.clipboard.writeText(text);
+        return true;
+    }
+
+    static openEmail(to: string, subject: string, body: string): void {
+        const encodedSubject = encodeURIComponent(subject);
+        const encodedBody = encodeURIComponent(body);
+        window.open(`mailto:${to}?subject=${encodedSubject}&body=${encodedBody}`, '_blank');
+    }
     static normalizeString(value: string): string {
         return value
             .normalize('NFD')                 // separa acentos
@@ -108,6 +156,10 @@ export class Utils {
             void router.navigate(['/status/500']);
             return;
         }
+    }
+
+    static getLumosTenant(): string {
+        return '';
     }
 
 

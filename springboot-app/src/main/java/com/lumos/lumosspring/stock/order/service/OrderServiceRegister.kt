@@ -90,7 +90,8 @@ class OrderServiceRegister(
                     body = "O status da sua requisição de materiais ${it.second} foi atualizado. Toque para ver os detalhes.",
                     action = "APPROVATED_ORDERS",
                     notificationCode = it.first,
-                    type = NotificationType.ALERT
+                    type = NotificationType.ALERT,
+                    tenant = Utils.getCurrentTenantId().toString()
                 )
             }
         }
@@ -205,7 +206,8 @@ class OrderServiceRegister(
                             body = "Os materiais para **${it.third}** estão disponíveis no almoxarifado. Toque para ver os detalhes.",
                             action = "APPROVATED_ORDERS",
                             notificationCode = it.second,
-                            type = NotificationType.ALERT
+                            type = NotificationType.ALERT,
+                            tenant = Utils.getCurrentTenantId().toString()
                         )
                     } else {
                         FCMService.sendNotificationForTopic(
@@ -213,7 +215,8 @@ class OrderServiceRegister(
                             body = "Alguns materiais da instalação **${it.third}** foram recusados pelo estoquista. Refaça o gerenciamento para prosseguir com a instalação.",
                             action = "/requisicoes/instalacoes/gerenciamento-estoque",
                             notificationCode = it.second,
-                            type = NotificationType.ALERT
+                            type = NotificationType.ALERT,
+                            tenant = Utils.getCurrentTenantId().toString()
                         )
                     }
                 }

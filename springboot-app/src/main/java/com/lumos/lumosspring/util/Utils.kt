@@ -47,6 +47,11 @@ object Utils {
         throw IllegalStateException("Usuário não autenticado ou token inválido")
     }
 
+    @JvmStatic
+    fun getLumosTenantId(): UUID {
+        return UUID.fromString("cabb04df-184d-4372-b046-f526da158046")
+    }
+
     fun String.replacePlaceholders(values: Map<String, String>): String {
         var result = this
         values.forEach { (key, value) ->

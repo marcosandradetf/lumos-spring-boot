@@ -36,7 +36,7 @@ export class HeaderComponent implements OnInit {
     protected hasNotifications$ = inject(FcmService).hasNotifications$;
 
     constructor(protected authService: AuthService,
-                private router: Router,
+                protected router: Router,
                 private utils: UtilsService,
                 private messageService: MessageService
     ) {
@@ -49,6 +49,9 @@ export class HeaderComponent implements OnInit {
     }
 
     ngOnInit() {
+        this.utils.menuState$.subscribe((isOpen: boolean) => {
+            this.menuOpen = isOpen;
+        });
         this.options = [
             {
                 label: 'Perfil',

@@ -1,0 +1,17 @@
+.share-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.share-hint {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.share-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}

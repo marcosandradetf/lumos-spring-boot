@@ -1,0 +1,19 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="true"
+  [dismissableMask]="true"
+  [style]="{ width: '420px' }"
+  header="Compartilhar">
+  <div class="share-body">
+    <p class="share-hint dark:text-neutral-100">Escolha como deseja compartilhar a mensagem.</p>
+
+    <div class="share-actions">
+      <button pButton type="button" icon="pi pi-copy" label="Copiar mensagem" (click)="copyMessage()"></button>
+      <button pButton type="button" icon="pi pi-whatsapp" label="WhatsApp" (click)="shareWhatsApp()" class="p-button-success"></button>
+      <button pButton type="button" icon="pi pi-envelope" label="E-mail" (click)="shareEmail()" class="p-button-secondary"></button>
+    </div>
+  </div>
+</p-dialog>

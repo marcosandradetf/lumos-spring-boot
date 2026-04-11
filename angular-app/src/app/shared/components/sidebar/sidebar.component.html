@@ -1,12 +1,82 @@
 <div class="h-screen transition-all duration-300 ease-in-out hidden md:block">
-  <div (click)="router.navigate([''])"
-    class="flex items-center gap-2 px-3 py-2 border border-neutral-200 dark:border-neutral-800 m-2 rounded cursor-pointer">
-    <img ngSrc="/public/icon-192.png" alt="Lumos" height="32" width="32" />
-    <span class="flex items-center font-semibold text-lg select-none tracking-tight">
-      <span class="text-blue-900 dark:text-neutral-100">Lumos</span>
-      <span class="text-green-600 dark:text-green-400 ml-1">IP</span>
-      <span class="text-xs align-top ml-0.5 text-gray-500 dark:text-neutral-400">™</span>
+  <div
+    class="flex items-center gap-2 px-3 py-3 justify-between">
+    <div
+      class="flex items-center gap-2.5 cursor-pointer group select-none"
+      (click)="router.navigate([''])"
+    >
+      <!-- Ícone -->
+      <div class="
+    flex items-center justify-center
+    w-8 h-8
+    rounded-lg
+    bg-gradient-to-br from-blue-200 to-indigo-200
+    shadow-sm
+    group-hover:shadow-md
+    transition-all duration-200
+  ">
+        <img
+          ngSrc="/public/icon-192.png"
+          alt="Lumos"
+          height="20"
+          width="20"
+          class="opacity-90"
+        />
+      </div>
+
+      <!-- Nome -->
+      <span class="flex items-center tracking-tight">
+    <span class="
+      font-semibold text-[15px]
+      text-gray-900 dark:text-white
+      group-hover:text-indigo-600 dark:group-hover:text-indigo-400
+      transition-colors
+    ">
+      Lumos
     </span>
+
+    <span class="
+      ml-1
+      text-[15px] font-medium
+      text-gray-500 dark:text-zinc-400
+    ">
+      IP
+    </span>
+
+    <span class="
+      text-[10px]
+      ml-0.5
+      text-gray-400
+      dark:text-zinc-500
+      align-top
+    ">
+      ™
+    </span>
+  </span>
+    </div>
+
+    <div (click)="toggleMenu()" [title]="menuOpen ? 'Recolher Menu' : 'Expandir Menu'" class="
+                  hidden md:block
+                  flex items-center justify-center
+                  rounded-lg
+                  p-1
+                  bg-gray-100 border border-gray-200
+                  dark:bg-zinc-800 dark:border-zinc-700
+                ">
+      <button type="button" class="
+                    flex items-center justify-center
+                    w-7 h-7
+                    rounded-md
+                    bg-white text-gray-600
+                    hover:bg-gray-50 hover:text-gray-900
+                    dark:bg-zinc-900 dark:text-zinc-300
+                    dark:hover:bg-zinc-700 dark:hover:text-white
+                    transition-colors transition-transform duration-200
+                    focus:outline-none focus:ring-2 focus:ring-indigo-500
+                  ">
+        <span [ngClass]="menuOpen ? 'pi-chevron-left' : 'pi-chevron-right'" class="pi text-sm"></span>
+      </button>
+    </div>
   </div>
   <p-panelmenu [multiple]="true" [model]="items" styleClass="text-xs p-2" *ngIf="menuOpen"></p-panelmenu>
 </div>

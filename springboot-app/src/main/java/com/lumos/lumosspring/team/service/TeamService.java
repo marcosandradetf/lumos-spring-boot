@@ -252,7 +252,8 @@ public class TeamService {
                 false,
                 null,
                 null,
-                null
+                null,
+                Utils.getCurrentTenantId().toString()
         );
         return ResponseEntity.noContent().build();
     }

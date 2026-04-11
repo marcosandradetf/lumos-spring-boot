@@ -185,7 +185,8 @@ public class DirectExecutionManagementService {
                 false,
                 null,
                 null,
-                null
+                null,
+                Utils.getCurrentTenantId().toString()
         );
 
         return ResponseEntity.ok(new DefaultResponse(step + " etapa criada com sucesso"));

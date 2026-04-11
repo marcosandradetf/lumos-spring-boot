@@ -127,7 +127,7 @@ export class MaintenanceComponent implements OnInit {
         this.isApple = /iPad|iPhone|iPod|Mac/.test(ua);
         this.setDefaultDateRange();
 
-        this.canShare = !!navigator.share;
+        this.canShare = Utils.isShareAvailable();
 
         this.loadMaintenances();
     }
@@ -261,11 +261,11 @@ export class MaintenanceComponent implements OnInit {
             {type: 'application/pdf'}
         );
 
-        if (navigator.share && navigator.canShare?.({files: [file]})) {
-            await navigator.share({
+        if (Utils.isMobileDevice() && Utils.isShareAvailable()) {
+            await Utils.shareMessage(this.shareText ?? 'Relatório de manutenção', {
                 title: 'Relatório Lumos',
-                text: this.shareText ?? 'Relatório de manutenção',
-                files: [file]
+                subject: 'Relatório Lumos',
+                file
             });
         } else {
             this.downloadPdf();

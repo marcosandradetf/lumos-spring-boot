@@ -9,6 +9,7 @@ import { CardModule } from 'primeng/card';
 import { DividerModule } from 'primeng/divider';
 import { SharedState } from '../core/service/shared-state';
 import { Title } from '@angular/platform-browser';
+import { Utils } from '../core/service/utils';
 
 @Component({
   selector: 'app-unavailable-access',
@@ -59,5 +60,9 @@ export class UnavailableAccessComponent implements OnInit {
         void this.router.navigate(['/auth/login']);
       }
     });
+  }
+
+  openSupportEmail(): void {
+    Utils.openEmail('support@lumos.com', 'Suporte Lumos', 'Olá, preciso de suporte para acessar minha conta.');
   }
 }

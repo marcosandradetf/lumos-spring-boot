@@ -196,16 +196,16 @@ export class InstallationComponent implements OnInit {
             {type: 'application/pdf'}
         );
 
-        if (navigator.share && navigator.canShare?.({files: [file]})) {
+        if (Utils.isMobileDevice() && Utils.isShareAvailable()) {
             const shareText =
                 `${this.descTitle}\n` +
                 `${this.selectedStep?.description ?? ''}` +
                 `Gerado pelo sistema Lumos às ${Utils.formatNowToDDMMYYHHmm(true)}`;
 
-            await navigator.share({
+            await Utils.shareMessage(shareText, {
                 title: 'Relatório Lumos',
-                text: shareText,
-                files: [file]
+                subject: 'Relatório Lumos',
+                file
             });
         } else {
             this.downloadPdf();

@@ -31,6 +31,7 @@ import {Textarea} from 'primeng/textarea';
 import {Message} from 'primeng/message';
 import {TeamService} from '../../manage/team/team-service.service';
 import {SharedState} from '../../core/service/shared-state';
+import {Utils} from '../../core/service/utils';
 
 @Component({
     selector: 'app-reservation-management-select',
@@ -651,14 +652,14 @@ Obrigado.
             const phone: string = this.formWhatsapp.get('phone')!.value;
             const text: string = this.formWhatsapp.get('text')!.value;
 
-            const url = `https://api.whatsapp.com/send?phone=55${phone}&text=${encodeURIComponent(text)}`;
-
             this.formWhatsapp.reset();
             this.formSubmitted = false;
             this.showWhatsApp = false;
             this.ignore(true);
 
-            window.open(url, '_blank');
+            Utils.shareMessage(text, { whatsappPhone: phone }).catch(() => {
+                this.utils.showMessage('Não foi possível compartilhar a mensagem.', 'error', 'Lumos');
+            });
         }
     }
 
@@ -670,7 +671,7 @@ Obrigado.
     copyPhone(phone: string) {
         if (!phone) return;
 
-        navigator.clipboard.writeText(phone).then(() => {
+        Utils.copyToClipboard(phone).then(() => {
             this.utils.showMessage('Número copiado', 'success', 'Lumos');
         });
     }

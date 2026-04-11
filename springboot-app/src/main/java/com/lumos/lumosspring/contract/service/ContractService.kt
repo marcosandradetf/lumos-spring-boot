@@ -151,7 +151,8 @@ class ContractService(
                 notificationCode = "SUPPORT",
                 type = NotificationType.CONTRACT,
                 platform = FCMService.TargetPlatform.WEB,
-                uri = "/contratos/validar/${contract.contractId}"
+                uri = "/contratos/validar/${contract.contractId}",
+                tenant = Utils.getLumosTenantId().toString()
             )
 
             return ResponseEntity.ok(
@@ -294,7 +295,8 @@ class ContractService(
             notificationCode = "SUPPORT",
             type = NotificationType.CONTRACT,
             platform = FCMService.TargetPlatform.WEB,
-            uri = "/contratos/validar/${contract.contractId}"
+            uri = "/contratos/validar/${contract.contractId}",
+            tenant = Utils.getLumosTenantId().toString()
         )
 
 //        fcmService.sendNotificationForTopic(

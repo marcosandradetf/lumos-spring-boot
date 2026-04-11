@@ -1,4 +1,5 @@
 import { BehaviorSubject } from 'rxjs';
+import { ShareRequest } from './share.models';
 
 export class SharedState {
     // estado observável global
@@ -8,6 +9,8 @@ export class SharedState {
 
     static readonly showNotificationDrawer$ = new BehaviorSubject<boolean>(false);
     static readonly showAccountDrawer$ = new BehaviorSubject<boolean>(false);
+
+    static readonly shareRequest$ = new BehaviorSubject<ShareRequest | null>(null);
 
     // setter opcional
     static setCurrentPath(currentPath: string[]) {
@@ -22,5 +25,13 @@ export class SharedState {
     static toggleNotificationDrawer() {
         const current = SharedState.showNotificationDrawer$.value;
         this.showNotificationDrawer$.next(!current);
+    }
+
+    static openShareModal(request: ShareRequest) {
+        SharedState.shareRequest$.next(request);
+    }
+
+    static closeShareModal() {
+        SharedState.shareRequest$.next(null);
     }
 }

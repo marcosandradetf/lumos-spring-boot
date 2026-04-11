@@ -13,29 +13,20 @@
 
 .step-button:hover {
   transform: translateY(-1px);
-  background: rgba(248, 250, 252, 0.9);
+  background: rgba(240, 250, 245, 0.9);
+  @apply dark:bg-gray-800;
 }
 
-:host-context(.dark) .step-button:hover {
-  background: rgba(15, 23, 42, 0.65);
+
+
+.step-active {
+  @apply border border-cyan-300 bg-cyan-50/95
+  dark:border-cyan-600/60 dark:bg-cyan-900/30;
 }
 
-.step-button-active {
-  border-color: rgb(103 232 249);
-  background: rgba(236, 254, 255, 0.95);
-}
-
-:host-context(.dark) .step-button-active {
-  border-color: rgba(8, 145, 178, 0.6);
-  background: rgba(8, 47, 73, 0.35);
-}
-
-.step-button-done {
-  background: rgba(236, 253, 245, 0.7);
-}
-
-:host-context(.dark) .step-button-done {
-  background: rgba(6, 78, 59, 0.18);
+.step-done {
+  @apply bg-emerald-50/70
+  dark:bg-emerald-900/20;
 }
 
 .step-badge {

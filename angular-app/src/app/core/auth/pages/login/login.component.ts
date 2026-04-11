@@ -289,8 +289,9 @@ export class LoginComponent implements OnInit {
     copyDocLink() {
         const key = this.docs.find(d => d.id === this.activeDoc)?.key ?? '';
         const url = `${location.origin}${location.pathname}?doc=${encodeURIComponent(key)}`;
-        navigator.clipboard.writeText(url);
-        this.utils.showMessage('Link copiado!', 'success', 'Lumos™');
+        Utils.copyToClipboard(url).then(() => {
+            this.utils.showMessage('Link copiado!', 'success', 'Lumos™');
+        });
     }
 
     @ViewChild('doc') docSection!: ElementRef<HTMLElement>;

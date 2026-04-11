@@ -304,11 +304,11 @@ export class ReportManageComponent implements OnInit {
             {type: 'application/pdf'}
         );
 
-        if (this.isApple || this.isAndroid) {
-            await navigator.share({
+        if (Utils.isMobileDevice() && Utils.isShareAvailable()) {
+            await Utils.shareMessage(this.shareText ?? 'Relatório de manutenção', {
                 title: 'Relatório Lumos',
-                text: this.shareText ?? 'Relatório de manutenção',
-                files: [file]
+                subject: 'Relatório Lumos',
+                file
             });
         } else {
             // fallback

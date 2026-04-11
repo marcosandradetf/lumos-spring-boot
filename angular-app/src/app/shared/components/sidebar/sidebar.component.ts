@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, model, OnInit, Output } from '@angular/core';
-import { AsyncPipe, NgIf, NgOptimizedImage } from '@angular/common';
+import {AsyncPipe, NgClass, NgIf, NgOptimizedImage} from '@angular/common';
 import { Router } from '@angular/router';
 import { PanelMenu } from 'primeng/panelmenu';
 import { MenuItem } from 'primeng/api';
@@ -13,6 +13,7 @@ import { SharedState } from '../../../core/service/shared-state';
         PanelMenu,
         NgIf,
         NgOptimizedImage,
+        NgClass,
     ],
     templateUrl: './sidebar.component.html',
     styleUrls: ['./sidebar.component.scss']
@@ -36,7 +37,7 @@ export class SidebarComponent implements OnInit {
     isSupport = false;
 
     constructor(
-        private utils: UtilsService, 
+        private utils: UtilsService,
         protected router: Router,
     ) {
 
@@ -106,7 +107,7 @@ export class SidebarComponent implements OnInit {
                 visible: !this.configurationFinished,
                 command: () => {
                     SharedState.showMenuDrawer$.next(false);
-                }
+                },
             },
 
             {
@@ -563,4 +564,10 @@ export class SidebarComponent implements OnInit {
 
     protected readonly model = model;
     protected readonly SharedState = SharedState;
+
+    toggleMenu() {
+        this.menuOpen = !this.menuOpen;
+        this.utils.toggleMenu(this.menuOpen);
+        localStorage.setItem('menuOpen', JSON.stringify(this.menuOpen));
+    }
 }

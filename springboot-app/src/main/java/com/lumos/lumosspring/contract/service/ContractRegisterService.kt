@@ -48,7 +48,8 @@ class ContractRegisterService(
                     platform = FCMService.TargetPlatform.WEB,
                     uri = "/contratos/expirados",
                     isPopUp = true,
-                    subtitle = "Foi detectado que esse contrato agora está ativo sob outra empresa."
+                    subtitle = "Foi detectado que esse contrato agora está ativo sob outra empresa.",
+                    tenant = tenant.first.toString()
                 )
             }
 
@@ -59,7 +60,8 @@ class ContractRegisterService(
                 type = NotificationType.CONTRACT,
                 platform = FCMService.TargetPlatform.WEB,
                 uri = "/contratos/listar?for=view",
-                subtitle = "Nosso time finalizou a análise e aprovou esse contrato."
+                subtitle = "Nosso time finalizou a análise e aprovou esse contrato.",
+                tenant = contract.tenantId.toString()
             )
 
         } else {
@@ -75,7 +77,8 @@ class ContractRegisterService(
                 type = NotificationType.CONTRACT,
                 platform = FCMService.TargetPlatform.WEB,
                 uri = "/contratos/rejeitados/${contract.contractId}",
-                subtitle = "Após uma análise pelo nosso time, ainda não foi possível aprovar esse contrato."
+                subtitle = "Após uma análise pelo nosso time, ainda não foi possível aprovar esse contrato.",
+                tenant = contract.tenantId.toString()
             )
         }
 

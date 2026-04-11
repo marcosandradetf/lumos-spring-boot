@@ -1,23 +1,23 @@
-import { Component } from '@angular/core';
-import { Router } from '@angular/router';
-import { UtilsService } from '../../core/service/utils.service';
-import { AuthService } from '../../core/auth/auth.service';
-import { DomSanitizer, SafeResourceUrl, Title } from '@angular/platform-browser';
-import { FormsModule, NgForm, ReactiveFormsModule } from '@angular/forms';
-import { NgClass, NgForOf, NgIf } from '@angular/common';
-import { TableComponent } from '../../shared/components/table/table.component';
-import { ufRequest } from '../../core/uf-request.dto';
-import { IbgeService } from '../../core/service/ibge.service';
-import { citiesRequest } from '../../core/cities-request.dto';
-import { TeamService } from './team-service.service';
-import { TeamsModel } from '../../models/teams.model';
-import { Toast } from 'primeng/toast';
-import { MultiSelect } from 'primeng/multiselect';
-import { SharedState } from '../../core/service/shared-state';
-import { LoadingComponent } from '../../shared/components/loading/loading.component';
-import { forkJoin } from 'rxjs';
-import { Utils } from '../../core/service/utils';
-import { GuideStateComponent } from '../../guide-state/guide-state.component';
+import {Component} from '@angular/core';
+import {Router} from '@angular/router';
+import {UtilsService} from '../../core/service/utils.service';
+import {AuthService} from '../../core/auth/auth.service';
+import {DomSanitizer, SafeResourceUrl, Title} from '@angular/platform-browser';
+import {FormsModule, NgForm, ReactiveFormsModule} from '@angular/forms';
+import {NgClass, NgForOf, NgIf} from '@angular/common';
+import {TableComponent} from '../../shared/components/table/table.component';
+import {ufRequest} from '../../core/uf-request.dto';
+import {IbgeService} from '../../core/service/ibge.service';
+import {citiesRequest} from '../../core/cities-request.dto';
+import {TeamService} from './team-service.service';
+import {TeamsModel} from '../../models/teams.model';
+import {Toast} from 'primeng/toast';
+import {MultiSelect} from 'primeng/multiselect';
+import {SharedState} from '../../core/service/shared-state';
+import {LoadingComponent} from '../../shared/components/loading/loading.component';
+import {forkJoin} from 'rxjs';
+import {Utils} from '../../core/service/utils';
+import {GuideStateComponent} from '../../guide-state/guide-state.component';
 
 @Component({
     selector: 'app-team',
@@ -74,18 +74,18 @@ export class TeamComponent {
         plate: string;
         sel: boolean;
     }[] = [
-            {
-                idTeam: '',
-                teamName: '',
-                driver: { driverId: '', driverName: '' },
-                electrician: { electricianId: '', electricianName: '' },
-                UFName: '',
-                cityName: '',
-                regionName: '',
-                plate: '',
-                sel: false,
-            }
-        ];
+        {
+            idTeam: '',
+            teamName: '',
+            driver: {driverId: '', driverName: ''},
+            electrician: {electricianId: '', electricianName: ''},
+            UFName: '',
+            cityName: '',
+            regionName: '',
+            plate: '',
+            sel: false,
+        }
+    ];
 
     ufs: ufRequest[] = [];
     cities: citiesRequest[] = [];
@@ -105,7 +105,12 @@ export class TeamComponent {
     embeddedDocUrl: SafeResourceUrl | null = null;
     docUrl: string | null = null;
 
-    readonly docs: { key: 'setup-teams' | 'field-app' | 'day-to-day'; title: string; description: string; url: string }[] = [
+    readonly docs: {
+        key: 'setup-teams' | 'field-app' | 'day-to-day';
+        title: string;
+        description: string;
+        url: string
+    }[] = [
         {
             key: 'setup-teams',
             title: 'Como estruturar equipes de campo',
@@ -127,9 +132,9 @@ export class TeamComponent {
     ];
 
     constructor(protected router: Router, protected utils: UtilsService,
-        protected authService: AuthService, private titleService: Title, private ibgeService: IbgeService,
-        private teamService: TeamService,
-        private sanitizer: DomSanitizer) {
+                protected authService: AuthService, private titleService: Title, private ibgeService: IbgeService,
+                private teamService: TeamService,
+                private sanitizer: DomSanitizer) {
         SharedState.setCurrentPath(["Configurações", "Equipes"]);
         this.titleService.setTitle("Configurações - Equipes");
         this.ibgeService.getUfs().subscribe(
@@ -223,8 +228,8 @@ export class TeamComponent {
     }
 
     submitTeams(form
-        :
-        NgForm
+                :
+                NgForm
     ) {
         this.formSubmitted = true;
 
@@ -360,22 +365,12 @@ export class TeamComponent {
     }
 
     async shareDocumentation() {
+        const shareText = 'Teste 123';
 
         try {
-            await navigator.share({
+            await Utils.shareMessage(shareText, {
                 title: `${this.embeddedDocTitle} • Lumos IP™`,
-                text: `Olá! 👋
-
-Compartilhei com você uma documentação do Lumos IP™:
-
-📘 ${this.embeddedDocTitle}
-
-🔗 Acesse aqui:
-${this.docUrl}
-
-Essa documentação explica de forma simples como utilizar esse recurso no sistema.
-
-Se tiver dúvidas, fale com seu gestor ou equipe.`
+                subject: `${this.embeddedDocTitle} • Lumos IP™`
             });
         } catch (error: any) {
             if (error?.name !== 'AbortError') {

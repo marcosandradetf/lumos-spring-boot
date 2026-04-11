@@ -165,10 +165,12 @@
           <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
             Entre em contato com nosso suporte para dúvidas sobre sua assinatura.
           </p>
-          <a href="mailto:support@lumos.com"
-             class="text-blue-600 dark:text-blue-400 hover:underline text-sm font-semibold">
+          <button
+            type="button"
+            (click)="openSupportEmail()"
+            class="text-blue-600 dark:text-blue-400 hover:underline text-sm font-semibold">
             Contatar Suporte →
-          </a>
+          </button>
         </p-card>
       </div>
     </div>

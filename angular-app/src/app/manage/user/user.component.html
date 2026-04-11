@@ -2,7 +2,7 @@
 
 <div class="w-full px-4 py-6">
   <div class="mx-auto flex w-full max-w-7xl flex-col gap-6">
-    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <div class="flex flex-col gap-4 ">
       <div>
         <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">
           Usuários
@@ -34,7 +34,7 @@
           </div>
 
           <div *ngIf="quickAddMenuOpen"
-            class="absolute right-0 z-20 mt-2 w-64 rounded-xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-800 dark:bg-neutral-900">
+               class="absolute right-0 z-20 mt-2 w-64 rounded-xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-800 dark:bg-neutral-900">
             <p class="px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
               Cadastro rápido
             </p>
@@ -50,9 +50,12 @@
           </div>
         </div>
 
-        <button *ngIf="hasDraftUsers" class="btn btn-outline btn-sm border-amber-300 text-amber-800 hover:bg-amber-50 md:btn-md dark:border-amber-800 dark:text-amber-200 dark:hover:bg-amber-950/30" type="button" (click)="removeUser()">
+        <button *ngIf="hasDraftUsers"
+                class="btn btn-outline btn-sm border-amber-300 text-amber-800 hover:bg-amber-50 md:btn-md dark:border-amber-800 dark:text-amber-200 dark:hover:bg-amber-950/30"
+                type="button" (click)="removeUser()">
           <i class="pi pi-trash"></i>
-          <span class="hidden sm:inline">Remover {{ draftUsersCount }} {{ draftUsersCount === 1 ? 'rascunho' : 'rascunhos' }}</span>
+          <span
+            class="hidden sm:inline">Remover {{ draftUsersCount }} {{ draftUsersCount === 1 ? 'rascunho' : 'rascunhos' }}</span>
         </button>
       </div>
     </div>
@@ -104,151 +107,164 @@
         } @else {
           <form #usersForm="ngForm" (ngSubmit)="submitUsers(usersForm)">
             <div *ngIf="users.length === 0"
-              class="flex items-center justify-center rounded-xl border border-dashed p-8 text-sm text-gray-500 dark:text-gray-400">
+                 class="flex items-center justify-center rounded-xl border border-dashed p-8 text-sm text-gray-500 dark:text-gray-400">
               Nenhum usuário encontrado para a pesquisa informada.
             </div>
 
-            <div *ngIf="users.length > 0" class="hidden md:block rounded-xl border border-slate-200 dark:border-slate-800">
+            <div *ngIf="users.length > 0"
+                 class="hidden md:block rounded-xl border border-slate-200 dark:border-slate-800">
               <table class="w-full min-w-0 table-fixed border-collapse">
                 <thead class="bg-slate-50 dark:bg-slate-800/60">
-                  <tr class="text-left text-xs uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
-                    <th class="w-24 px-3 py-3">Ações</th>
-                    <th class="w-[40%] px-3 py-3">Usuário</th>
-                    <th class="w-[16%] px-3 py-3">Funções</th>
-                    <th class="w-[19%] px-3 py-3">Status</th>
-                    <th class="w-[25%] px-3 py-3">Ativação</th>
-                  </tr>
+                <tr class="text-left text-xs uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
+                  <th class="w-24 px-3 py-3">Ações</th>
+                  <th class="w-[35%] px-3 py-3">Usuário</th>
+                  <th class="w-[18%] px-3 py-3 text-center">Funções</th>
+                  <th class="w-[22%] px-3 py-3 text-center">Status</th>
+                  <th class="w-[25%] px-3 py-3">Ativação</th>
+                </tr>
                 </thead>
 
                 <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-                  <ng-container *ngFor="let user of users; let i = index; trackBy: trackByUser">
-                    <tr class="align-top bg-white dark:bg-neutral-900">
-                      <td class="px-3 py-4">
-                        <div class="flex flex-wrap gap-2">
-                          <button class="btn btn-ghost btn-sm" type="button" (click)="toggleUserEdit(user)">
-                            <i class="pi" [ngClass]="user.sel ? 'pi-times' : 'pi-pencil'"></i>
-                          </button>
+                <ng-container *ngFor="let user of users; let i = index; trackBy: trackByUser">
+                  <tr class="align-top bg-white dark:bg-neutral-900">
+                    <td class="px-3 py-4">
+                      <div class="flex flex-wrap gap-2">
+                        <button class="btn btn-ghost btn-sm" type="button" (click)="toggleUserEdit(user)">
+                          <i class="pi" [ngClass]="user.sel ? 'pi-times' : 'pi-pencil'"></i>
+                        </button>
 
-                          <button *ngIf="user.sel" class="btn btn-primary btn-sm" type="submit">
-                            <i class="pi pi-save"></i>
-                          </button>
-                        </div>
-                      </td>
+                        <button *ngIf="user.sel" class="btn btn-primary btn-sm" type="submit">
+                          <i class="pi pi-save"></i>
+                        </button>
+                      </div>
+                    </td>
 
-                      <td class="px-3 py-4">
-                        <div class="min-w-0">
-                          <p class="truncate font-semibold text-slate-800 dark:text-slate-100">
-                            {{ getUserDisplayName(user) }}
-                          </p>
-                          <p class="mt-1 truncate text-sm text-slate-500 dark:text-slate-400">
-                            {{ user.username || 'Usuário não definido' }}
-                          </p>
-                          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                            CPF: {{ user.cpf || 'Pendente' }}
-                          </p>
-                          <p class="mt-1 truncate text-sm text-slate-500 dark:text-slate-400">
-                            {{ user.email || 'E-mail não informado' }}
-                          </p>
-                        </div>
-                      </td>
+                    <td class="px-3 py-4">
+                      <div class="min-w-0">
+                        <p class="truncate font-semibold text-slate-800 dark:text-slate-100">
+                          {{ getUserDisplayName(user) }}
+                        </p>
+                        <p class="mt-1 truncate text-sm text-slate-500 dark:text-slate-400">
+                          {{ user.username || 'Usuário não definido' }}
+                        </p>
+                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                          CPF: {{ user.cpf || 'Pendente' }}
+                        </p>
+                        <p class="mt-1 truncate text-sm text-slate-500 dark:text-slate-400">
+                          {{ user.email || 'E-mail não informado' }}
+                        </p>
+                      </div>
+                    </td>
 
-                      <td class="px-3 py-4">
-                        <div class="flex flex-wrap gap-2">
+                    <td class="px-3 py-4">
+                      <div class="flex flex-wrap gap-2">
                           <span *ngFor="let role of user.role.slice(0, 3)"
-                            class="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-950/40 dark:text-blue-200">
+                                class="cursor-default hover:border hover:border-blue-400 rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-950/40 dark:text-blue-200">
                             {{ getRoleLabel(role) }}
                           </span>
 
-                          <span *ngIf="user.role.length > 3"
-                            class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300"
-                            [title]="getAllRoles(user.role)">
+                        <span *ngIf="user.role.length > 3"
+                              class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                              [title]="getAllRoles(user.role)">
                             +{{ user.role.length - 3 }}
                           </span>
-                        </div>
-                      </td>
+                      </div>
+                    </td>
 
-                      <td class="px-3 py-4">
-                        <div class="space-y-2 flex flex-col item-center justify-center">
-                          <span class="flex item-center justify-center rounded-full px-3 py-1 text-xs font-semibold min-w-full text-center" [ngClass]="getStatusBadgeClass(user.status)">
+                    <td class="px-3 py-4">
+                      <div class="space-y-2 flex flex-col item-center justify-center">
+                          <span
+                            class="cursor-default hover:border flex item-center justify-center rounded-full px-3 py-1 text-xs font-semibold min-w-full text-center"
+                            [ngClass]="getStatusBadgeClass(user.status)">
                             {{ getStatusLabel(user.status) }}
                           </span>
-                            <button 
-                              *ngIf="user.mustChangePassword"
-                              class="btn btn-outline btn-xs" type="button" (click)="openDocumentation('first-access')">
-                              <i class="pi pi-book text-xs"></i>
-                              Como ativar
-                            </button>
-                          <!-- <p class="text-sm text-slate-500 dark:text-slate-400">
-                            {{ user.mustChangePassword ? 'Senha pendente' : 'Pronto para acesso' }}
-                          </p> -->
-                        </div>
-                      </td>
+                        <button
+                          *ngIf="user.mustChangePassword"
+                          class="btn btn-outline btn-xs" type="button" (click)="openDocumentation('first-access')">
+                          <i class="pi pi-book text-xs"></i>
+                          Como ativar
+                        </button>
+                        <!-- <p class="text-sm text-slate-500 dark:text-slate-400">
+                          {{ user.mustChangePassword ? 'Senha pendente' : 'Pronto para acesso' }}
+                        </p> -->
+                      </div>
+                    </td>
 
-                      <td class="px-3 py-4">
-                        <div class="space-y-3">
-                          <p class="text-sm text-slate-600 dark:text-slate-300">
-                            {{ getActivationSummary(user) }}
+                    <td class="px-3 py-4">
+                      <div class="space-y-3">
+                        <p class="text-sm text-slate-600 dark:text-slate-300">
+                          {{ getActivationSummary(user) }}
+                        </p>
+
+                        <div class="flex flex-wrap gap-2">
+                          <button class="btn btn-outline btn-xs w-full" type="button"
+                                  (click)="confirmGenerateActivation(user)">
+                            Gerar código
+                          </button>
+
+                          <button class="btn btn-outline btn-xs w-full" type="button"
+                                  (click)="openDocumentation('invite-users')">
+                            Ver Orientação
+                          </button>
+                        </div>
+                      </div>
+                    </td>
+
+                  </tr>
+
+                  <tr *ngIf="user.sel" class="bg-slate-50/80 dark:bg-slate-950/30">
+                    <td colspan="7" class="px-3 py-4">
+                      <div
+                        class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-neutral-900">
+                        <div class="mb-4">
+                          <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                            Editar usuário
                           </p>
-
-                          <div class="flex flex-wrap gap-2">
-                            <button class="btn btn-outline btn-xs" type="button" (click)="confirmGenerateActivation(user)">
-                              Gerar código
-                            </button>
-
-                            <button class="btn btn-outline btn-xs" type="button" (click)="openDocumentation('invite-users')">
-                              Ver Orientação
-                            </button>
-                          </div>
+                          <p class="text-sm text-slate-500 dark:text-slate-400">
+                            Atualize os dados básicos, papéis e status deste acesso.
+                          </p>
                         </div>
-                      </td>
 
-                    </tr>
-
-                    <tr *ngIf="user.sel" class="bg-slate-50/80 dark:bg-slate-950/30">
-                      <td colspan="7" class="px-3 py-4">
-                        <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-neutral-900">
-                          <div class="mb-4">
-                            <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                              Editar usuário
-                            </p>
-                            <p class="text-sm text-slate-500 dark:text-slate-400">
-                              Atualize os dados básicos, papéis e status deste acesso.
-                            </p>
+                        <div class="grid gap-4 xl:grid-cols-2">
+                          <div class="grid gap-3">
+                            <input [(ngModel)]="user.username" name="username{{i}}" class="input input-bordered w-full"
+                                   placeholder="Usuário"/>
+                            <input [(ngModel)]="user.name" name="name{{i}}" class="input input-bordered w-full"
+                                   placeholder="Nome"/>
+                            <input [(ngModel)]="user.lastname" name="lastname{{i}}" class="input input-bordered w-full"
+                                   placeholder="Sobrenome"/>
+                            <input [(ngModel)]="user.email" name="email{{i}}" class="input input-bordered w-full"
+                                   placeholder="E-mail"/>
+                            <input [(ngModel)]="user.cpf" name="cpf{{i}}" mask="000.000.000-00"
+                                   class="input input-bordered w-full" placeholder="CPF"/>
                           </div>
 
-                          <div class="grid gap-4 xl:grid-cols-2">
-                            <div class="grid gap-3">
-                              <input [(ngModel)]="user.username" name="username{{i}}" class="input input-bordered w-full" placeholder="Usuário" />
-                              <input [(ngModel)]="user.name" name="name{{i}}" class="input input-bordered w-full" placeholder="Nome" />
-                              <input [(ngModel)]="user.lastname" name="lastname{{i}}" class="input input-bordered w-full" placeholder="Sobrenome" />
-                              <input [(ngModel)]="user.email" name="email{{i}}" class="input input-bordered w-full" placeholder="E-mail" />
-                              <input [(ngModel)]="user.cpf" name="cpf{{i}}" mask="000.000.000-00" class="input input-bordered w-full" placeholder="CPF" />
+                          <div class="grid gap-3">
+                            <div class="grid grid-cols-3 gap-2">
+                              <input [(ngModel)]="user.day" name="day{{i}}" class="input input-bordered w-full"
+                                     placeholder="Dia"/>
+                              <select [(ngModel)]="user.month" name="month{{i}}" class="select select-bordered w-full">
+                                <option *ngFor="let month of months" [value]="month.number">{{ month.name }}</option>
+                              </select>
+                              <input [(ngModel)]="user.year" name="year{{i}}" class="input input-bordered w-full"
+                                     placeholder="Ano"/>
                             </div>
 
-                            <div class="grid gap-3">
-                              <div class="grid grid-cols-3 gap-2">
-                                <input [(ngModel)]="user.day" name="day{{i}}" class="input input-bordered w-full" placeholder="Dia" />
-                                <select [(ngModel)]="user.month" name="month{{i}}" class="select select-bordered w-full">
-                                  <option *ngFor="let month of months" [value]="month.number">{{ month.name }}</option>
-                                </select>
-                                <input [(ngModel)]="user.year" name="year{{i}}" class="input input-bordered w-full" placeholder="Ano" />
-                              </div>
-
-                              <p-multiselect
-                                [options]="roles"
-                                [(ngModel)]="user.role"
-                                optionLabel="label"
-                                optionValue="roleName"
-                                appendTo="body"
-                                [maxSelectedLabels]="2"
-                                defaultLabel="Selecione os papéis"
-                                name="roleName{{i}}"
-                                styleClass="w-full user-role-select">
-                                <ng-template let-role pTemplate="item">
-                                  <div class="flex w-full flex-col gap-1">
-                                    <div class="flex items-center justify-between">
-                                      <span class="font-medium">{{ role.label }}</span>
-                                      <span class="rounded px-2 py-0.5 text-xs" [ngClass]="{
+                            <p-multiselect
+                              [options]="roles"
+                              [(ngModel)]="user.role"
+                              optionLabel="label"
+                              optionValue="roleName"
+                              appendTo="body"
+                              [maxSelectedLabels]="2"
+                              defaultLabel="Selecione os papéis"
+                              name="roleName{{i}}"
+                              styleClass="w-full user-role-select">
+                              <ng-template let-role pTemplate="item">
+                                <div class="flex w-full flex-col gap-1">
+                                  <div class="flex items-center justify-between">
+                                    <span class="font-medium">{{ role.label }}</span>
+                                    <span class="rounded px-2 py-0.5 text-xs" [ngClass]="{
                                         'bg-red-100 text-red-700': role.roleName === 'ADMIN',
                                         'bg-orange-100 text-orange-700': ['ANALISTA', 'RESPONSAVEL_TECNICO'].includes(role.roleName),
                                         'bg-blue-100 text-blue-700': ['ESTOQUISTA_CHEFE', 'ESTOQUISTA'].includes(role.roleName),
@@ -256,31 +272,31 @@
                                       }">
                                         {{ getBadge(role.roleName) }}
                                       </span>
-                                    </div>
-                                    <small class="text-xs text-gray-500">{{ role.description }}</small>
                                   </div>
-                                </ng-template>
-                              </p-multiselect>
+                                  <small class="text-xs text-gray-500">{{ role.description }}</small>
+                                </div>
+                              </ng-template>
+                            </p-multiselect>
 
-                              <select [(ngModel)]="user.status" name="status{{i}}" class="select select-bordered w-full">
-                                <option *ngFor="let option of statusOptions" [value]="option.value">
-                                  {{ option.label }}
-                                </option>
-                              </select>
-                            </div>
+                            <select [(ngModel)]="user.status" name="status{{i}}" class="select select-bordered w-full">
+                              <option *ngFor="let option of statusOptions" [value]="option.value">
+                                {{ option.label }}
+                              </option>
+                            </select>
                           </div>
                         </div>
-                      </td>
-                    </tr>
-                  </ng-container>
+                      </div>
+                    </td>
+                  </tr>
+                </ng-container>
                 </tbody>
               </table>
             </div>
 
             <div *ngIf="users.length > 0" class="flex flex-col gap-4 md:hidden">
               <article *ngFor="let user of users; let i = index; trackBy: trackByUser"
-                class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition dark:border-slate-800 dark:bg-neutral-900"
-                [ngClass]="{
+                       class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition dark:border-slate-800 dark:bg-neutral-900"
+                       [ngClass]="{
                   'border-cyan-300 ring-2 ring-cyan-500/20 dark:border-cyan-700': user.sel
                 }">
                 <div class="flex flex-col gap-4">
@@ -291,7 +307,8 @@
                           {{ getUserDisplayName(user) }}
                         </h4>
 
-                        <span class="rounded-full px-3 py-1 text-xs font-semibold" [ngClass]="getStatusBadgeClass(user.status)">
+                        <span class="rounded-full px-3 py-1 text-xs font-semibold"
+                              [ngClass]="getStatusBadgeClass(user.status)">
                           {{ getStatusLabel(user.status) }}
                         </span>
                       </div>
@@ -317,7 +334,7 @@
 
                       <div class="mt-3 flex flex-wrap gap-2">
                         <span *ngFor="let role of user.role"
-                          class="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700 dark:bg-blue-950/40 dark:text-blue-200">
+                              class="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700 dark:bg-blue-950/40 dark:text-blue-200">
                           {{ getRoleLabel(role) }}
                         </span>
                       </div>
@@ -336,7 +353,8 @@
                     </div>
                   </div>
 
-                  <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center rounded-lg bg-slate-50 px-4 py-3 text-sm dark:bg-slate-800/50">
+                  <div
+                    class="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center rounded-lg bg-slate-50 px-4 py-3 text-sm dark:bg-slate-800/50">
                     <div class="min-w-0">
                       <p class="font-medium text-slate-700 dark:text-slate-200">
                         {{ user.mustChangePassword ? 'Senha ainda não definida pelo usuário' : 'Usuário pronto para acessar' }}
@@ -358,7 +376,7 @@
                       </button>
 
                       <button class="btn btn-ghost btn-sm" type="button"
-                        (click)="openDocumentation(isOperationalUser(user) ? 'first-access' : 'invite-users')">
+                              (click)="openDocumentation(isOperationalUser(user) ? 'first-access' : 'invite-users')">
                         <i class="pi pi-book"></i>
                         Orientar
                       </button>
@@ -377,20 +395,28 @@
 
                     <div class="grid gap-4 xl:grid-cols-2">
                       <div class="grid gap-3">
-                        <input [(ngModel)]="user.username" name="mobileUsername{{i}}" class="input input-bordered w-full" placeholder="Usuário" />
-                        <input [(ngModel)]="user.name" name="mobileName{{i}}" class="input input-bordered w-full" placeholder="Nome" />
-                        <input [(ngModel)]="user.lastname" name="mobileLastname{{i}}" class="input input-bordered w-full" placeholder="Sobrenome" />
-                        <input [(ngModel)]="user.email" name="mobileEmail{{i}}" class="input input-bordered w-full" placeholder="E-mail" />
-                        <input [(ngModel)]="user.cpf" name="mobileCpf{{i}}" mask="000.000.000-00" class="input input-bordered w-full" placeholder="CPF" />
+                        <input [(ngModel)]="user.username" name="mobileUsername{{i}}"
+                               class="input input-bordered w-full" placeholder="Usuário"/>
+                        <input [(ngModel)]="user.name" name="mobileName{{i}}" class="input input-bordered w-full"
+                               placeholder="Nome"/>
+                        <input [(ngModel)]="user.lastname" name="mobileLastname{{i}}"
+                               class="input input-bordered w-full" placeholder="Sobrenome"/>
+                        <input [(ngModel)]="user.email" name="mobileEmail{{i}}" class="input input-bordered w-full"
+                               placeholder="E-mail"/>
+                        <input [(ngModel)]="user.cpf" name="mobileCpf{{i}}" mask="000.000.000-00"
+                               class="input input-bordered w-full" placeholder="CPF"/>
                       </div>
 
                       <div class="grid gap-3">
                         <div class="grid grid-cols-3 gap-2">
-                          <input [(ngModel)]="user.day" name="mobileDay{{i}}" class="input input-bordered w-full" placeholder="Dia" />
-                          <select [(ngModel)]="user.month" name="mobileMonth{{i}}" class="select select-bordered w-full">
+                          <input [(ngModel)]="user.day" name="mobileDay{{i}}" class="input input-bordered w-full"
+                                 placeholder="Dia"/>
+                          <select [(ngModel)]="user.month" name="mobileMonth{{i}}"
+                                  class="select select-bordered w-full">
                             <option *ngFor="let month of months" [value]="month.number">{{ month.name }}</option>
                           </select>
-                          <input [(ngModel)]="user.year" name="mobileYear{{i}}" class="input input-bordered w-full" placeholder="Ano" />
+                          <input [(ngModel)]="user.year" name="mobileYear{{i}}" class="input input-bordered w-full"
+                                 placeholder="Ano"/>
                         </div>
 
                         <p-multiselect
@@ -421,7 +447,8 @@
                           </ng-template>
                         </p-multiselect>
 
-                        <select [(ngModel)]="user.status" name="mobileStatus{{i}}" class="select select-bordered w-full">
+                        <select [(ngModel)]="user.status" name="mobileStatus{{i}}"
+                                class="select select-bordered w-full">
                           <option *ngFor="let option of statusOptions" [value]="option.value">
                             {{ option.label }}
                           </option>
@@ -492,11 +519,13 @@
         {{ activationModalTitle }}
       </h3>
       <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-        Compartilhe este código com o usuário por um canal seguro. A senha continua sendo definida apenas no primeiro acesso.
+        Compartilhe este código com o usuário por um canal seguro. A senha continua sendo definida apenas no primeiro
+        acesso.
       </p>
     </div>
 
-    <div class="rounded-xl border border-dashed border-emerald-300 bg-emerald-50 p-4 dark:border-emerald-800 dark:bg-emerald-950/30">
+    <div
+      class="rounded-xl border border-dashed border-emerald-300 bg-emerald-50 p-4 dark:border-emerald-800 dark:bg-emerald-950/30">
       <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700 dark:text-emerald-300">
         Código de ativação
       </p>
@@ -508,17 +537,21 @@
       </p>
     </div>
 
-    <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600 dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-300">
-      {{ isOperational
-        ? 'Para usuários operacionais, oriente a abertura do app Lumos OP e o uso da opção "Primeiro acesso".'
-        : 'Para usuários administrativos, compartilhe também o link do primeiro acesso web junto com este código.' }}
+    <div
+      class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600 dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-300">
+      {{
+        isOperational
+          ? 'Para usuários operacionais, oriente a abertura do app Lumos OP e o uso da opção "Primeiro acesso".'
+          : 'Para usuários administrativos, compartilhe também o link do primeiro acesso web junto com este código.'
+      }}
     </div>
 
     <div class="flex flex-wrap justify-end gap-2">
       <button type="button" class="btn btn-outline btn-sm" (click)="closeActivationModal()">
         Fechar
       </button>
-      <button *ngIf="canShareActivationCode" type="button" class="btn btn-outline btn-sm" (click)="shareActivationCode()">
+      <button *ngIf="canShareActivationCode" type="button" class="btn btn-outline btn-sm"
+              (click)="shareActivationCode()">
         Compartilhar
       </button>
       <button type="button" class="btn btn-primary btn-sm" (click)="copyActivationCode()">
@@ -528,10 +561,11 @@
   </div>
 </app-modal>
 
-<div *ngIf="embeddedDocOpen" class="fixed inset-0 z-40 bg-slate-950/35 backdrop-blur-[2px]" (click)="closeDocumentation()"></div>
+<div *ngIf="embeddedDocOpen" class="fixed inset-0 z-40 bg-slate-950/35 backdrop-blur-[2px]"
+     (click)="closeDocumentation()"></div>
 
 <section *ngIf="embeddedDocOpen"
-  class="fixed inset-y-0 right-0 z-50 flex h-full w-full max-w-[96vw] flex-col bg-white shadow-2xl dark:bg-slate-900 lg:w-[min(1200px,92vw)]">
+         class="fixed inset-y-0 right-0 z-50 flex h-full w-full max-w-[96vw] flex-col bg-white shadow-2xl dark:bg-slate-900 lg:w-[min(1200px,92vw)]">
   <div
     class="flex flex-col gap-3 border-b border-slate-200 px-4 py-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between sm:px-5">
     <div>

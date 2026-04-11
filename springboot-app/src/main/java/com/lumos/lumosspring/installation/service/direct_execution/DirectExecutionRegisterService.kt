@@ -286,7 +286,8 @@ class DirectExecutionRegisterService(
                 isPopUp = false,
                 uri = "/relatorios/gerenciamento?contractId=${contractId}&executionId=${directExecutionId}&type=data&scope=INSTALLATION&executionType=DIRECT_EXECUTION",
                 relatedId = directExecutionId.toString(),
-                subtitle = "Relatório disponível"
+                subtitle = "Relatório disponível",
+                tenant = Utils.getCurrentTenantId().toString()
             )
 
         } else {
@@ -299,7 +300,8 @@ class DirectExecutionRegisterService(
                 isPopUp = true,
                 uri = "/contratos/validar-execucao/${directExecutionId}",
                 relatedId = directExecutionId.toString(),
-                subtitle = "Uma instalação foi concluída no campo sem ordem de serviço prévia."
+                subtitle = "Uma instalação foi concluída no campo sem ordem de serviço prévia.",
+                tenant = Utils.getCurrentTenantId().toString()
             )
         }
 

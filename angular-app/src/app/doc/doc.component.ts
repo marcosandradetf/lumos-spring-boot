@@ -6,6 +6,7 @@ import {InputText} from "primeng/inputtext";
 import {MarkdownComponent} from "ngx-markdown";
 import {NgForOf, NgOptimizedImage} from "@angular/common";
 import {UtilsService} from '../core/service/utils.service';
+import {Utils} from '../core/service/utils';
 import {Title} from '@angular/platform-browser';
 import {DocItem} from '../core/auth/pages/login/login.component';
 import {ActivatedRoute, Router} from '@angular/router';
@@ -119,7 +120,8 @@ export class DocComponent implements OnInit {
     copyDocLink() {
         const key = this.docs.find(d => d.id === this.activeDoc)?.key ?? '';
         const url = `${location.origin}${location.pathname}?doc=${encodeURIComponent(key)}`;
-        navigator.clipboard.writeText(url);
-        this.utils.showMessage('Link copiado!', 'success', 'Lumos™');
+        Utils.copyToClipboard(url).then(() => {
+            this.utils.showMessage('Link copiado!', 'success', 'Lumos™');
+        });
     }
 }

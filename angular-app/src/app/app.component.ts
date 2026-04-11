@@ -24,13 +24,14 @@ import { TeamService } from './manage/team/team-service.service';
 import { StockService } from './stock/services/stock.service';
 import { MaterialService } from './stock/services/material.service';
 import { Utils } from './core/service/utils';
-import { DomSanitizer, SafeResourceUrl, Title } from '@angular/platform-browser';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { ShareModalComponent } from './shared/components/share-modal/share-modal.component';
 
 @Component({
     selector: 'app-root',
     standalone: true,
     imports: [
-        RouterOutlet, HeaderComponent, FooterComponent, AsyncPipe, SidebarComponent, NgClass, NgIf, SidebarDrawerComponent, NotificationDrawerComponent, AccountDrawerComponent, Toast, PrimeTemplate, LoadingOverlayComponent],
+        RouterOutlet, HeaderComponent, AsyncPipe, SidebarComponent, NgClass, NgIf, SidebarDrawerComponent, NotificationDrawerComponent, AccountDrawerComponent, Toast, PrimeTemplate, ShareModalComponent],
     templateUrl: './app.component.html',
     styleUrl: './app.component.scss',
 })

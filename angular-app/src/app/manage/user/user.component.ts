@@ -193,7 +193,11 @@ export class UserComponent {
     }
 
     get canShareActivationCode(): boolean {
-        return typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+        if (Utils.isMobileDevice()) {
+            return Utils.isShareAvailable();
+        }
+
+        return true;
     }
 
     trackByUser(_: number, user: ManagedUser): string {
@@ -303,7 +307,7 @@ export class UserComponent {
             return;
         }
 
-        navigator.clipboard.writeText(this.generatedActivationCode).then(() => {
+        Utils.copyToClipboard(this.generatedActivationCode).then(() => {
             this.utils.showMessage('Código de ativação copiado com sucesso.', 'success', 'Lumos™');
         });
     }
@@ -313,21 +317,19 @@ export class UserComponent {
             return;
         }
 
-        if (!this.canShareActivationCode) {
-            this.utils.showMessage('O compartilhamento nativo não está disponível neste navegador.', 'info', 'Lumos™');
-            return;
-        }
-
         const expiration = this.formatActivationExpiration(this.generatedActivationExpiresAt);
 
         try {
-            await navigator.share({
-                title: 'Acesso ao Lumos IP™',
-                text: `Olá! Você foi convidado para acessar o Lumos IP™.\n\nCódigo de ativação: ${this.generatedActivationCode}\nValidade: ${expiration}\n\n${this.isOperational
+            await Utils.shareMessage(
+                `Olá! Você foi convidado para acessar o Lumos IP™.\n\nCódigo de ativação: ${this.generatedActivationCode}\nValidade: ${expiration}\n\n${this.isOperational
                     ? 'Use o app Lumos OP, toque em "Primeiro acesso", informe seu CPF, o código acima e crie sua senha.'
                     : 'Acesse https://app.lumosip.com.br/primeiro-acesso, informe seu CPF, o código acima e crie sua senha.'
-                    }\n\nEste código é pessoal e expira automaticamente.`
-            });
+                }\n\nEste código é pessoal e expira automaticamente.`,
+                {
+                    title: 'Acesso ao Lumos IP™',
+                    subject: 'Acesso ao Lumos IP™'
+                }
+            );
         } catch (error: any) {
             if (error?.name !== 'AbortError') {
                 this.utils.showMessage('Não foi possível compartilhar o código de ativação.', 'error', 'Lumos™');
@@ -392,14 +394,14 @@ export class UserComponent {
 
     getStatusBadgeClass(status: UserActivationStatus): string {
         if (status === 'ACTIVE') {
-            return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200';
+            return 'hover:border-emerald-400 bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200';
         }
 
         if (status === 'BLOCKED') {
-            return 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-200';
+            return 'hover:border-red-400 bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-200';
         }
 
-        return 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-200';
+        return 'hover:border-amber-400 bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-200';
     }
 
     getActivationSummary(user: ManagedUser): string {
