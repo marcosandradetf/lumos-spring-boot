@@ -102,7 +102,11 @@ class DirectExecutionReportService(
                         <td style="text-align: left;">${line["description"].asText()}</td>
                         <td style="text-align: right;">${formatMoney(line["unit_price"].asDouble())}</td>
                         <td style="text-align: right;">${line["quantity_executed"].asText()}</td>
-                        <td style="text-align: right;">${line["factor"].asText()}</td>
+                        ${if(usesSuFactor){
+                            """
+                                <td style="text-align: right;">${line["factor"].asText()}</td>
+                            """.trimIndent()
+                        }else ""}
                         <td style="text-align: right;">${formatMoney(line["total_price"].asDouble())}</td>
                     </tr>
                 """.trimIndent()
