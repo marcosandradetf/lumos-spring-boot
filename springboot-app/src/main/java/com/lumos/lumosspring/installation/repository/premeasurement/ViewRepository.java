@@ -42,7 +42,7 @@ public class ViewRepository {
                         WHERE team_id = :teamId and p.status = :status
                         """,
                 Map.of("teamId", teamId, "status", status),
-                (rs, _) -> {
+                (rs, a) -> {
                     Long preMeasurementId = rs.getLong("pre_measurement_id");
 
                     // Busca as ruas da premedição
@@ -60,7 +60,7 @@ public class ViewRepository {
                                     WHERE s.pre_measurement_id = :preMeasurementId
                                     """,
                             Map.of("preMeasurementId", preMeasurementId),
-                            (rs2, _) -> {
+                            (rs2, b) -> {
                                 // Busca os materiais/reservas da rua
                                 List<ItemsInstallationResponse> items = namedJDBC.query(
                                         """
@@ -87,7 +87,7 @@ public class ViewRepository {
                                                 WHERE i.pre_measurement_street_id = :streetId
                                                 """,
                                         Map.of("streetId", rs2.getLong("pre_measurement_street_id")),
-                                        (rs3, _) -> new ItemsInstallationResponse(
+                                        (rs3, c) -> new ItemsInstallationResponse(
                                                 UUID.fromString(rs2.getObject("device_pre_measurement_street_id").toString()),
                                                 rs3.getLong("truck_material_stock_id"),
                                                 rs3.getLong("contract_item_id"),

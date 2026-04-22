@@ -64,6 +64,7 @@ export class SettingsComponent implements OnInit {
         '/estoque/caminhoes': 'caminhoes',
         '/estoque/cadastrar-material': 'cadastrar-material',
         '/contratos/itens-contratuais/cadastro': 'itens-contratuais',
+        '/contratos/itens-contratuais/vinculos': 'itens-contratuais',
         '/contratos/criar': 'criar-contrato',
     };
 

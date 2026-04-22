@@ -1,15 +1,20 @@
 package com.lumos.lumosspring.contract.repository
 
 import com.lumos.lumosspring.contract.entities.ContractItemDependency
+import org.springframework.data.jdbc.repository.query.Modifying
 import org.springframework.data.jdbc.repository.query.Query
 import org.springframework.data.repository.CrudRepository
-import java.math.BigDecimal
 
-interface ContractItemDependencyRepository: CrudRepository<ContractItemDependency, Long> {
+interface ContractItemDependencyRepository : CrudRepository<ContractItemDependency, Long> {
     data class ContractItemDependencyRow(val contractItemId: Long)
 
+    @Modifying
+    fun deleteByContractItemReferenceId(contractItemReferenceId: Long)
+
+    fun findByContractItemReferenceIdIn(contractItemReferenceIds: Collection<Long>): List<ContractItemDependency>
+
     @Query("""
-        select 
+        select
             dei.contract_item_id
         from contract_reference_item cri
         join contract_item ci on ci.contract_item_reference_id = cri.contract_reference_item_id
@@ -19,7 +24,6 @@ interface ContractItemDependencyRepository: CrudRepository<ContractItemDependenc
         where ci.contract_item_id = :contractItemId and dei.direct_execution_id = :directExecutionId;
     """)
     fun getAllDirectExecutionItemsById(contractItemId: Long, directExecutionId: Long): List<ContractItemDependencyRow>
-
 
     @Query("""
         select ci2.contract_item_id
@@ -32,7 +36,7 @@ interface ContractItemDependencyRepository: CrudRepository<ContractItemDependenc
     fun getAllRelatedContractItemsItemsById(contractItemId: Long, contractId: Long): List<ContractItemDependencyRow>
 
     @Query("""
-        select 
+        select
             psi.contract_item_id
         from contract_reference_item cri
         join contract_item ci on ci.contract_item_reference_id = cri.contract_reference_item_id

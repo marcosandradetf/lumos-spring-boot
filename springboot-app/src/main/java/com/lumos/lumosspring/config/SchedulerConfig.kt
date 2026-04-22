@@ -20,7 +20,7 @@ class SchedulerConfig(
     fun taskScheduler(): TaskScheduler {
         val scheduler = ThreadPoolTaskScheduler()
         scheduler.poolSize = 5
-        scheduler.threadNamePrefix = "execution-confirm-"
+        scheduler.setThreadNamePrefix("execution-confirm-")
         scheduler.initialize()
         return scheduler
     }

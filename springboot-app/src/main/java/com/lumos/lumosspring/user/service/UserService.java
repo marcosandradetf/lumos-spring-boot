@@ -155,27 +155,6 @@ public class UserService {
         return ResponseEntity.ok(new DefaultResponse("Senha alterada com sucesso"));
     }
 
-    public ResponseEntity<?> forgotPassword(String userId, String email) {
-        var user = userRepository.findByUserId(UUID.fromString(userId));
-        if (user.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("Usuário não encontrado"));
-        }
-
-        if (!email.equals(user.get().getEmail())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse("Email incorreto ou não cadastrado, comunique ao administrador do sistema!"));
-        }
-
-        String code = UUID.randomUUID().toString();
-        user.get().setCodeResetPassword(passwordEncoder.encode(code));
-        userRepository.save(user.get());
-
-        emailService.sendEmail(user.get().getEmail(),
-                "Sistema Lumos - Código de verificaçao",
-                STR."Olá \{user.get().getName()}<br>Seu código de verificação é: \{code}<br>Use-o para definir uma nova senha.");
-
-        return ResponseEntity.ok(new DefaultResponse("Código de recuperação enviado com sucesso! Verifique seu e-mail."));
-    }
-
     public ResponseEntity<?> forgotPasswordByUsername(String usernameOrCpf) {
         var user = findUserByUsernameOrCpf(usernameOrCpf);
         if (user.isEmpty()) {
@@ -185,12 +164,15 @@ public class UserService {
         String code = UUID.randomUUID().toString();
         user.get().setCodeResetPassword(passwordEncoder.encode(code));
         userRepository.save(user.get());
-
-        emailService.sendEmail(user.get().getEmail(),
-                "Sistema Lumos - Código de recuperação",
-                STR."Olá \{user.get().getName()}<br>Seu código de recuperação é: \{code}<br>Use-o para redefinir sua senha.");
-
-        return ResponseEntity.ok(new DefaultResponse("Código de recuperação enviado com sucesso! Verifique seu e-mail."));
+        throw new Utils.BusinessException(
+                "Implementar mensagem para email"
+        );
+//
+//        emailService.sendEmail(user.get().getEmail(),
+//                "Sistema Lumos - Código de recuperação",
+//                STR."Olá \{user.get().getName()}<br>Seu código de recuperação é: \{code}<br>Use-o para redefinir sua senha.");
+//
+//        return ResponseEntity.ok(new DefaultResponse("Código de recuperação enviado com sucesso! Verifique seu e-mail."));
     }
 
     @Caching(evict = {
@@ -229,11 +211,11 @@ public class UserService {
         validateUserPayload(userDto, false);
 
         if (userRepository.findByUsernameIgnoreCase(userDto.username()).isPresent()) {
-            throw new Utils.BusinessException(STR."Username \{userDto.username()} já existente no sistema, utilize outro username.");
+            throw new Utils.BusinessException("Username " + userDto.username() + " já existente no sistema, utilize outro username.");
         }
 
         if (userRepository.findByCpfIgnoreCase(userDto.cpf()).isPresent()) {
-            throw new Utils.BusinessException(STR."CPF \{userDto.cpf()} já existente no sistema, utilize outro CPF.");
+            throw new Utils.BusinessException("CPF " + userDto.cpf() + " já existente no sistema, utilize outro CPF.");
         }
 
         Set<Role> userRoles = new HashSet<>(userDto.role());
@@ -456,15 +438,15 @@ public class UserService {
         }
 
         if (userDto.username().contains(" ")) {
-            throw new Utils.BusinessException(STR."ERRO: Username \{userDto.username()} foi enviado com espaços.");
+            throw new Utils.BusinessException("ERRO: Username " + userDto.username() + " foi enviado com espaços.");
         }
 
         if (!EMAIL_PATTERN.matcher(userDto.email()).matches()) {
-            throw new Utils.BusinessException(STR."ERRO: Email \{userDto.email()} é inválido.");
+            throw new Utils.BusinessException("ERRO: Email " + userDto.email() + " é inválido.");
         }
 
         if (!isValidCPF(userDto.cpf())) {
-            throw new Utils.BusinessException(STR."ERRO: CPF \{userDto.cpf()} é inválido.");
+            throw new Utils.BusinessException("ERRO: CPF " + userDto.cpf() + " é inválido.");
         }
     }
 

@@ -2,31 +2,18 @@ package com.lumos.lumosspring.util
 
 import org.intellij.lang.annotations.Language
 import org.springframework.dao.EmptyResultDataAccessException
-import org.springframework.jdbc.core.BeanPropertyRowMapper
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 
 object JdbcUtil {
 
-    inline fun <reified T> getDataNamed(
-        namedJdbc: NamedParameterJdbcTemplate,
-        sql: String,
-        params: Map<String, Any>
-    ): List<T> {
-        return namedJdbc.query(
-            sql,
-            MapSqlParameterSource(params),
-            BeanPropertyRowMapper(T::class.java)
-        )
-    }
-
     fun getRawData(
         namedJdbc: NamedParameterJdbcTemplate,
         @Language("SQL") sql: String,
         params: Map<String, Any?>
     ): List<Map<String, Any>> {
-        return namedJdbc.queryForList(sql, MapSqlParameterSource(params))
+        return namedJdbc.queryForList(sql, MapSqlParameterSource(params)) as List<Map<String, Any>>
     }
 
     fun getSingleRow(
@@ -38,7 +25,7 @@ object JdbcUtil {
             namedJdbc.queryForMap(sql, MapSqlParameterSource(params))
         } catch (e: EmptyResultDataAccessException) {
             null
-        }
+        } as Map<String, Any>?
     }
 
 
@@ -90,7 +77,7 @@ object JdbcUtil {
         var sql = "SELECT $field FROM $table WHERE $where"
         if (order != "") sql += " ORDER BY $order"
 
-        return jdbcTemplate.queryForList(sql, type)
+        return jdbcTemplate.queryForList(sql, type) as List<T>
     }
 
 }

@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.client.RestTemplate
+import org.springframework.web.client.exchange
 import org.springframework.web.util.UriComponentsBuilder
 import java.math.BigDecimal
 import java.text.Normalizer
@@ -22,7 +23,7 @@ object Utils {
     @JvmStatic
     fun getCurrentUserId(): UUID {
         val authentication = SecurityContextHolder.getContext().authentication
-        return UUID.fromString(authentication.name)
+        return UUID.fromString(authentication?.name)
     }
 
     @JvmStatic
@@ -81,15 +82,14 @@ object Utils {
         val request = HttpEntity(body, headers)
 
         val url = UriComponentsBuilder
-            .fromHttpUrl(url)
+            .fromUriString(url)
             .build()
             .toUri()
 
-        val response: ResponseEntity<ByteArray> = restTemplate.exchange(
+        val response: ResponseEntity<ByteArray> = restTemplate.exchange<ByteArray>(
             url,
             HttpMethod.POST,
-            request,
-            ByteArray::class.java
+            request
         )
 
         return if (response.statusCode.is2xxSuccessful) {

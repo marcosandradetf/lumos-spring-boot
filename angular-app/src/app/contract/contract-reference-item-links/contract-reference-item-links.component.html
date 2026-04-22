@@ -1,0 +1,355 @@
+<p-toast></p-toast>
+
+<div class="relative">
+
+  <app-guide-state
+    *ngIf="guideOptions.enabled && !loading"
+    [isModal]="true"
+    [title]="guideOptions.title"
+    [subtitle]="guideOptions.subtitle"
+    [icon]="guideOptions.icon"
+    [steps]="guideOptions.steps"
+    [hasButtonLabel]="guideOptions.hasButtonLabel"
+    [buttonLabel]="guideOptions.buttonLabel"
+    [buttonIcon]="guideOptions.buttonIcon"
+    [buttonRoute]="guideOptions.buttonRoute"
+    [hasSecondaryLabel]="guideOptions.hasSecondaryLabel"
+    [secondaryLabel]="guideOptions.secondaryLabel"
+    [secondaryIcon]="guideOptions.secondaryIcon"
+    [secondaryRoute]="guideOptions.secondaryRoute"
+    icon="pi pi-book"
+
+  ></app-guide-state>
+
+  <div class="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6">
+    <div class="flex flex-col gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">
+          {{ pageTitle }}
+        </h1>
+        <p class="mt-1 max-w-3xl text-sm text-slate-600 dark:text-slate-400">
+          {{ pageDescription }}
+        </p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="flex overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+          <button class="btn btn-sm rounded-none border-0 border-l border-slate-200 dark:border-slate-700"
+                  [ngClass]="isItemMode ? 'btn-primary' : 'btn-ghost'"
+                  type="button"
+                  (click)="switchOperation('item')">
+            Itens
+          </button>
+          <button class="btn btn-sm rounded-none border-0"
+                  [ngClass]="isMaterialMode ? 'btn-primary' : 'btn-ghost'"
+                  type="button"
+                  (click)="switchOperation('material')">
+            Materiais
+          </button>
+        </div>
+
+        <button class="btn btn-primary btn-sm md:btn-md" type="submit" form="contract-reference-links-form"
+                [disabled]="saving">
+          <i class="pi pi-save"></i>
+          <span>{{ saving ? 'Salvando...' : saveButtonLabel }}</span>
+        </button>
+
+        <button class="btn btn-outline btn-sm md:btn-md" type="button" (click)="goToBaseRegistration()">
+          <i class="pi pi-arrow-left"></i>
+          <span>Voltar ao cadastro base</span>
+        </button>
+      </div>
+
+      <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-100">
+        Edite os vínculos diretamente na linha. Você pode salvar uma linha individualmente ou usar o botão acima para salvar tudo, sem precisar selecionar opções.
+      </div>
+    </div>
+
+    <div class="grid gap-4 md:grid-cols-3">
+      <div *ngIf="isItemMode" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <div class="text-sm font-semibold text-slate-900 dark:text-slate-100">Serviço e Projeto</div>
+        <div class="mt-1 text-sm text-slate-600 dark:text-slate-300">
+          Exigem um ou mais itens referenciais vinculados.
+        </div>
+      </div>
+
+      <div *ngIf="isMaterialMode" class="rounded-2xl border border-cyan-200 bg-cyan-50 p-4 dark:border-cyan-900 dark:bg-cyan-950/30">
+        <div class="text-sm font-semibold text-cyan-900 dark:text-cyan-100">Materiais</div>
+        <div class="mt-1 text-sm text-cyan-800 dark:text-cyan-200">
+          Os demais tipos podem exigir material para ficarem ativos.
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30">
+        <div class="text-sm font-semibold text-amber-900 dark:text-amber-100">Pendência</div>
+        <div class="mt-1 text-sm text-amber-800 dark:text-amber-200">
+          O item permanece em validação até completar o vínculo obrigatório desta operação.
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <div class="text-sm font-semibold text-slate-900 dark:text-slate-100">Escopo da edição</div>
+        <div class="mt-1 text-sm text-slate-600 dark:text-slate-300">
+          A operação atual altera apenas {{ isItemMode ? 'itens vinculados' : 'materiais vinculados' }}.
+        </div>
+      </div>
+    </div>
+
+    <form id="contract-reference-links-form" (ngSubmit)="submit()">
+      <section class="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div class="border-b border-slate-200 px-4 py-4 dark:border-slate-800 md:px-6">
+          <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">{{ sectionTitle }}</h2>
+              <p class="text-sm text-slate-500 dark:text-slate-400">
+                {{ sectionDescription }}
+              </p>
+              <p class="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                Fluxo direto: criar ou editar vínculo e salvar.
+              </p>
+            </div>
+
+            <p-tag [value]="loading ? 'Carregando' : (items.length + ' registros')"
+                   [severity]="loading ? 'warn' : 'info'"></p-tag>
+          </div>
+        </div>
+
+        <div *ngIf="loading" class="p-6 text-sm text-slate-500 dark:text-slate-400">
+          Carregando itens e materiais...
+        </div>
+
+        <div *ngIf="!loading && items.length === 0" class="p-6 text-sm text-slate-500 dark:text-slate-400">
+          Nenhum item encontrado.
+        </div>
+
+        <div *ngIf="!loading && items.length > 0" class="hidden overflow-x-auto md:block">
+          <table class="w-full table-fixed border-collapse">
+            <thead class="bg-slate-50 dark:bg-slate-800/60">
+            <tr class="text-left text-xs uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
+              <th class="w-[32%] px-3 py-3">Registro</th>
+              <th *ngIf="isMaterialMode" class="w-[34%] px-3 py-3">Material Vinculado</th>
+              <th *ngIf="isItemMode" class="w-[34%] px-3 py-3">Item Vinculado</th>
+              <th class="w-[18%] px-3 py-3">Status</th>
+              <th class="w-[16%] px-3 py-3">Salvar</th>
+            </tr>
+            </thead>
+
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+            <tr *ngFor="let item of items; let i = index" class="align-top bg-white dark:bg-neutral-900">
+              <td class="px-3 py-4">
+                <div class="space-y-3">
+                  <div
+                    tooltipPosition="bottom"
+                    [pTooltip]="item.description"
+                    [showDelay]="200"
+                    class="cursor-default truncate rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium dark:border-slate-700 dark:bg-slate-800/60">
+                    {{ item.description }}
+                  </div>
+
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                      {{ item.type || 'Tipo não definido' }}
+                    </span>
+                    <span class="text-xs text-slate-500 dark:text-slate-400">
+                      {{ getLinkCountLabel(item) }}
+                    </span>
+                  </div>
+                </div>
+              </td>
+
+              <td *ngIf="isMaterialMode" class="px-3 py-4">
+                <div class="space-y-2">
+                  <p-multiSelect [(ngModel)]="item.materialLinks" name="material{{i}}"
+                                 [options]="allMaterials"
+                                 optionLabel="materialName"
+                                 dataKey="materialId"
+                                 [filter]="true"
+                                 filterBy="materialName,nameForImport,unitBase"
+                                 display="chip"
+                                 [maxSelectedLabels]="2"
+                                 selectedItemsLabel="{0} materiais selecionados"
+                                 defaultLabel="Adicionar ou editar material"
+                                 styleClass="w-full"
+                                 appendTo="body"
+                                 (onChange)="onMaterialSelect(item, $event.value)">
+                    <ng-template let-material pTemplate="item">
+                      <div class="flex flex-col">
+                        <span class="font-medium">{{ material.materialName }}</span>
+                        <small class="text-slate-500">
+                          {{ material.nameForImport || '-' }} • {{ material.unitBase || '-' }}
+                        </small>
+                      </div>
+                    </ng-template>
+                  </p-multiSelect>
+
+                  <div class="flex items-center justify-between gap-2">
+                    <small class="text-slate-500 dark:text-slate-400">
+                      {{ requiresMaterial(item) ? 'Obrigatório para este tipo.' : 'Opcional para este tipo.' }}
+                    </small>
+
+                    <button pButton type="button" icon="pi pi-plus" label="Criar material" class="p-button-text p-button-sm"
+                            (click)="openMaterialScreen()"></button>
+                  </div>
+                </div>
+              </td>
+
+              <td *ngIf="isItemMode" class="px-3 py-4">
+                <div class="space-y-2">
+                  <p-multiSelect [(ngModel)]="item.dependencyLinks" name="linkedItem{{i}}"
+                                 [options]="getLinkedItemOptions(item)"
+                                 optionLabel="description"
+                                 dataKey="linkKey"
+                                 [filter]="true"
+                                 filterBy="description,type"
+                                 display="chip"
+                                 [maxSelectedLabels]="2"
+                                 selectedItemsLabel="{0} itens selecionados"
+                                 defaultLabel="Adicionar ou editar item de referência"
+                                 styleClass="w-full"
+                                 appendTo="body"
+                                 (onChange)="onDependencySelect(item, $event.value)">
+                    <ng-template let-linkedItem pTemplate="item">
+                      <div class="flex flex-col">
+                        <span class="font-medium">{{ linkedItem.description }}</span>
+                        <small class="text-slate-500">Tipo: {{ linkedItem.type || '-' }}</small>
+                      </div>
+                    </ng-template>
+                  </p-multiSelect>
+
+                  <small class="text-slate-500 dark:text-slate-400">
+                    {{ requiresDependency(item) ? 'Obrigatório para Serviço/Projeto.' : 'Não exigido para este tipo.' }}
+                  </small>
+                </div>
+              </td>
+
+              <td class="px-3 py-4">
+                <div class="space-y-2">
+                  <p-tag [value]="getStatusLabel(item)" [severity]="getStatusSeverity(item)"></p-tag>
+                  <p class="text-xs leading-5 text-slate-500 dark:text-slate-400">
+                    {{ getStatusMessage(item) }}
+                  </p>
+                </div>
+              </td>
+
+              <td class="px-3 py-4">
+                <button class="btn btn-primary btn-sm w-full justify-center h-full p-2" type="button" (click)="saveItem(item)" [disabled]="saving">
+                  <i class="pi pi-save"></i>
+                  <span>{{ singleSaveButtonLabel }}</span>
+                </button>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div *ngIf="!loading && items.length > 0" class="space-y-4 p-4 md:hidden">
+          <article *ngFor="let item of items; let i = index"
+                   class="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+            <div class="mb-4 flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="truncate font-semibold text-slate-900 dark:text-slate-100">
+                  {{ item.description }}
+                </p>
+                <p class="text-sm text-slate-500 dark:text-slate-400">
+                  {{ item.type || 'Tipo não definido' }}
+                </p>
+              </div>
+
+              <p-tag [value]="getStatusLabel(item)" [severity]="getStatusSeverity(item)"></p-tag>
+            </div>
+
+            <div class="space-y-4">
+              <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
+                {{ getLinkCountLabel(item) }}. Edite abaixo e salve quando concluir.
+              </div>
+
+              <div>
+                <label *ngIf="isMaterialMode" class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Material Vinculado
+                </label>
+                <label *ngIf="isItemMode" class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Item Vinculado
+                </label>
+                <p-multiSelect *ngIf="isMaterialMode" [(ngModel)]="item.materialLinks" name="mobileMaterial{{i}}"
+                               [options]="allMaterials"
+                               optionLabel="materialName"
+                               dataKey="materialId"
+                               [filter]="true"
+                               filterBy="materialName,nameForImport,unitBase"
+                               display="chip"
+                               [maxSelectedLabels]="2"
+                               selectedItemsLabel="{0} materiais selecionados"
+                               defaultLabel="Adicionar ou editar material"
+                               styleClass="w-full"
+                               appendTo="body"
+                               (onChange)="onMaterialSelect(item, $event.value)">
+                  <ng-template let-material pTemplate="item">
+                    <div class="flex flex-col">
+                      <span class="font-medium">{{ material.materialName }}</span>
+                      <small class="text-slate-500">
+                        {{ material.nameForImport || '-' }} • {{ material.unitBase || '-' }}
+                      </small>
+                    </div>
+                  </ng-template>
+                </p-multiSelect>
+                <p-multiSelect *ngIf="isItemMode" [(ngModel)]="item.dependencyLinks" name="mobileLinkedItem{{i}}"
+                               [options]="getLinkedItemOptions(item)"
+                               optionLabel="description"
+                               dataKey="linkKey"
+                               [filter]="true"
+                               filterBy="description,type"
+                               display="chip"
+                               [maxSelectedLabels]="2"
+                               selectedItemsLabel="{0} itens selecionados"
+                               defaultLabel="Adicionar ou editar item de referência"
+                               styleClass="w-full"
+                               appendTo="body"
+                               (onChange)="onDependencySelect(item, $event.value)">
+                  <ng-template let-linkedItem pTemplate="item">
+                    <div class="flex flex-col">
+                      <span class="font-medium">{{ linkedItem.description }}</span>
+                      <small class="text-slate-500">Tipo: {{ linkedItem.type || '-' }}</small>
+                    </div>
+                  </ng-template>
+                </p-multiSelect>
+              </div>
+
+              <p class="text-xs leading-5 text-slate-500 dark:text-slate-400">
+                {{ getStatusMessage(item) }}
+              </p>
+
+              <button class="btn btn-primary btn-sm w-full" type="button" (click)="saveItem(item)" [disabled]="saving">
+                <i class="pi pi-save"></i>
+                <span>{{ saving ? 'Salvando...' : singleSaveButtonLabel }}</span>
+              </button>
+            </div>
+          </article>
+        </div>
+      </section>
+    </form>
+  </div>
+
+  <div *ngIf="materialFrameVisible" class="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+       (click)="materialFrameVisible = false"></div>
+
+  <div *ngIf="materialFrameVisible" class="fixed top-0 right-0 z-50 flex h-full w-full flex-col bg-white shadow-2xl
+         dark:bg-slate-900 lg:w-[850px] animate-slide-in">
+    <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+      <div>
+        <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
+          Cadastro de Material
+        </h2>
+        <p class="text-xs text-slate-500">
+          Crie um novo material sem sair da tela
+        </p>
+      </div>
+
+      <button pButton icon="pi pi-times" class="p-button-rounded p-button-text"
+              (click)="materialFrameVisible = false"></button>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-5">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+</div>

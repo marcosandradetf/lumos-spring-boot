@@ -7,15 +7,15 @@ import org.springframework.data.relational.core.mapping.Table
 import java.math.BigDecimal
 
 @Table
-data class ContractItemDependency(
+class ContractItemDependency : Persistable<Long> {
     @Id
-    val contractItemReferenceId: Long,
-    val contractItemReferenceIdDependency: Long,
-    val factor: BigDecimal = BigDecimal.ONE,
+    var contractItemReferenceId: Long = 0
+    var contractItemReferenceIdDependency: Long = 0
+    var factor: BigDecimal = BigDecimal.ONE
 
     @Transient
-    private var isNewEntry: Boolean = true
-): Persistable<Long> {
+    var isNewEntry: Boolean = true
+
     override fun getId(): Long = contractItemReferenceIdDependency
     override fun isNew(): Boolean = isNewEntry
 }

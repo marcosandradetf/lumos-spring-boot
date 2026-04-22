@@ -98,7 +98,7 @@ public class ManagementRegisterService {
 
         if (preMeasurementID != null) {
             preMeasurement = preMeasurementRepository.findById(preMeasurementID)
-                    .orElseThrow(() -> new IllegalStateException(STR."Street not found for id: \{preMeasurementID}"));
+                    .orElseThrow(() -> new IllegalStateException("Street not found for id: " + preMeasurementID));
 
             if (!Objects.equals(preMeasurement.getStatus(), ExecutionStatus.WAITING_STOCKIST)) {
                 return ResponseEntity.status(500)
@@ -153,7 +153,7 @@ public class ManagementRegisterService {
 
                     if (inProgress == null || inProgress.isEmpty()) {
                         throw new Utils.BusinessException(
-                                STR."Apesar de no sistema existir saldo para o item \{contractItemId} existem execuções em andamentos que podem fazer o saldo estourar"
+                                "Apesar de no sistema existir saldo para o item " + contractItemId + " existem execuções em andamentos que podem fazer o saldo estourar"
                         );
                     }
 
@@ -242,7 +242,7 @@ public class ManagementRegisterService {
 
                     if (truckRow == null || !truckRow.containsKey("material_id_stock")) {
                         throw new IllegalStateException(
-                                STR."Truck Material stock not found \{materialReserve.getMaterialId()} - deposit: \{depositId}"
+                                "Truck Material stock not found " +materialReserve.getMaterialId() + " - deposit: " + depositId
                         );
                     }
 

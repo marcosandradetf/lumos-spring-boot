@@ -1,44 +1,35 @@
-import { CommonModule } from '@angular/common';
-import { Component, computed, signal } from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {Component, OnInit} from '@angular/core';
+import {FormsModule} from '@angular/forms';
+import {Router} from '@angular/router';
+
+import {MessageService} from 'primeng/api';
+import {ButtonModule} from 'primeng/button';
+import {DropdownModule} from 'primeng/dropdown';
+import {InputTextModule} from 'primeng/inputtext';
+import {TagModule} from 'primeng/tag';
+import {ToastModule} from 'primeng/toast';
+
 import {
-    FormBuilder,
-    FormControl,
-    FormGroup,
-    ReactiveFormsModule,
-    Validators,
-} from '@angular/forms';
-
-import { InputTextModule } from 'primeng/inputtext';
-import { InputNumberModule } from 'primeng/inputnumber';
-import { DropdownModule } from 'primeng/dropdown';
-import { AutoCompleteModule } from 'primeng/autocomplete';
-import { CheckboxModule } from 'primeng/checkbox';
-import { DialogModule } from 'primeng/dialog';
-import { TagModule } from 'primeng/tag';
-import { DividerModule } from 'primeng/divider';
-import { ToastModule } from 'primeng/toast';
-import { MessageService } from 'primeng/api';
-import { TextareaModule } from 'primeng/textarea';
-
-import * as XLSX from 'xlsx';
-import {TableModule} from 'primeng/table';
-import {Button, ButtonModule} from 'primeng/button';
-import {Sidebar} from 'primeng/sidebar';
-import {ActivatedRoute, Router, RouterOutlet} from '@angular/router';
+    ContractReferenceItemBaseManagementDTO,
+    SaveContractReferenceItemBaseDTO,
+} from '../contract-models';
+import {ContractService} from '../services/contract.service';
+import {SharedState} from '../../core/service/shared-state';
+import {isEqual, cloneDeep} from 'lodash';
 
 interface ContractReferenceItemTypeOption {
     label: string;
     value: string;
-    requiresMaterial: boolean;
+    link?: string;
 }
 
-interface MaterialOption {
-    idMaterial: number;
-    materialName: string;
-    nameForImport?: string;
-    unitBase?: string;
-    stockQuantity?: number;
-    truckStockControl?: boolean;
+interface EditableBaseReferenceItem {
+    draftId: string;
+    contractReferenceItemId: number | null;
+    description: string;
+    type: string | null;
+    status: string;
 }
 
 @Component({
@@ -46,293 +37,293 @@ interface MaterialOption {
     standalone: true,
     imports: [
         CommonModule,
-        ReactiveFormsModule,
+        FormsModule,
         InputTextModule,
-        InputNumberModule,
         DropdownModule,
-        AutoCompleteModule,
-        CheckboxModule,
-        DialogModule,
         ButtonModule,
         TagModule,
-        DividerModule,
         ToastModule,
-        TextareaModule,
-        TableModule,
-        Button,
-        Sidebar,
-        RouterOutlet,
     ],
     providers: [MessageService],
     templateUrl: './contract-reference-item-form.component.html',
 })
-export class ContractReferenceItemFormComponent {
+export class ContractReferenceItemFormComponent implements OnInit {
     readonly typeOptions: ContractReferenceItemTypeOption[] = [
-        { label: 'BRAÇO', value: 'BRAÇO', requiresMaterial: true },
-        { label: 'REFLETOR', value: 'REFLETOR', requiresMaterial: true },
-        { label: 'LED', value: 'LED', requiresMaterial: true },
-        { label: 'PORCA', value: 'PORCA', requiresMaterial: true },
-        { label: 'FITA ISOLANTE ADESIVO', value: 'FITA ISOLANTE ADESIVO', requiresMaterial: true },
-        { label: 'POSTE', value: 'POSTE', requiresMaterial: true },
-        { label: 'EXTENSÃO DE REDE', value: 'EXTENSÃO DE REDE', requiresMaterial: false },
-        { label: 'CINTA', value: 'CINTA', requiresMaterial: true },
-        { label: 'PARAFUSO', value: 'PARAFUSO', requiresMaterial: true },
-        { label: 'FITA ISOLANTE AUTOFUSÃO', value: 'FITA ISOLANTE AUTOFUSÃO', requiresMaterial: true },
-        { label: 'CONECTOR', value: 'CONECTOR', requiresMaterial: true },
-        { label: 'POSTE GALVANIZADO', value: 'POSTE GALVANIZADO', requiresMaterial: true },
-        { label: 'CABO', value: 'CABO', requiresMaterial: true },
-        { label: 'RELÉ', value: 'RELÉ', requiresMaterial: true },
-        { label: 'SERVIÇO', value: 'SERVIÇO', requiresMaterial: false },
-        { label: 'PROJETO', value: 'PROJETO', requiresMaterial: false },
-        { label: 'CIMENTO', value: 'CIMENTO', requiresMaterial: true },
-        { label: 'POSTE CIMENTO', value: 'POSTE CIMENTO', requiresMaterial: true },
-        { label: 'MANUTENÇÃO', value: 'MANUTENÇÃO', requiresMaterial: false },
+        {label: 'BRAÇO', value: 'BRAÇO', link: 'CABO'},
+        {label: 'REFLETOR', value: 'REFLETOR', },
+        {label: 'LED', value: 'LED'},
+        {label: 'PORCA', value: 'PORCA'},
+        {label: 'FITA ISOLANTE ADESIVO', value: 'FITA ISOLANTE ADESIVO'},
+        {label: 'POSTE', value: 'POSTE'},
+        {label: 'EXTENSÃO DE REDE', value: 'EXTENSÃO DE REDE'},
+        {label: 'CINTA', value: 'CINTA'},
+        {label: 'PARAFUSO', value: 'PARAFUSO'},
+        {label: 'FITA ISOLANTE AUTOFUSÃO', value: 'FITA ISOLANTE AUTOFUSÃO'},
+        {label: 'CONECTOR', value: 'CONECTOR'},
+        {label: 'POSTE GALVANIZADO', value: 'POSTE GALVANIZADO'},
+        {label: 'CABO', value: 'CABO'},
+        {label: 'RELÉ', value: 'RELÉ'},
+        {label: 'SERVIÇO', value: 'SERVIÇO', link: 'ITEM'},
+        {label: 'PROJETO', value: 'PROJETO', link: 'ITEM'},
+        {label: 'CIMENTO', value: 'CIMENTO'},
+        {label: 'POSTE CIMENTO', value: 'POSTE CIMENTO'},
+        {label: 'MANUTENÇÃO', value: 'MANUTENÇÃO'},
     ];
 
-    readonly materialFreeTypes = new Set([
-        'SERVIÇO',
-        'EXTENSÃO DE REDE',
-        'CEMIG',
-        'PROJETO',
-        'MANUTENÇÃO',
-    ]);
+    readonly quickAddOptions = [1, 3];
 
-    private readonly allMaterials: MaterialOption[] = [
-        {
-            idMaterial: 101,
-            materialName: 'BRAÇO GALVANIZADO PADRÃO CEMIG ATÉ 1,5M',
-            nameForImport: 'BRAÇO DE 1,5',
-            unitBase: 'UN',
-            stockQuantity: 25,
-            truckStockControl: true,
-        },
-        {
-            idMaterial: 102,
-            materialName: 'LUMINÁRIA LED 150W',
-            nameForImport: 'LED 150W',
-            unitBase: 'UN',
-            stockQuantity: 18,
-            truckStockControl: true,
-        },
-    ];
-
-    filteredMaterials: MaterialOption[] = [];
-    materialDialogVisible = false;
-
-    readonly selectedType = signal<string | null>(null);
-    readonly selectedMaterial = signal<MaterialOption | null>(null);
-
-    readonly requiresMaterial = computed(() => {
-        const type = this.selectedType();
-        return !!type && !this.materialFreeTypes.has(type);
-    });
-
-    importedItems: any[] = [];
+    items: EditableBaseReferenceItem[] = [];
+    itemsBackup: EditableBaseReferenceItem[] = [];
+    quickAddMenuOpen = false;
+    loading = true;
+    saving = false;
+    formSubmitted = false;
 
     constructor(
-        private readonly fb: FormBuilder,
         private readonly messageService: MessageService,
-        private router: Router,
-        private route: ActivatedRoute
+        private readonly router: Router,
+        private readonly contractService: ContractService,
     ) {
-        this.form = this.fb.group({
-            description: ['', [Validators.required]],
-            type: [null, Validators.required],
-            linking: [''],
-            itemDependency: [''],
-            nameForImport: ['', [Validators.required]],
-            factor: [1, [Validators.required]],
-            truckStockControl: [true],
-            material: [null],
-        });
+    }
 
-        this.materialCreateForm = this.fb.group({
-            materialName: ['', Validators.required],
-            nameForImport: ['', Validators.required],
-            unitBase: ['UN'],
-            defaultQuantity: [1],
-            truckStockControl: [true],
-        });
+    ngOnInit(): void {
+        SharedState.setCurrentPath(['Contratos', 'Cadastrar Itens']);
 
-        this.form.get('type')?.valueChanges.subscribe((value) => {
-            this.selectedType.set(value);
-            this.selectedMaterial.set(null);
-            this.form.get('material')?.setValue(null);
-            this.syncMaterialValidator();
+        this.contractService.getReferenceItemBaseManagement().subscribe({
+            next: (referenceItems) => {
+                this.items = referenceItems.length > 0
+                    ? referenceItems.map(item => this.mapToEditableItem(item))
+                    : [this.createDraftItem()];
+                this.itemsBackup = cloneDeep(this.items);
+                this.loading = false;
+            },
+            error: () => {
+                this.loading = false;
+                this.items = [this.createDraftItem()];
+                this.itemsBackup = cloneDeep(this.items);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Falha ao carregar dados',
+                    detail: 'Nao foi possivel carregar os itens referenciais.',
+                });
+            },
         });
     }
 
-    readonly form: FormGroup;
-
-    readonly materialCreateForm: FormGroup;
-
-    get f() {
-        return this.form.controls;
+    get draftItemsCount(): number {
+        return this.items.filter(item => item.contractReferenceItemId === null).length;
     }
 
-    private syncMaterialValidator(): void {
-        const control = this.form.get('material') as FormControl;
+    get hasDraftItems(): boolean {
+        return this.draftItemsCount > 0;
+    }
 
-        if (this.requiresMaterial()) {
-            control.setValidators([Validators.required]);
-        } else {
-            control.clearValidators();
+    toggleQuickAddMenu(): void {
+        this.quickAddMenuOpen = !this.quickAddMenuOpen;
+    }
+
+    newItem(): void {
+        this.addItemsBatch(1);
+    }
+
+    addItemsBatch(count: number): void {
+        for (let index = 0; index < count; index += 1) {
+            this.items.unshift(this.createDraftItem());
         }
 
-        control.updateValueAndValidity();
+        this.quickAddMenuOpen = false;
     }
 
-    searchMaterials(event: any): void {
-        const query = (event.query || '').toLowerCase();
+    removeDraftItems(): void {
+        this.items = this.items.filter(item => item.contractReferenceItemId !== null);
+        if (this.items.length === 0) {
+            this.items = [this.createDraftItem()];
+        }
+        this.itemsBackup = cloneDeep(this.items);
+    }
 
-        this.filteredMaterials = this.allMaterials.filter(m =>
-            m.materialName.toLowerCase().includes(query)
+    removeItem(item: EditableBaseReferenceItem): void {
+        this.items = this.items.filter(current => current.draftId !== item.draftId);
+        if (this.items.length === 0) {
+            this.items = [this.createDraftItem()];
+        }
+        this.itemsBackup = cloneDeep(this.items);
+    }
+
+    goToLinkManagement(): void {
+        void this.router.navigate(
+            ['/contratos/itens-contratuais/vinculos'],
+            {
+                queryParams: {
+                    operation: 'item'
+                }
+            }
         );
     }
 
-    onMaterialSelect(material: MaterialOption): void {
-        this.selectedMaterial.set(material);
+    saveItem(item: EditableBaseReferenceItem): void {
+        this.formSubmitted = true;
+        if (!this.isBaseItemValid(item)) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Linha incompleta',
+                detail: 'Descricao e tipo sao obrigatorios.',
+            });
+            return;
+        }
 
-        this.form.patchValue({
-            material,
-            nameForImport: material.nameForImport || material.materialName,
-            truckStockControl: material.truckStockControl
+        this.saving = true;
+        this.contractService.saveReferenceItemsBase([this.toPayload(item)]).subscribe({
+            next: (response) => {
+                const saved = response[0];
+                if (saved) {
+                    this.replaceItem(item, this.mapToEditableItem(saved));
+                }
+
+                this.saving = false;
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Cadastro salvo',
+                    detail: 'O item foi salvo como pendente de validacao. Complete os vinculos na tela dedicada.',
+                });
+            },
+            error: (error) => {
+                this.saving = false;
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Falha ao salvar',
+                    detail: error?.error?.message ?? 'Nao foi possivel salvar o item.',
+                });
+            },
         });
     }
 
-    materialFrameVisible = false;
-
-    openMaterialScreen() {
-        this.materialFrameVisible = true;
-        void this.router.navigate(['material-create'], { relativeTo: this.route });
-    }
-
-    createMaterial(): void {
-        if (this.materialCreateForm.invalid) return;
-
-        const raw = this.materialCreateForm.value;
-
-        const newMaterial: MaterialOption = {
-            idMaterial: Date.now(),
-            materialName: raw.materialName,
-            nameForImport: raw.nameForImport,
-            unitBase: raw.unitBase,
-            stockQuantity: 0,
-            truckStockControl: raw.truckStockControl
-        };
-
-        this.allMaterials.unshift(newMaterial);
-        this.onMaterialSelect(newMaterial);
-        this.materialDialogVisible = false;
-    }
-
-    // 🔥 IMPORTAÇÃO
-    importFile(event: any): void {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-
-        reader.onload = (e: any) => {
-            const wb = XLSX.read(e.target.result, { type: 'binary' });
-            const ws = wb.Sheets[wb.SheetNames[0]];
-            const data = XLSX.utils.sheet_to_json(ws);
-
-            this.importedItems = data.map((row: any, index: number) => {
-                const description = (row['descricao'] || '').trim();
-
-                const suggestedType = this.suggestType(description);
-
-                return {
-                    rowNumber: index + 1,
-                    description,
-                    nameForImport: description,
-                    type: suggestedType,
-                    factor: 1,
-                    material: null,
-
-                    errors: [
-                        !description && 'Descrição obrigatória',
-                    ].filter(Boolean),
-                };
-            });
-
-            this.messageService.add({
-                severity: 'info',
-                summary: 'Importação realizada',
-                detail: `${this.importedItems.length} itens carregados`,
-            });
-        };
-
-        reader.readAsBinaryString(file);
-    }
-
-    suggestType(description: string): string | null {
-        const text = description.toUpperCase();
-
-        if (text.includes('BRAÇO')) return 'BRAÇO';
-        if (text.includes('REFLETOR')) return 'REFLETOR';
-        if (text.includes('LED')) return 'LED';
-        if (text.includes('PORCA')) return 'LED';
-        if (text.includes('FITA ISOLANTE ADESIVO')) return 'FITA ISOLANTE ADESIVO';
-        if (text.includes('POSTE')) return 'POSTE';
-        if (text.includes('EXTENSÃO DE REDE')) return 'EXTENSÃO DE REDE';
-        if (text.includes('CEMIG')) return 'CEMIG';
-        if (text.includes('CINTA')) return 'CINTA';
-        if (text.includes('PARAFUSO')) return 'PARAFUSO';
-        if (text.includes('FITA ISOLANTE AUTOFUSÃO')) return 'FITA ISOLANTE AUTOFUSÃO';
-        if (text.includes('CONECTOR')) return 'CONECTOR';
-        if (text.includes('POSTE GALVANIZADO')) return 'POSTE GALVANIZADO';
-        if (text.includes('CABO')) return 'CABO';
-        if (text.includes('RELÉ')) return 'RELÉ';
-        if (text.includes('SERVIÇO')) return 'SERVIÇO';
-        if (text.includes('PROJETO')) return 'PROJETO';
-        if (text.includes('CIMENTO')) return 'CIMENTO';
-        if (text.includes('POSTE CIMENTO')) return 'POSTE CIMENTO';
-        if (text.includes('MANUTENÇÃO')) return 'MANUTENÇÃO';
-
-        return null;
-    }
-
     submit(): void {
-        if (this.form.invalid) return;
+        this.formSubmitted = true;
+        const changedItems = this.items.filter(item => {
+            const original =
+                this.itemsBackup.find(x => x.contractReferenceItemId === item.contractReferenceItemId);
 
-        const raw = this.form.value;
+            return !isEqual(item, original);
+        });
 
-        const payload = {
-            description: raw.description,
-            itemDependency: raw.itemDependency,
-            linking: raw.linking,
-            type: raw.type,
-            nameForImport: raw.nameForImport,
-            factor: raw.factor,
-            truckStockControl: raw.truckStockControl,
-            materialId: raw.material?.idMaterial ?? null,
+        if (changedItems.length === 0) {
+            this.saving = true;
+            setTimeout(() => {
+                this.saving = false;
+            }, 10);
+            return;
+        }
+
+        const invalidItems = changedItems.filter(item => !this.isBaseItemValid(item));
+        if (invalidItems.length > 0) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Existem linhas incompletas',
+                detail: 'Descricao e tipo precisam ser preenchidos nas linhas selecionadas.',
+            });
+            return;
+        }
+
+        this.saving = true;
+        this.contractService.saveReferenceItemsBase(changedItems.map(item => this.toPayload(item))).subscribe({
+            next: (response) => {
+                const responseMap = new Map(response.map(item => [item.contractReferenceItemId, item]));
+                this.items = this.items.map(item => {
+                    const saved = item.contractReferenceItemId !== null
+                        ? responseMap.get(item.contractReferenceItemId)
+                        : response.find(candidate =>
+                            candidate.description === item.description &&
+                            candidate.type === item.type
+                        );
+
+                    return saved ? this.mapToEditableItem(saved) : item;
+                });
+                this.itemsBackup = cloneDeep(this.items);
+
+                this.saving = false;
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Cadastros salvos',
+                    detail: 'Os itens foram salvos como pendentes de validacao. Complete os vinculos na tela dedicada.',
+                });
+            },
+            error: (error) => {
+                this.saving = false;
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Falha ao salvar',
+                    detail: error?.error?.message ?? 'Nao foi possivel salvar os itens selecionados.',
+                });
+            },
+        });
+    }
+
+    itemHasError(item: EditableBaseReferenceItem, field: 'description' | 'type'): boolean {
+        if (!this.formSubmitted) {
+            return false;
+        }
+
+        if (field === 'description') {
+            return !item.description.trim();
+        }
+
+        return !item.type;
+    }
+
+    getStatusLabel(item: EditableBaseReferenceItem): string {
+        return item.status === 'ACTIVE' ? 'Ativo' : item.status;
+    }
+
+    getStatusSeverity(item: EditableBaseReferenceItem): 'success' | 'warn' {
+        return item.status === 'ACTIVE' ? 'success' : 'warn';
+    }
+
+    private mapToEditableItem(item: ContractReferenceItemBaseManagementDTO): EditableBaseReferenceItem {
+        return {
+            draftId: this.generateDraftId(),
+            contractReferenceItemId: item.contractReferenceItemId,
+            description: item.description,
+            type: item.type,
+            status: item.status,
         };
+    }
 
-        console.log(payload);
+    private isBaseItemValid(item: EditableBaseReferenceItem): boolean {
+        return !!item.description.trim() && !!item.type;
+    }
+
+    private toPayload(item: EditableBaseReferenceItem): SaveContractReferenceItemBaseDTO {
+        const link = this.typeOptions.find(t => t.value === item.type);
+
+        return {
+            clientDraftId: item.contractReferenceItemId === null ? item.draftId : null,
+            contractReferenceItemId: item.contractReferenceItemId,
+            description: item.description.trim(),
+            type: item.type,
+            link: link?.link
+        };
+    }
+
+    private createDraftItem(): EditableBaseReferenceItem {
+        return {
+            draftId: this.generateDraftId(),
+            contractReferenceItemId: null,
+            description: '',
+            type: null,
+            status: '',
+        };
     }
 
 
-    modelDownload(): void {
-        const rows = [
-            { descricao: 'Preencha apenas esta coluna com a descrição do item' },
-            { descricao: 'BRAÇO GALVANIZADO 1,5M' },
-            { descricao: 'LUMINÁRIA LED 150W' },
-            { descricao: 'PARAFUSO M16' },
-            { descricao: 'CINTA INOX PARA POSTE' },
-            { descricao: 'CONECTOR PERFURANTE' },
-        ];
-
-        const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet(rows);
-
-        worksheet['!cols'] = [
-            { wch: 55 },
-        ];
-
-        const workbook: XLSX.WorkBook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Modelo');
-
-        XLSX.writeFile(workbook, 'modelo_importacao_itens.xlsx');
+    private generateDraftId(): string {
+        return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     }
+
+    private replaceItem(target: EditableBaseReferenceItem, replacement: EditableBaseReferenceItem): void {
+        this.items = this.items.map(item => item.draftId === target.draftId ? replacement : item);
+        this.itemsBackup = cloneDeep(this.items);
+    }
+
+
 }

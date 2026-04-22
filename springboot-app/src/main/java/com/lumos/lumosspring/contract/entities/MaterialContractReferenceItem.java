@@ -1,4 +1,4 @@
-package com.lumos.lumosspring.stock.materialsku.model;
+package com.lumos.lumosspring.contract.entities;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;

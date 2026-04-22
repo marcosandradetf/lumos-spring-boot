@@ -4,8 +4,12 @@ import {environment} from '../../../environments/environment';
 import {
     ContractItemsResponse, ContractItemsResponseWithExecutionsSteps,
     ContractReferenceItemsDTO,
+    ContractReferenceItemBaseManagementDTO,
+    ContractReferenceItemManagementDTO,
     ContractResponse,
-    CreateContractDTO
+    CreateContractDTO,
+    SaveContractReferenceItemBaseDTO,
+    SaveContractReferenceItemLinksDTO
 } from '../contract-models';
 
 @Injectable({
@@ -27,6 +31,22 @@ export class ContractService {
 
     getContractReferenceItems() {
         return this.http.get<ContractReferenceItemsDTO[]>(this.endpoint + "/get-items");
+    }
+
+    getReferenceItemBaseManagement() {
+        return this.http.get<ContractReferenceItemBaseManagementDTO[]>(this.endpoint + "/reference-items-management/base");
+    }
+
+    saveReferenceItemsBase(items: SaveContractReferenceItemBaseDTO[]) {
+        return this.http.post<ContractReferenceItemBaseManagementDTO[]>(this.endpoint + "/reference-items-management/base", items);
+    }
+
+    getReferenceItemLinkManagement() {
+        return this.http.get<ContractReferenceItemManagementDTO[]>(this.endpoint + "/reference-items-management/links");
+    }
+
+    saveReferenceItemLinks(items: SaveContractReferenceItemLinksDTO[]) {
+        return this.http.post<ContractReferenceItemManagementDTO[]>(this.endpoint + "/reference-items-management/links", items);
     }
 
     getAllContracts(filters: {

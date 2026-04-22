@@ -2,7 +2,7 @@ package com.lumos.lumosspring.stock.materialsku.service;
 
 import com.lumos.lumosspring.stock.deposit.repository.DepositRepository;
 import com.lumos.lumosspring.stock.materialsku.model.Material;
-import com.lumos.lumosspring.stock.materialsku.model.MaterialContractReferenceItem;
+import com.lumos.lumosspring.contract.entities.MaterialContractReferenceItem;
 import com.lumos.lumosspring.stock.materialsku.repository.MaterialContractReferenceItemRepository;
 import com.lumos.lumosspring.stock.materialsku.repository.MaterialReferenceRepository;
 import com.lumos.lumosspring.stock.materialstock.model.MaterialStock;
@@ -136,7 +136,8 @@ public class MaterialReferenceService {
                     material.barcode(),
                     material.buyUnit(),
                     material.requestUnit(),
-                    material.truckStockControl()
+                    material.truckStockControl(),
+                    "ACTIVE"
             );
             materialSku = materialReferenceRepository.save(materialSku);
             Long materialId = materialSku.getIdMaterial();
@@ -205,7 +206,8 @@ public class MaterialReferenceService {
                     material.inactive(),
                     material.buyUnit(),
                     material.requestUnit(),
-                    material.truckStockControl()
+                    material.truckStockControl(),
+                    "ACTIVE"
             );
             materialReferenceRepository.save(materialSku);
 

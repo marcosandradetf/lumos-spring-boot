@@ -49,6 +49,8 @@ public interface MaterialReferenceRepository extends CrudRepository<Material, Lo
 
     List<Material> findByIdMaterialIn(Collection<Long> idMaterials);
 
+    boolean existsMaterialByRelationshipStatusNot(String relationshipStatus);
+
     record MaterialResponse(
             Long materialId,
             String materialName,

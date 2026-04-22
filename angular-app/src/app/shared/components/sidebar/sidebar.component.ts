@@ -385,14 +385,6 @@ export class SidebarComponent implements OnInit {
                 },
                 items: [
                     {
-                        label: 'Itens Contratuais',
-                        icon: 'pi pi-list text-green-500',
-                        routerLink: ['/contratos/itens-contratuais/cadastro'],
-                        command: () => {
-                            SharedState.showMenuDrawer$.next(false);
-                        },
-                    },
-                    {
                         label: 'Novo Contrato',
                         icon: 'pi pi-plus-circle text-green-500',
                         routerLink: ['/contratos/criar'],
@@ -422,6 +414,25 @@ export class SidebarComponent implements OnInit {
                         label: 'Catálogo de Itens Contratuais',
                         icon: 'pi pi-table text-neutral-500',
                         routerLink: ['/contratos/itens-contratuais/catalogo'],
+                        command: () => {
+                            SharedState.showMenuDrawer$.next(false);
+                        },
+                    },
+                    {
+                        label: 'Itens Contratuais',
+                        icon: 'pi pi-list text-green-500',
+                        routerLink: ['/contratos/itens-contratuais/cadastro'],
+                        command: () => {
+                            SharedState.showMenuDrawer$.next(false);
+                        },
+                    },
+                    {
+                        label: 'Vincular Itens Contratuais',
+                        icon: 'pi pi-link text-cyan-500',
+                        routerLink: ['/contratos/itens-contratuais/vinculos'],
+                        queryParams: {
+                            'operation': 'item'
+                        },
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
                         },

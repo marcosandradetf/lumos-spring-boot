@@ -14,7 +14,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 @EnableCaching
 @EnableAsync
-@EnableJdbcRepositories(basePackages = "com.lumos.lumosspring")
+//@EnableJdbcRepositories(basePackages = "com.lumos.lumosspring")
 public class LumosSpringApplication {
     @Value("${resend.api.key}")
     private String apiKey;

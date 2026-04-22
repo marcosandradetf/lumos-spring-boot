@@ -3,6 +3,26 @@ import {Router} from '@angular/router';
 import {NgForOf, NgIf} from '@angular/common';
 import {ButtonDirective} from 'primeng/button';
 
+export interface GuideStateOptions {
+    enabled: boolean;
+    title: string;
+    subtitle: string;
+    icon: string;
+    steps: [boolean, string][],
+    hasButtonLabel: boolean;
+    buttonLabel: string;
+    buttonIcon: string;
+    buttonRoute: string;
+    hasSecondaryLabel: boolean;
+    secondaryLabel: string;
+    secondaryRoute: string;
+    secondaryIcon: string;
+    hasTertiaryLabel: boolean;
+    tertiaryLabel: string;
+    tertiaryRoute: string;
+    tertiaryIcon: string;
+}
+
 @Component({
     selector: 'app-guide-state',
     standalone: true,
@@ -20,7 +40,7 @@ export class GuideStateComponent {
     @Input() subtitle?: string;
 
     // lista de instruções
-    @Input() steps:  [boolean, string][] = [];
+    @Input() steps: [boolean, string][] = [];
 
     // botão principal
     @Input() hasButtonLabel: boolean = false;
@@ -38,6 +58,8 @@ export class GuideStateComponent {
     @Input() tertiaryLabel?: string;
     @Input() tertiaryRoute?: string;
     @Input() tertiaryIcon: string = 'pi-arrow-right';
+
+    @Input() isModal: boolean = false;
 
     constructor(private router: Router) {
     }

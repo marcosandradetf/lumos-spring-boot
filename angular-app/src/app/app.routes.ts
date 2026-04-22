@@ -5,6 +5,9 @@ import { ServiceRequestMapComponent } from './maintenance/request/service-reques
 import {
     ContractReferenceItemFormComponent
 } from './contract/contract-reference-item-form/contract-reference-item-form.component';
+import {
+    ContractReferenceItemLinksComponent
+} from './contract/contract-reference-item-links/contract-reference-item-links.component';
 import { MaterialFormComponent } from './stock/material-form/material-form.component';
 import { ServerErrorComponent } from './server-error/server-error.component';
 import { StockistsComponent } from './stock/stockists/stockists.component';
@@ -134,6 +137,12 @@ export const routes: Routes = [
     {
         path: 'contratos/itens-contratuais/cadastro',
         component: ContractReferenceItemFormComponent,
+        canActivate: [AuthGuard],
+        data: { role: ['ADMIN', 'ANALISTA'], path: 'contratos' },
+    },
+    {
+        path: 'contratos/itens-contratuais/vinculos',
+        component: ContractReferenceItemLinksComponent,
         children: [
             {
                 path: 'material-create',
@@ -206,8 +215,12 @@ export const routes: Routes = [
                 loadComponent: () => import('./stock/material-form/material-form.component').then(m => m.MaterialFormComponent),
             },
             {
-                path: 'itens-contratuais',
+                path: 'itens-contratuais/cadastro',
                 component: ContractReferenceItemFormComponent,
+            },
+            {
+                path: 'itens-contratuais/vinculos',
+                component: ContractReferenceItemLinksComponent,
                 children: [
                     {
                         path: 'material-create',

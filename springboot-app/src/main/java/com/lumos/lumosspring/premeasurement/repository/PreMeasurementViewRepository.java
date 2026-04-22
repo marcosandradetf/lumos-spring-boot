@@ -137,8 +137,8 @@ public class PreMeasurementViewRepository {
                             where p.status = :status and p.tenant_id = :tenantId
                         """,
                 Map.of("status", status,
-                        "tenantId", Utils.INSTANCE.getCurrentTenantId()),
-                (rs, _) -> {
+                        "tenantId", Utils.getCurrentTenantId()),
+                (rs, x) -> {
                     Instant time = rs.getTimestamp("created_at").toInstant();
                     var timezone = time.atZone(ZoneId.of("America/Sao_Paulo"));
                     var formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm");
@@ -175,7 +175,7 @@ public class PreMeasurementViewRepository {
                          group by ci.contracted_quantity, ci.quantity_executed, cri.description, cri.contract_reference_item_id\s
                         \s""",
                 Map.of("preMeasurementId", preMeasurementId),
-                (rs, _) -> {
+                (rs, y) -> {
                     return new CheckBalanceResponse(
                             rs.getString("description"),
                             rs.getBigDecimal("total_measured"),

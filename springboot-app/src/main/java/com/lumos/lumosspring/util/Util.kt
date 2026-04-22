@@ -140,12 +140,12 @@ class Util(
 
         val columnType = columnTypesByTable[request.table.lowercase()]?.get(request.where)
 
-        return if (columnType?.equals("uuid", ignoreCase = true) == true) {
+        return (if (columnType?.equals("uuid", ignoreCase = true) == true) {
             val uuidParams = request.equal.map { UUID.fromString(it.toString()) }.toTypedArray()
             jdbcTemplate.queryForList(sql, *uuidParams)
         } else {
             jdbcTemplate.queryForList(sql, *request.equal.toTypedArray())
-        }
+        }) as List<Map<String, Any>>
     }
 
 

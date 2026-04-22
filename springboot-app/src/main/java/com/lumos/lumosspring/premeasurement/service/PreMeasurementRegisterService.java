@@ -180,7 +180,7 @@ public class PreMeasurementRegisterService {
 
                 try {
                     deviceStreetId = UUID.fromString(parts[0]);
-                } catch (Exception _) {
+                } catch (Exception e) {
                     continue;
                 }
 
@@ -196,7 +196,7 @@ public class PreMeasurementRegisterService {
                             Map.of("deviceStreetId", deviceStreetId),
                             String.class
                     );
-                } catch (EmptyResultDataAccessException _) {
+                } catch (EmptyResultDataAccessException e) {
                     // nenhum registro encontrado → existingUri fica null
                 }
 

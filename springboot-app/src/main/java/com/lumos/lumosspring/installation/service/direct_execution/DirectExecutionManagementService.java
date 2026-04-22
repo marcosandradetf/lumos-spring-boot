@@ -82,7 +82,7 @@ public class DirectExecutionManagementService {
         // 5) Cria o gerenciamento de reserva (ReservationManagement)
         var management = new ReservationManagement(
                 null,
-                STR."Etapa \{step} - \{contract.getContractor()}",
+                "Etapa " + step + " - " + contract.getContractor(),
                 stockist.getUserId(),
                 ReservationStatus.PENDING
         );

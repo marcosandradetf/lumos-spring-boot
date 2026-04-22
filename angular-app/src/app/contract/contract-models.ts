@@ -86,6 +86,48 @@ export interface ContractReferenceItemsDTO {
     }[];
 }
 
+export interface ContractReferenceItemMaterialLinkDTO {
+    materialId: number;
+    materialName: string;
+    description: string | null;
+}
+
+export interface ContractReferenceItemDependencyLinkDTO {
+    contractReferenceItemId: number;
+    description: string;
+    type: string | null;
+}
+
+export interface ContractReferenceItemManagementDTO {
+    contractReferenceItemId: number | null;
+    description: string;
+    type: string | null;
+    status: 'ACTIVE' | 'PENDING_VALIDATION';
+    materialLinks: ContractReferenceItemMaterialLinkDTO[];
+    dependencyLinks: ContractReferenceItemDependencyLinkDTO[];
+}
+
+export interface ContractReferenceItemBaseManagementDTO {
+    contractReferenceItemId: number | null;
+    description: string;
+    type: string | null;
+    status: 'ACTIVE' | 'PENDING_VALIDATION';
+}
+
+export interface SaveContractReferenceItemBaseDTO {
+    clientDraftId?: string | null;
+    contractReferenceItemId: number | null;
+    description: string;
+    type: string | null;
+    link?: string
+}
+
+export interface SaveContractReferenceItemLinksDTO {
+    contractReferenceItemId: number;
+    materialIds: number[];
+    dependencyReferenceItemIds: number[];
+}
+
 export interface ContractItemsResponseWithExecutionsSteps {
     contractReferenceItemId: number;
     number: number;

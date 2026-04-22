@@ -136,7 +136,7 @@ export class AppComponent implements OnInit {
 
     protected readonly SharedState = SharedState;
 
-    sidebarWidth = 400;
+    sidebarWidth = 350;
 
     private resizing = false;
 
@@ -154,7 +154,7 @@ export class AppComponent implements OnInit {
             const newWidth = startWidth + (moveEvent.clientX - startX);
 
             // limites profissionais
-            if (newWidth >= 280 && newWidth <= 400) {
+            if (newWidth >= 250 && newWidth <= 350) {
                 this.sidebarWidth = newWidth;
             }
         };

@@ -22,4 +22,7 @@ public interface ContractReferenceItemRepository extends CrudRepository<Contract
         where ci.contract_item_id = :contractItemId
     """)
     Optional<String> getDescription(Long contractItemId);
+
+
+    boolean existsContractReferenceItemByStatusNot(String status);
 }

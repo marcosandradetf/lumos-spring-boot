@@ -28,7 +28,7 @@
     </scm>
     <properties>
         <java.version>21</java.version>
-        <kotlin.version>2.1.10</kotlin.version>
+        <kotlin.version>2.2.21</kotlin.version>
     </properties>
 
     <dependencyManagement>
@@ -198,6 +198,8 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <jvmTarget>21</jvmTarget>
+                    <compilerExecutionStrategy>in-process</compilerExecutionStrategy>
                     <compilerPlugins>
                         <plugin>spring</plugin>
                     </compilerPlugins>
@@ -214,7 +216,6 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>3.3.4</version>
                 <executions>
                     <execution>
                         <goals>
@@ -256,7 +257,7 @@
                 <configuration>
                     <source>21</source>
                     <target>21</target>
-                    <compilerArgs>--enable-preview</compilerArgs>
+<!--                    <compilerArgs>&#45;&#45;enable-preview</compilerArgs>-->
                 </configuration>
             </plugin>
         </plugins>

@@ -354,3 +354,54 @@ svg path {
   display: none !important;
 }
 
+:root {
+  --p-tooltip-max-width: 12.5rem;
+  --p-tooltip-gutter: 0.25rem;
+  --p-tooltip-shadow: var(--p-overlay-popover-shadow);
+  --p-tooltip-padding: 0.5rem 0.75rem;
+  --p-tooltip-border-radius: var(--p-overlay-popover-border-radius);
+  --p-tooltip-background: var(--p-surface-700);
+  --p-tooltip-color: var(--p-surface-0);
+}
+
+/* caixa do tooltip */
+.p-tooltip .p-tooltip-text {
+  background: var(--p-tooltip-background) !important;
+  color: var(--p-tooltip-color) !important;
+  padding: var(--p-tooltip-padding) !important;
+  border-radius: var(--p-tooltip-border-radius) !important;
+  max-width: var(--p-tooltip-max-width) !important;
+  box-shadow: var(--p-tooltip-shadow) !important;
+}
+
+/* reseta a seta pra não ficar quadrada */
+.p-tooltip .p-tooltip-arrow {
+  width: 0 !important;
+  height: 0 !important;
+  border-style: solid !important;
+  position: absolute;
+}
+
+/* top */
+.p-tooltip.p-tooltip-top .p-tooltip-arrow {
+  border-width: 0.4rem 0.4rem 0 0.4rem !important;
+  border-color: var(--p-tooltip-background) transparent transparent transparent !important;
+}
+
+/* bottom */
+.p-tooltip.p-tooltip-bottom .p-tooltip-arrow {
+  border-width: 0 0.4rem 0.4rem 0.4rem !important;
+  border-color: transparent transparent var(--p-tooltip-background) transparent !important;
+}
+
+/* left */
+.p-tooltip.p-tooltip-left .p-tooltip-arrow {
+  border-width: 0.4rem 0 0.4rem 0.4rem !important;
+  border-color: transparent transparent transparent var(--p-tooltip-background) !important;
+}
+
+/* right */
+.p-tooltip.p-tooltip-right .p-tooltip-arrow {
+  border-width: 0.4rem 0.4rem 0.4rem 0 !important;
+  border-color: transparent var(--p-tooltip-background) transparent transparent !important;
+}

@@ -1,250 +1,219 @@
 <p-toast></p-toast>
 
-<div class="relative">
-  <div class="max-w-6xl mx-auto">
-    <div class="mb-6">
-      <h1 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100">
-        Cadastro de Item de Referência Contratual
+<div class="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6">
+  <div class="flex flex-col gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">
+        Cadastro Base de Item Referencial
       </h1>
-      <p class="text-sm md:text-base text-slate-600 dark:text-slate-400 mt-1">
-        Esta etapa é apenas para descrever os itens contratuais que serão utilizados posteriormente nos contratos. Não é
-        necessário informar quantitativos.
+      <p class="mt-1 max-w-3xl text-sm text-slate-600 dark:text-slate-400">
+        Nesta etapa você cadastra apenas a <strong>descrição</strong> e o <strong>tipo</strong>. Alguns itens salvo aqui
+        permanece com o status diferente de <strong>Ativo</strong> até passar pela tela de vínculos.
       </p>
     </div>
 
-    <div class="mb-4 space-y-3">
-      <div
-        class="flex flex-col xl:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-4 md:p-6 space-y-5">
-        <h2>Importação de múltiplos itens contratuais</h2>
-        <div class="space-x-2 relative">
-          <p-tag severity="info" value="Opcional" class="absolute top-0 right-0"></p-tag>
-          <button pButton type="button" label="Baixar modelo" icon="pi pi-download" class="p-button-outlined"
-            severity="info" (click)="modelDownload()"></button>
+    <div class="flex flex-wrap items-center gap-2">
+      <div class="relative">
+        <div class="flex overflow-hidden rounded-xl border border-cyan-600 shadow-sm">
+          <button class="btn btn-primary btn-sm rounded-none border-0 md:btn-md" type="button" (click)="newItem()">
+            <i class="pi pi-plus"></i>
+            <span class="hidden sm:inline">Novo item</span>
+          </button>
 
-          <button pButton type="button" label="Enviar Planilha" icon="pi pi-upload" class="p-button-outlined"
-            (click)="modelDownload()"></button>
+          <button class="btn btn-primary btn-sm rounded-none border-0 border-l border-cyan-500 px-3 md:btn-md"
+                  type="button" (click)="toggleQuickAddMenu()">
+            <i class="pi" [ngClass]="quickAddMenuOpen ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+          </button>
+        </div>
 
-          <input #inputXLSX class="hidden" type="file" (change)="importFile($event)" accept=".xlsx,.xls" />
+        <div *ngIf="quickAddMenuOpen"
+             class="absolute left-0 z-20 mt-2 w-64 rounded-xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-800 dark:bg-neutral-900">
+          <p class="px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+            Cadastro rápido
+          </p>
+
+          <button *ngFor="let option of quickAddOptions"
+                  class="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition hover:bg-slate-50 dark:hover:bg-slate-800"
+                  type="button" (click)="addItemsBatch(option)">
+            <span>Adicionar {{ option }} {{ option === 1 ? 'item' : 'itens' }}</span>
+            <span class="text-xs text-slate-500 dark:text-slate-400">rascunho</span>
+          </button>
         </div>
       </div>
 
+      <button *ngIf="hasDraftItems"
+              class="btn btn-outline btn-sm border-amber-300 text-amber-800 hover:bg-amber-50 md:btn-md dark:border-amber-800 dark:text-amber-200 dark:hover:bg-amber-950/30"
+              type="button" (click)="removeDraftItems()">
+        <i class="pi pi-trash"></i>
+        <span class="hidden sm:inline">Remover rascunhos</span>
+      </button>
 
-      <!-- PREVIEW -->
-      <p-table *ngIf="importedItems.length" [value]="importedItems" [scrollable]="true" scrollHeight="300px">
+      <button class="btn btn-primary btn-sm md:btn-md" type="submit" form="contract-reference-items-form"
+              [disabled]="saving">
+        <i class="pi pi-save"></i>
+        <span>{{ saving ? 'Salvando...' : 'Salvar selecionados' }}</span>
+      </button>
 
-        <ng-template pTemplate="header">
-          <tr>
-            <th>Descrição</th>
-            <th>Tipo</th>
-            <th>Importação</th>
-            <th>Status</th>
-          </tr>
-        </ng-template>
+      <button class="btn btn-outline btn-sm md:btn-md" type="button" (click)="goToLinkManagement()">
+        <i class="pi pi-link"></i>
+        <span>Ir para vínculos</span>
+      </button>
+    </div>
+  </div>
 
-        <ng-template pTemplate="body" let-row>
-          <tr [ngClass]="{ 'bg-red-100': !row.valid }">
-
-            <td>{{ row.description }}</td>
-            <td>{{ row.type }}</td>
-            <td>{{ row.nameForImport }}</td>
-
-            <td>
-              <span *ngIf="row.valid" class="text-green-600">OK</span>
-
-              <span *ngIf="!row.valid" class="text-red-600">
-                {{
-                row.requiresMaterial
-                ? 'Precisa vincular material'
-                : 'Campos obrigatórios faltando'
-                }}
-              </span>
-            </td>
-
-          </tr>
-        </ng-template>
-
-      </p-table>
-
+  <div class="grid gap-4 md:grid-cols-3">
+    <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+      <div class="text-sm font-semibold text-slate-900 dark:text-slate-100">Etapa 1</div>
+      <div class="mt-1 text-sm text-slate-600 dark:text-slate-300">
+        Cadastre descrição e tipo do item referencial.
+      </div>
     </div>
 
-    <form [formGroup]="form" (ngSubmit)="submit()">
-      <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <!-- formulário principal -->
-        <div
-          class="xl:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-4 md:p-6 space-y-5">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="md:col-span-2">
-              <label class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">
-                Descrição *
-              </label>
-              <input pInputText formControlName="description" class="w-full"
-                placeholder="Ex.: BRAÇO GALVANIZADO PADRÃO CEMIG ATÉ 1,5M" />
-              <small *ngIf="f['description'].invalid && f['description'].touched" class="text-red-500">
-                Informe a descrição do item.
+    <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30">
+      <div class="text-sm font-semibold text-amber-900 dark:text-amber-100">Status inicial</div>
+      <div class="mt-1 text-sm text-amber-800 dark:text-amber-200">
+        Alguns itens salvo nesta tela fica com o status diferente de Ativo.
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-cyan-200 bg-cyan-50 p-4 dark:border-cyan-900 dark:bg-cyan-950/30">
+      <div class="text-sm font-semibold text-cyan-900 dark:text-cyan-100">Etapa 2</div>
+      <div class="mt-1 text-sm text-cyan-800 dark:text-cyan-200">
+        Use a tela de vínculos para conectar materiais e dependências e ativar o item quando aplicável.
+      </div>
+    </div>
+  </div>
+
+  <form id="contract-reference-items-form" (ngSubmit)="submit()">
+    <section class="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div class="border-b border-slate-200 px-4 py-4 dark:border-slate-800 md:px-6">
+        <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Itens referenciais</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400">
+              Cadastro inline somente dos dados base do item.
+            </p>
+          </div>
+
+          <p-tag [value]="loading ? 'Carregando' : (items.length + ' linhas')"
+                 [severity]="loading ? 'warn' : 'info'"></p-tag>
+        </div>
+      </div>
+
+      <div *ngIf="loading" class="p-6 text-sm text-slate-500 dark:text-slate-400">
+        Carregando itens...
+      </div>
+
+      <div *ngIf="!loading && items.length === 0" class="p-6 text-sm text-slate-500 dark:text-slate-400">
+        Nenhum item encontrado.
+      </div>
+
+      <div *ngIf="!loading && items.length > 0" class="hidden overflow-x-auto md:block">
+        <table class="w-full min-w-[900px] table-fixed border-collapse">
+          <thead class="bg-slate-50 dark:bg-slate-800/60">
+          <tr class="text-left text-xs uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
+            <th class="w-24 px-3 py-3">Salvar</th>
+            <th class="w-[42%] px-3 py-3">Descrição</th>
+            <th class="w-[24%] px-3 py-3">Tipo</th>
+            <th class="w-[20%] px-3 py-3">Status</th>
+            <th class="w-[10%] px-3 py-3">Ação</th>
+          </tr>
+          </thead>
+
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+          <tr *ngFor="let item of items; let i = index;" class="align-top bg-white dark:bg-neutral-900">
+            <td class="px-3 py-4">
+              <div class="flex item-center justify-center">
+                <button class="btn btn-primary btn-sm" type="button" (click)="saveItem(item)" [disabled]="saving">
+                  <i class="pi pi-save"></i>
+                </button>
+              </div>
+            </td>
+
+            <td class="px-3 py-4">
+              <input pInputText [(ngModel)]="item.description" name="description{{i}}" class="w-full"
+                     placeholder="Descrição do item"/>
+              <small *ngIf="itemHasError(item, 'description')" class="mt-1 block text-red-500">
+                Descrição obrigatória.
+              </small>
+            </td>
+
+            <td class="px-3 py-4">
+              <p-dropdown [(ngModel)]="item.type" name="type{{i}}" [options]="typeOptions" optionLabel="label"
+                          optionValue="value" placeholder="Tipo" styleClass="w-full"></p-dropdown>
+              <small *ngIf="itemHasError(item, 'type')" class="mt-1 block text-red-500">
+                Tipo obrigatório.
+              </small>
+            </td>
+
+            <td class="px-3 py-4">
+              <div class="space-y-2 text-center cursor-default">
+                <p-tag [value]="getStatusLabel(item)" [severity]="getStatusSeverity(item)"></p-tag>
+              </div>
+            </td>
+
+            <td class="px-3 py-4">
+              <button class="btn btn-ghost btn-sm text-red-600" type="button" (click)="removeItem(item)">
+                <i class="pi pi-trash"></i>
+              </button>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div *ngIf="!loading && items.length > 0" class="space-y-4 p-4 md:hidden">
+        <article *ngFor="let item of items; let i = index"
+                 class="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+          <div class="mb-4 flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="truncate font-semibold text-slate-900 dark:text-slate-100">
+                {{ item.description || 'Novo item' }}
+              </p>
+              <p class="text-sm text-slate-500 dark:text-slate-400">
+                {{ item.type || 'Tipo não definido' }}
+              </p>
+            </div>
+
+            <button class="btn btn-ghost btn-sm text-red-600" type="button" (click)="removeItem(item)">
+              <i class="pi pi-trash"></i>
+            </button>
+          </div>
+
+          <div class="mb-4">
+            <p-tag [value]="getStatusLabel(item)" [severity]="getStatusSeverity(item)"></p-tag>
+            <p class="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+              A vinculação será feita na próxima tela.
+            </p>
+          </div>
+
+          <div class="space-y-4">
+
+            <div>
+              <label class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Descrição</label>
+              <input pInputText [(ngModel)]="item.description" name="mobileDescription{{i}}" class="w-full"
+                     placeholder="Descrição do item"/>
+              <small *ngIf="itemHasError(item, 'description')" class="mt-1 block text-red-500">
+                Descrição obrigatória.
               </small>
             </div>
 
             <div>
-              <label class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">
-                Tipo *
-              </label>
-              <p-dropdown formControlName="type" [options]="typeOptions" optionLabel="label" optionValue="value"
-                placeholder="Selecione o tipo" styleClass="w-full"></p-dropdown>
-              <small *ngIf="f['type'].invalid && f['type'].touched" class="text-red-500">
-                Selecione um tipo.
+              <label class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Tipo</label>
+              <p-dropdown [(ngModel)]="item.type" name="mobileType{{i}}" [options]="typeOptions" optionLabel="label"
+                          optionValue="value" placeholder="Tipo" styleClass="w-full"></p-dropdown>
+              <small *ngIf="itemHasError(item, 'type')" class="mt-1 block text-red-500">
+                Tipo obrigatório.
               </small>
             </div>
 
-
-            <div *ngIf="form.get('type')?.value === 'CEMIG'">
-              <label class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">
-                Fator de potência planilha {{form.get('type')?.value}}*
-              </label>
-              <p-inputNumber formControlName="factor" [min]="0" [minFractionDigits]="0" [maxFractionDigits]="4"
-                inputStyleClass="w-full" styleClass="w-full" placeholder="0,0000"></p-inputNumber>
-              <small *ngIf="f['factor'].invalid && f['factor'].touched" class="text-red-500">
-                Informe um fator válido.
-              </small>
-            </div>
+            <button class="btn btn-primary btn-sm w-full" type="button" (click)="saveItem(item)" [disabled]="saving">
+              <i class="pi pi-save"></i>
+              <span>{{ saving ? 'Salvando...' : 'Salvar linha' }}</span>
+            </button>
           </div>
-
-          <p-divider></p-divider>
-
-          <div class="space-y-4">
-            <div class="flex items-center justify-between gap-3 flex-wrap">
-              <div>
-                <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                  Material relacionado
-                </h2>
-                <p class="text-sm text-slate-500 dark:text-slate-400">
-                  Obrigatório para o tipo selecionado.
-                </p>
-              </div>
-
-              <p-tag [severity]="requiresMaterial() ? 'danger' : 'info'"
-                [value]="requiresMaterial() ? 'Material obrigatório' : 'Não requer material'"></p-tag>
-            </div>
-
-            <div *ngIf="requiresMaterial(); else noMaterialRequired"
-              class="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-3 items-start">
-              <div>
-                <label class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">
-                  Buscar material *
-                </label>
-                <p-autoComplete formControlName="material" [suggestions]="filteredMaterials"
-                  (completeMethod)="searchMaterials($event)" (onSelect)="onMaterialSelect($event.value)"
-                  field="material_name" [dropdown]="true" [forceSelection]="false" [showClear]="true" appendTo="body"
-                  placeholder="Digite para pesquisar material" styleClass="w-full">
-                  <ng-template let-item pTemplate="item">
-                    <div class="flex flex-col">
-                      <span class="font-medium">{{ item.material_name }}</span>
-                      <small class="text-slate-500">
-                        Importação: {{ item.name_for_import || '-' }} • Unidade: {{ item.unit_base || '-' }}
-                      </small>
-                    </div>
-                  </ng-template>
-                </p-autoComplete>
-                <small *ngIf="f['material'].invalid && f['material'].touched" class="text-red-500">
-                  O vínculo com material é obrigatório para este tipo.
-                </small>
-              </div>
-
-              <div class="pt-7">
-                <button pButton type="button" label="Criar material" icon="pi pi-plus"
-                  class="p-button-outlined w-full lg:w-auto" (click)="openMaterialScreen()"></button>
-              </div>
-            </div>
-
-            <ng-template #noMaterialRequired>
-              <div
-                class="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-4 text-sm text-slate-600 dark:text-slate-300">
-                Para o tipo selecionado, o vínculo com material não é obrigatório.
-              </div>
-            </ng-template>
-
-            <div *ngIf="selectedMaterial() as material"
-              class="rounded-xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/40 p-4">
-              <div class="flex items-start justify-between gap-4 flex-wrap">
-                <div>
-                  <div class="text-sm text-emerald-700 dark:text-emerald-300 font-medium">Material selecionado</div>
-                  <div class="text-base font-semibold text-emerald-900 dark:text-emerald-100">
-                    {{ material.materialName }}
-                  </div>
-                  <div class="text-sm text-emerald-700 dark:text-emerald-300 mt-1">
-                    Importação: {{ material.nameForImport || '-' }} • Unidade: {{ material.unitBase || '-' }} •
-                    Estoque: {{ material.stockQuantity || 0 }}
-                  </div>
-                </div>
-                <p-tag [value]="material.truckStockControl ? 'Controla estoque de caminhão' : 'Sem estoque de caminhão'"
-                  severity="success"></p-tag>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- resumo lateral -->
-        <div
-          class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-4 md:p-6 h-fit space-y-4">
-          <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Resumo de regra</h2>
-
-          <div class="rounded-xl bg-slate-50 dark:bg-slate-800 p-4 space-y-2 text-sm">
-            <div class="font-medium text-slate-800 dark:text-slate-100">Tipos sem obrigatoriedade de material</div>
-            <div class="text-slate-600 dark:text-slate-300">
-              SERVIÇO, EXTENSÃO DE REDE, CEMIG, PROJETO e MANUTENÇÃO.
-            </div>
-          </div>
-
-          <div class="rounded-xl bg-slate-50 dark:bg-slate-800 p-4 space-y-2 text-sm">
-            <div class="font-medium text-slate-800 dark:text-slate-100">Fluxo esperado</div>
-            <ol class="list-decimal ml-5 space-y-1 text-slate-600 dark:text-slate-300">
-              <li>Selecionar o tipo do item.</li>
-              <li>Se exigir material relacionado, selecionar <code>material</code> existente no catálogo.</li>
-              <li>Se não existir, criar utilizando o botão ao lado.</li>
-              <li>Salvar o item com vínculo ao material.</li>
-            </ol>
-          </div>
-
-          <button pButton type="submit" label="Salvar cadastro" icon="pi pi-save" class="w-full"></button>
-        </div>
+        </article>
       </div>
-    </form>
-  </div>
-
-  <div *ngIf="materialFrameVisible" class="fixed inset-0 bg-black/30 z-40" (click)="materialFrameVisible = false"></div>
-
-  <!-- OVERLAY -->
-  <div *ngIf="materialFrameVisible" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
-    (click)="materialFrameVisible = false"></div>
-
-  <!-- DRAWER -->
-  <div *ngIf="materialFrameVisible" class="fixed top-0 right-0 h-full w-full lg:w-[850px] bg-white dark:bg-slate-900 z-50 shadow-2xl
-         flex flex-col animate-slide-in">
-
-    <!-- HEADER -->
-    <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-800">
-
-      <div>
-        <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
-          Cadastro de Material
-        </h2>
-        <p class="text-xs text-slate-500">
-          Crie um novo material sem sair da tela
-        </p>
-      </div>
-
-      <button pButton icon="pi pi-times" class="p-button-rounded p-button-text"
-        (click)="materialFrameVisible = false"></button>
-
-    </div>
-
-    <!-- BODY (SCROLL) -->
-    <div class="flex-1 overflow-y-auto p-5">
-
-      <router-outlet></router-outlet>
-
-    </div>
-
-  </div>
-
+    </section>
+  </form>
 </div>

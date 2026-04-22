@@ -22,6 +22,8 @@ class ContractReferenceItem : TenantEntity() {
 
     var itemDependency: String? = null
 
+    var status: String = "ACTIVE"
+
     @Transient
     var referenceMaterialsIds: List<Long> = emptyList()
 }

@@ -40,6 +40,7 @@ public class Material extends TenantEntity {
     private String materialWeight;
     private String barcode;
     private Boolean truckStockControl;
+    private String relationshipStatus;
 
     @Transient
     private List<Long> referenceItemsIds;
@@ -64,7 +65,8 @@ public class Material extends TenantEntity {
             String barcode,
             String buyUnit,
             String requestUnit,
-            Boolean truckStockControl
+            Boolean truckStockControl,
+            String relationshipStatus
     ) {
         this.parentMaterialId = parentMaterialId;
         this.materialName = materialName;
@@ -83,6 +85,7 @@ public class Material extends TenantEntity {
         this.BuyUnit = buyUnit;
         this.RequestUnit = requestUnit;
         this.truckStockControl = truckStockControl;
+        this.relationshipStatus = relationshipStatus;
     }
 
     public Material(
@@ -269,7 +272,8 @@ public class Material extends TenantEntity {
             Boolean inactive,
             String buyUnit,
             String requestUnit,
-            Boolean truckStockControl
+            Boolean truckStockControl,
+            String relationshipStatus
     ) {
         this.parentMaterialId = parentMaterialId;
         this.materialName = materialName;
@@ -289,6 +293,7 @@ public class Material extends TenantEntity {
         this.BuyUnit = buyUnit;
         this.RequestUnit = requestUnit;
         this.truckStockControl = truckStockControl;
+        this.relationshipStatus = relationshipStatus;
     }
 
     public Boolean getTruckStockControl() {
@@ -305,6 +310,14 @@ public class Material extends TenantEntity {
 
     public void setReferenceItemsIds(List<Long> referenceItemsIds) {
         this.referenceItemsIds = referenceItemsIds;
+    }
+
+    public String getRelationshipStatus() {
+        return relationshipStatus;
+    }
+
+    public void setRelationshipStatus(String relationshipStatus) {
+        this.relationshipStatus = relationshipStatus;
     }
 }
 

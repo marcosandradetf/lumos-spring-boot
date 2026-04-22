@@ -205,7 +205,7 @@ class ContractService(
             }
 
             try {
-                contractItemsQuantitativeRepository.deleteAllById(deleteContractItemsIds)
+                contractItemsQuantitativeRepository.deleteAllById(deleteContractItemsIds as Iterable<out Long>)
             } catch (ex: Exception) {
                 ex.printStackTrace()
 

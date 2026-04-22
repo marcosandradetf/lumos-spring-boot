@@ -1,8 +1,6 @@
 package com.lumos.lumosspring.stock.materialsku.repository;
 
-import com.lumos.lumosspring.stock.materialsku.model.MaterialContractReferenceItem;
-import com.lumos.lumosspring.stock.materialsku.model.MaterialGroup;
-import kotlin.Pair;
+import com.lumos.lumosspring.contract.entities.MaterialContractReferenceItem;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
@@ -16,6 +14,9 @@ public interface MaterialContractReferenceItemRepository extends CrudRepository<
 
     @Modifying
     void deleteByMaterialId(Long materialId);
+
+    @Modifying
+    void deleteByContractReferenceItemId(Long contractReferenceItemId);
 
     @Query(
             """

@@ -29,6 +29,30 @@
             </button>
           </div>
 
+          <div (click)="SharedState.showMenuDrawer$.next(true);" [title]="menuOpen ? 'Recolher Menu' : 'Expandir Menu'"
+               class="
+                  md:hidden
+                  flex items-center justify-center
+                  rounded-lg
+                  p-1
+                  bg-gray-100 border border-gray-200
+                  dark:bg-zinc-800 dark:border-zinc-700
+                ">
+            <button (click)="SharedState.showMenuDrawer$.next(true);" type="button" class="
+                    flex items-center justify-center
+                    w-7 h-7
+                    rounded-md
+                    bg-white text-gray-600
+                    hover:bg-gray-50 hover:text-gray-900
+                    dark:bg-zinc-900 dark:text-zinc-300
+                    dark:hover:bg-zinc-700 dark:hover:text-white
+                    transition-colors transition-transform duration-200
+                    focus:outline-none focus:ring-2 focus:ring-indigo-500
+                  ">
+              <span class="pi pi-bars text-sm"></span>
+            </button>
+          </div>
+
           <div
             *ngIf="!menuOpen"
             class="flex items-center gap-2.5 cursor-pointer group select-none ml-4"
@@ -54,29 +78,7 @@
             </div>
           </div>
 
-          <div (click)="SharedState.showMenuDrawer$.next(true);" [title]="menuOpen ? 'Recolher Menu' : 'Expandir Menu'"
-            class="
-                  md:hidden
-                  flex items-center justify-center
-                  rounded-lg
-                  p-1
-                  bg-gray-100 border border-gray-200
-                  dark:bg-zinc-800 dark:border-zinc-700
-                ">
-            <button (click)="SharedState.showMenuDrawer$.next(true);" type="button" class="
-                    flex items-center justify-center
-                    w-7 h-7
-                    rounded-md
-                    bg-white text-gray-600
-                    hover:bg-gray-50 hover:text-gray-900
-                    dark:bg-zinc-900 dark:text-zinc-300
-                    dark:hover:bg-zinc-700 dark:hover:text-white
-                    transition-colors transition-transform duration-200
-                    focus:outline-none focus:ring-2 focus:ring-indigo-500
-                  ">
-              <span class="pi pi-bars text-sm"></span>
-            </button>
-          </div>
+
           <app-prime-breadcrumb [path]="(SharedState.currentPath$ | async) ?? []">
           </app-prime-breadcrumb>
           <h3 class="text-medium pr-5 font-medium">{{ (SharedState.title$ | async) ?? '' }}</h3>
