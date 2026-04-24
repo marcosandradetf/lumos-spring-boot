@@ -50,7 +50,8 @@ public class SecurityConfig {
                 "https://app.lumosip.com.br",
                 "http://localhost:4200",
                 "http://localhost:4321",
-                "http://192.168.1.102:4200"
+                "http://192.168.1.102:4200",
+                "http://100.72.177.73:4200"
         ));
         configuration.setAllowCredentials(true);
         configuration.setAllowedMethods(List.of(

@@ -49,8 +49,10 @@ public class MaterialReferenceController {
     }
 
     @GetMapping("/get-catalogue")
-    public ResponseEntity<?> getCatalogue() {
-        return materialReferenceService.getCatalogue();
+    public ResponseEntity<?> getCatalogue(
+            @RequestParam("generic") boolean generic
+    ) {
+        return materialReferenceService.getCatalogue(generic);
     }
 
     @GetMapping("/get-brands")

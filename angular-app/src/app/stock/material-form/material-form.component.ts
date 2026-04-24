@@ -3,13 +3,10 @@ import {AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validators
 import {DropdownModule} from 'primeng/dropdown';
 import {InputText} from 'primeng/inputtext';
 import {ButtonDirective} from 'primeng/button';
-import {PrimeBreadcrumbComponent} from '../../shared/components/prime-breadcrumb/prime-breadcrumb.component';
 import {UtilsService} from '../../core/service/utils.service';
 import {NgIf} from '@angular/common';
 import {MultiSelectModule} from 'primeng/multiselect';
-import {ContractReferenceItemsDTO} from '../../contract/contract-models';
 import {Title} from '@angular/platform-browser';
-import {ContractService} from '../../contract/services/contract.service';
 import {StockService} from '../services/stock.service';
 import {MaterialService} from '../services/material.service';
 import {Toast} from 'primeng/toast';
@@ -28,7 +25,6 @@ import {SharedState} from '../../core/service/shared-state';
         ReactiveFormsModule,
         DropdownModule,
         InputText,
-        PrimeBreadcrumbComponent,
         ButtonDirective,
         NgIf,
         MultiSelectModule,
@@ -44,7 +40,6 @@ export class MaterialFormComponent implements OnInit {
     form!: FormGroup;
     materialTypes: any[] = [];
     availableSubtypes: any[] = [];
-    items: ContractReferenceItemsDTO[] = [];
     loading = false;
     formats = [
         BarcodeFormat.EAN_8,
@@ -57,7 +52,6 @@ export class MaterialFormComponent implements OnInit {
                 protected utils: UtilsService,
                 protected router: Router,
                 private title: Title,
-                private contractService: ContractService,
                 private stockService: StockService,
                 private materialService: MaterialService,
                 private route: ActivatedRoute,
@@ -91,7 +85,6 @@ export class MaterialFormComponent implements OnInit {
             buyUnit: [null, Validators.required],
             requestUnit: [null, Validators.required],
             truckStockControl: [true, Validators.required],
-            contractItems: [[], Validators.required],
         });
 
         // ✅ Apenas um subscribe
@@ -101,12 +94,6 @@ export class MaterialFormComponent implements OnInit {
 
         this.title.setTitle('Cadastrar Material');
 
-        this.contractService.getContractReferenceItems().subscribe(items => {
-            this.items = items.filter(i =>
-                !['SERVIÇO', 'CEMIG', 'PROJETO', 'MANUTENÇÃO']
-                    .includes((i.type ?? '').toUpperCase())
-            );
-        });
 
         this.stockService.findAllTypeSubtype().subscribe(types => {
             this.materialTypes = types;
@@ -176,6 +163,14 @@ export class MaterialFormComponent implements OnInit {
         const partsBase = [
             materialType,
             materialSubType,
+            v.materialFunction,
+            v.materialModel,
+            v.materialAmps,
+            v.materialLength,
+            v.materialWidth,
+            v.materialPower,
+            v.materialGauge,
+            v.materialWeight
         ];
 
         const parts = [

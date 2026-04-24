@@ -3,6 +3,7 @@ package com.lumos.lumosspring.stock.materialsku.model;
 import com.lumos.lumosspring.authentication.model.TenantEntity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
+import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.util.List;
@@ -13,6 +14,9 @@ public class Material extends TenantEntity {
     private Long idMaterial;
 
     private String materialName;
+
+    @Column("material_name_unaccent")
+    private String materialNameUnaccent;
 
     private String nameForImport;
 
@@ -41,6 +45,7 @@ public class Material extends TenantEntity {
     private String barcode;
     private Boolean truckStockControl;
     private String relationshipStatus;
+    private Boolean isGeneric;
 
     @Transient
     private List<Long> referenceItemsIds;
@@ -66,7 +71,8 @@ public class Material extends TenantEntity {
             String buyUnit,
             String requestUnit,
             Boolean truckStockControl,
-            String relationshipStatus
+            String relationshipStatus,
+            Boolean isGeneric
     ) {
         this.parentMaterialId = parentMaterialId;
         this.materialName = materialName;
@@ -86,18 +92,21 @@ public class Material extends TenantEntity {
         this.RequestUnit = requestUnit;
         this.truckStockControl = truckStockControl;
         this.relationshipStatus = relationshipStatus;
+        this.isGeneric = isGeneric;
     }
 
     public Material(
             String materialName,
             Long materialType,
             Long materialSubtype,
-            Boolean truckStockControl
+            Boolean truckStockControl,
+            Boolean isGeneric
     ) {
         this.materialName = materialName;
         this.idMaterialType = materialType;
         this.subtypeId = materialSubtype;
         this.truckStockControl = truckStockControl;
+        this.isGeneric = isGeneric;
     }
 
     public Long getIdMaterial() {
@@ -114,6 +123,14 @@ public class Material extends TenantEntity {
 
     public void setMaterialName(String materialName) {
         this.materialName = materialName;
+    }
+
+    public String getMaterialNameUnaccent() {
+        return materialNameUnaccent;
+    }
+
+    public void setMaterialNameUnaccent(String materialNameUnaccent) {
+        this.materialNameUnaccent = materialNameUnaccent;
     }
 
     public String getNameForImport() {
@@ -273,7 +290,8 @@ public class Material extends TenantEntity {
             String buyUnit,
             String requestUnit,
             Boolean truckStockControl,
-            String relationshipStatus
+            String relationshipStatus,
+            Boolean isGeneric
     ) {
         this.parentMaterialId = parentMaterialId;
         this.materialName = materialName;
@@ -294,6 +312,7 @@ public class Material extends TenantEntity {
         this.RequestUnit = requestUnit;
         this.truckStockControl = truckStockControl;
         this.relationshipStatus = relationshipStatus;
+        this.isGeneric = isGeneric;
     }
 
     public Boolean getTruckStockControl() {
@@ -319,5 +338,12 @@ public class Material extends TenantEntity {
     public void setRelationshipStatus(String relationshipStatus) {
         this.relationshipStatus = relationshipStatus;
     }
-}
 
+    public Boolean getGeneric() {
+        return isGeneric;
+    }
+
+    public void setGeneric(Boolean generic) {
+        isGeneric = generic;
+    }
+}

@@ -42,14 +42,16 @@ public interface MaterialReferenceRepository extends CrudRepository<Material, Lo
                     m.inactive
                 from material m
                 where m.tenant_id = :tenantId
-                    and m.is_generic = false
+                    and m.is_generic = :generic
                 order by m.material_name
             """)
-    List<MaterialResponse> getCatalogue(UUID tenantId);
+    List<MaterialResponse> getCatalogue(UUID tenantId, boolean generic);
 
     List<Material> findByIdMaterialIn(Collection<Long> idMaterials);
 
     boolean existsMaterialByRelationshipStatusNot(String relationshipStatus);
+
+    List<Material> findAllByTenantIdAndIsGeneric(UUID tenantId, Boolean isGeneric);
 
     record MaterialResponse(
             Long materialId,

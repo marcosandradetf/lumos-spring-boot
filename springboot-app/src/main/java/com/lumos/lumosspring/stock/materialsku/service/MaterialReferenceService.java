@@ -103,25 +103,29 @@ public class MaterialReferenceService {
     public ResponseEntity<?> create(MaterialRequest material) {
         // Cria e salva o log de atualização
         var user = userRepository.findByUserId(Utils.getCurrentUserId()).orElseThrow();
-        Long baseMaterialId = materialReferenceRepository.findBaseMaterialId(material.materialBaseName(), Utils.INSTANCE.getCurrentTenantId());
+
+        Long baseMaterialId = materialReferenceRepository.findBaseMaterialId(material.materialBaseName(), Utils.getCurrentTenantId());
+        if (baseMaterialId == null) {
+            var baseMaterial = materialReferenceRepository.save(
+                new Material(
+                    material.materialBaseName(),
+                    material.materialType(),
+                    material.materialSubtype(),
+                    material.truckStockControl(),
+                    true
+                )
+            );
+            baseMaterialId = baseMaterial.getIdMaterial();
+        }
+
         var log = new Log();
         String logMessage;
 
+        // CREATE ->
         if (material.materialId() == null) {
-            if (baseMaterialId == null) {
-                var baseMaterial = new Material(
-                        material.materialBaseName(),
-                        material.materialType(),
-                        material.materialSubtype(),
-                        material.truckStockControl()
-                );
-                baseMaterial = materialReferenceRepository.save(baseMaterial);
-                baseMaterialId = baseMaterial.getIdMaterial();
-            }
-
             var materialSku = new Material(
                     baseMaterialId,
-                    material.materialName(),
+                    material.materialName().trim(),
                     material.materialType(),
                     material.materialSubtype(),
                     material.materialFunction(),
@@ -137,20 +141,11 @@ public class MaterialReferenceService {
                     material.buyUnit(),
                     material.requestUnit(),
                     material.truckStockControl(),
-                    "ACTIVE"
+                    "ACTIVE",
+                    false
             );
             materialSku = materialReferenceRepository.save(materialSku);
             Long materialId = materialSku.getIdMaterial();
-
-            material.contractItems().forEach(itemId -> {
-                materialContractReferenceItemRepository.save(
-                        new MaterialContractReferenceItem(
-                                materialId,
-                                itemId,
-                                true
-                        )
-                );
-            });
 
             var depositsIds = depositRepository.findAllDepositIds();
             for (Long depositId : depositsIds) {
@@ -174,19 +169,11 @@ public class MaterialReferenceService {
                     material.materialName()
             );
             log.setType("create");
+
+        // UPDATE ->
         } else {
             Long materialId = material.materialId();
             var materialSku = materialReferenceRepository.findById(materialId).orElseThrow();
-            if (baseMaterialId == null) {
-                var baseMaterial = new Material(
-                        material.materialBaseName(),
-                        material.materialType(),
-                        material.materialSubtype(),
-                        material.truckStockControl()
-                );
-                baseMaterial = materialReferenceRepository.save(baseMaterial);
-                baseMaterialId = baseMaterial.getIdMaterial();
-            }
 
             materialSku.update(
                     baseMaterialId,
@@ -207,20 +194,12 @@ public class MaterialReferenceService {
                     material.buyUnit(),
                     material.requestUnit(),
                     material.truckStockControl(),
-                    "ACTIVE"
+                    "ACTIVE",
+                    false
             );
             materialReferenceRepository.save(materialSku);
 
             materialContractReferenceItemRepository.deleteByMaterialId(materialId);
-            material.contractItems().forEach(itemId -> {
-                materialContractReferenceItemRepository.save(
-                        new MaterialContractReferenceItem(
-                                materialId,
-                                itemId,
-                                true
-                        )
-                );
-            });
 
             logMessage = String.format("Usuário %s atualizou o material %d - %s com sucesso.",
                     user.getUsername(),
@@ -241,16 +220,11 @@ public class MaterialReferenceService {
     }
 
     public ResponseEntity<?> findByBarcode(String barcode) {
-        var material = materialReferenceRepository.findByBarcodeAndTenantId(barcode, Utils.INSTANCE.getCurrentTenantId()).orElse(null);
+        var material = materialReferenceRepository.findByBarcodeAndTenantId(barcode, Utils.getCurrentTenantId()).orElse(null);
         if (material == null) {
             material = materialReferenceRepository.findFirstByBarcode(barcode)
                     .orElseThrow(() -> new Utils.BusinessException("Material não encontrado"));
             material.setIdMaterial(null);
-        }
-
-        List<Long> items = new ArrayList<>();
-        if (material.getIdMaterial() != null) {
-            items = materialContractReferenceItemRepository.findAllByMaterialId(material.getIdMaterial());
         }
 
         var response = new MaterialRequest(
@@ -272,8 +246,7 @@ public class MaterialReferenceService {
                 material.getInactive(),
                 material.getBuyUnit(),
                 material.getRequestUnit(),
-                material.getTruckStockControl(),
-                items
+                material.getTruckStockControl()
         );
 
         return ResponseEntity.ok(response);
@@ -283,8 +256,6 @@ public class MaterialReferenceService {
         var material = materialReferenceRepository.findById(materialId)
                 .orElseThrow(() -> new Utils.BusinessException("Material não encontrado"));
 
-        var items = materialContractReferenceItemRepository.findAllByMaterialId(material.getIdMaterial());
-
         var response = new MaterialRequest(
                 material.getIdMaterial(),
                 null,
@@ -304,15 +275,14 @@ public class MaterialReferenceService {
                 material.getInactive(),
                 material.getBuyUnit(),
                 material.getRequestUnit(),
-                material.getTruckStockControl(),
-                items
+                material.getTruckStockControl()
         );
 
         return ResponseEntity.ok(response);
     }
 
-    public ResponseEntity<?> getCatalogue() {
-        var materials = materialReferenceRepository.getCatalogue(Utils.getCurrentTenantId());
+    public ResponseEntity<?> getCatalogue(boolean generic) {
+        var materials = materialReferenceRepository.getCatalogue(Utils.getCurrentTenantId(), generic);
         return ResponseEntity.ok(materials);
     }
 

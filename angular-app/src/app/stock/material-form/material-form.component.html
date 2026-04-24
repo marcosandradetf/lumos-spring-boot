@@ -345,39 +345,6 @@
 
             <!-- Itens Contratuais -->
             <div class="space-y-4">
-
-                <div class="flex flex-col gap-3">
-
-                    <label class="block text-base font-medium text-gray-800 dark:text-neutral-200">
-                        Itens Contratuais Vinculados*
-                    </label>
-                    <p class="text-sm text-gray-500 dark:text-neutral-400">
-                        Selecione os itens contratuais relacionados a este material. <strong>Atenção, isso é importante
-                        para
-                        vincular os itens ao estoque</strong>
-                    </p>
-
-                    <p-multiSelect
-                        formControlName="contractItems"
-                        [options]="items"
-                        optionLabel="description"
-                        optionValue="contractReferenceItemId"
-                        display="chip"
-                        placeholder="Selecione um ou mais itens"
-                        class="w-full">
-                    </p-multiSelect>
-
-                    <small
-                        *ngIf="
-              form.get('contractItems')?.invalid &&
-                form.get('contractItems')?.touched"
-                        class="text-red-500 text-xs">
-                        Atenção, isso é importante para vincular os itens ao estoque. <strong>Selecione ao menos um
-                        item.</strong>
-                    </small>
-
-                </div>
-
                 <!-- Ações -->
                 <div class="flex justify-end gap-4 py-6">
                     <button

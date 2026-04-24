@@ -24,5 +24,8 @@ public interface ContractReferenceItemRepository extends CrudRepository<Contract
     Optional<String> getDescription(Long contractItemId);
 
 
-    boolean existsContractReferenceItemByStatusNot(String status);
+
+    boolean existsContractReferenceItemByTenantIdAndStatusNot(UUID tenantId, String status);
+
+    List<ContractReferenceItem> findAllByTenantIdAndStatusNotIn(UUID tenantId, Collection<String> statuses);
 }

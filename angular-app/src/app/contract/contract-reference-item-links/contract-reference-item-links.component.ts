@@ -1,12 +1,12 @@
 import {CommonModule} from '@angular/common';
-import {Component, Input, OnInit} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {ActivatedRoute, Router, RouterOutlet} from '@angular/router';
 import {forkJoin} from 'rxjs';
 
 import {MessageService} from 'primeng/api';
 import {ButtonModule} from 'primeng/button';
-import {MultiSelectModule} from 'primeng/multiselect';
+import {ListboxModule} from 'primeng/listbox';
 import {TagModule} from 'primeng/tag';
 import {ToastModule} from 'primeng/toast';
 
@@ -17,12 +17,16 @@ import {Tooltip} from 'primeng/tooltip';
 import {GuideStateComponent, GuideStateOptions} from '../../guide-state/guide-state.component';
 import {Utils} from '../../core/service/utils';
 import {SharedState} from '../../core/service/shared-state';
+import {
+    ContractReferenceMaterialLinksComponent
+} from './contract-reference-material-links/contract-reference-material-links.component';
 
-interface MaterialOption {
+export interface MaterialOption {
     materialId: number;
     materialName: string;
     nameForImport?: string;
     unitBase?: string;
+    status?: string;
 }
 
 interface LinkedReferenceItemOption {
@@ -32,7 +36,7 @@ interface LinkedReferenceItemOption {
     type: string | null;
 }
 
-interface EditableLinkedReferenceItem {
+export interface EditableLinkedReferenceItem {
     contractReferenceItemId: number;
     description: string;
     type: string | null;
@@ -49,23 +53,26 @@ type LinkOperationMode = 'item' | 'material';
     imports: [
         CommonModule,
         FormsModule,
-        MultiSelectModule,
+        ListboxModule,
         ButtonModule,
         TagModule,
         ToastModule,
         RouterOutlet,
         Tooltip,
         GuideStateComponent,
+        ContractReferenceMaterialLinksComponent,
     ],
     providers: [MessageService],
     templateUrl: './contract-reference-item-links.component.html',
 })
 export class ContractReferenceItemLinksComponent implements OnInit {
-    readonly dependencyDrivenTypes = new Set(['SERVIÇO', 'PROJETO']);
+    readonly dependencyDrivenTypes = new Set(['SERVIÇO', 'PROJETO', 'BRAÇO']);
     readonly materialOptionalTypes = new Set(['EXTENSÃO DE REDE', 'MANUTENÇÃO']);
 
     operationMode: LinkOperationMode = 'item';
     items: EditableLinkedReferenceItem[] = [];
+    itemModeItems: EditableLinkedReferenceItem[] = [];
+    materialModeItems: EditableLinkedReferenceItem[] = [];
     allMaterials: MaterialOption[] = [];
     persistedReferenceItems: LinkedReferenceItemOption[] = [];
     materialFrameVisible = false;
@@ -82,7 +89,7 @@ export class ContractReferenceItemLinksComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        SharedState.setCurrentPath(['Contratos','Vincular Itens']);
+        SharedState.setCurrentPath(['Contratos','Vincular Serviços']);
 
         this.route.queryParamMap.subscribe(params => {
             const requestedMode = params.get('operation');
@@ -91,7 +98,7 @@ export class ContractReferenceItemLinksComponent implements OnInit {
 
         forkJoin({
             referenceItems: this.contractService.getReferenceItemLinkManagement(),
-            materials: this.materialService.getCatalogue(),
+            materials: this.materialService.getCatalogue(true),
         }).subscribe({
             next: ({referenceItems, materials}) => {
                 this.allMaterials = (materials ?? []).map(material => ({
@@ -109,6 +116,7 @@ export class ContractReferenceItemLinksComponent implements OnInit {
                 }));
 
                 this.items = referenceItems.map(item => this.mapToEditableItem(item));
+                this.refreshModeItems();
                 this.loading = false;
             },
             error: (error) => {
@@ -135,7 +143,7 @@ export class ContractReferenceItemLinksComponent implements OnInit {
     }
 
     get pageTitle(): string {
-        return this.isItemMode ? 'Vínculo de Itens Referenciais' : 'Vínculo de Materiais Referenciais';
+        return this.isItemMode ? 'Vínculo de Itens Referenciais' : 'Vínculo de Materiais Referenciais (Trabalhar somente com base de materiais!)';
     }
 
     get pageDescription(): string {
@@ -170,6 +178,18 @@ export class ContractReferenceItemLinksComponent implements OnInit {
         return this.operationMode === 'material';
     }
 
+    get currentModeItems(): EditableLinkedReferenceItem[] {
+        return this.isItemMode ? this.itemModeItems : this.materialModeItems;
+    }
+
+    get currentRecordCount(): number {
+        return this.isItemMode ? this.itemModeItems.length : this.allMaterials.length;
+    }
+
+    get hasCurrentModeRecords(): boolean {
+        return this.currentRecordCount > 0;
+    }
+
     switchOperation(mode: LinkOperationMode): void {
         void this.router.navigate([], {
             relativeTo: this.route,
@@ -192,6 +212,28 @@ export class ContractReferenceItemLinksComponent implements OnInit {
     onDependencySelect(item: EditableLinkedReferenceItem, selected: LinkedReferenceItemOption[] | null): void {
         item.dependencyLinks = selected ?? [];
         item.status = this.resolveStatus(item);
+    }
+
+    onMaterialItemsChange(materialId: number, selectedItemIds: number[]): void {
+        const material = this.allMaterials.find(option => option.materialId === materialId);
+        if (!material) {
+            return;
+        }
+
+        this.materialModeItems.forEach(item => {
+            const shouldContainMaterial = selectedItemIds.includes(item.contractReferenceItemId);
+            const hasMaterial = item.materialLinks.some(link => link.materialId === materialId);
+
+            if (shouldContainMaterial && !hasMaterial) {
+                item.materialLinks = [...item.materialLinks, material];
+            }
+
+            if (!shouldContainMaterial && hasMaterial) {
+                item.materialLinks = item.materialLinks.filter(link => link.materialId !== materialId);
+            }
+
+            item.status = this.resolveStatus(item);
+        });
     }
 
     openMaterialScreen(): void {
@@ -231,8 +273,47 @@ export class ContractReferenceItemLinksComponent implements OnInit {
         });
     }
 
+    saveMaterialLinks(): void {
+        if (this.materialModeItems.length === 0) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Nenhum item disponivel',
+                detail: 'Nao ha itens referenciais elegiveis para vincular aos materiais.',
+            });
+            return;
+        }
+
+        this.saving = true;
+        this.contractService.saveReferenceItemLinks(this.materialModeItems.map(item => this.toPayload(item))).subscribe({
+            next: (response) => {
+                const responseMap = new Map(response.map(item => [item.contractReferenceItemId, item]));
+                this.items = this.items.map(item => {
+                    const saved = responseMap.get(item.contractReferenceItemId);
+                    return saved ? this.mapToEditableItem(saved) : item;
+                });
+
+                this.refreshModeItems();
+                this.syncPersistedReferenceOptions(response);
+                this.saving = false;
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Materiais salvos',
+                    detail: `${response.length} ${response.length === 1 ? 'registro atualizado' : 'registros atualizados'}.`,
+                });
+            },
+            error: (error) => {
+                this.saving = false;
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Falha ao salvar',
+                    detail: error?.error?.message ?? 'Nao foi possivel salvar os vinculos de materiais.',
+                });
+            },
+        });
+    }
+
     submit(): void {
-        if (this.items.length === 0) {
+        if (this.currentModeItems.length === 0) {
             this.messageService.add({
                 severity: 'warn',
                 summary: 'Nenhum registro disponivel',
@@ -242,7 +323,7 @@ export class ContractReferenceItemLinksComponent implements OnInit {
         }
 
         this.saving = true;
-        this.contractService.saveReferenceItemLinks(this.items.map(item => this.toPayload(item))).subscribe({
+        this.contractService.saveReferenceItemLinks(this.currentModeItems.map(item => this.toPayload(item))).subscribe({
             next: (response) => {
                 const responseMap = new Map(response.map(item => [item.contractReferenceItemId, item]));
                 this.items = this.items.map(item => {
@@ -250,6 +331,7 @@ export class ContractReferenceItemLinksComponent implements OnInit {
                     return saved ? this.mapToEditableItem(saved) : item;
                 });
 
+                this.refreshModeItems();
                 this.syncPersistedReferenceOptions(response);
                 this.saving = false;
                 this.messageService.add({
@@ -280,7 +362,7 @@ export class ContractReferenceItemLinksComponent implements OnInit {
     getStatusMessage(item: EditableLinkedReferenceItem): string {
         if (this.isItemMode) {
             return this.requiresDependency(item)
-                ? 'Servico e projeto exigem item de referencia vinculado.'
+                ? Utils.capitalize(item.type ?? '') + ' exige item de referencia vinculado.'
                 : 'Este tipo nao exige item vinculado, mas a relacao pode ser mantida aqui.';
         }
 
@@ -389,16 +471,22 @@ export class ContractReferenceItemLinksComponent implements OnInit {
         this.items = this.items.map(item =>
             item.contractReferenceItemId === target.contractReferenceItemId ? replacement : item
         );
+        this.refreshModeItems();
     }
 
     private buildLinkKey(contractReferenceItemId: number): string {
         return `id-${contractReferenceItemId}`;
     }
 
+    private refreshModeItems(): void {
+        this.itemModeItems = this.items.filter(item => this.requiresDependency(item));
+        this.materialModeItems = this.items.filter(item => !this.requiresDependency(item));
+    }
+
 
     get guideOptions(): GuideStateOptions {
         const linkingItems = this.operationMode === 'item';
-        const emptyItems = this.items.length === 0;
+        const emptyItems = this.itemModeItems.length === 0;
         const emptyMaterials = this.allMaterials.length === 0;
 
         return {
@@ -426,4 +514,5 @@ export class ContractReferenceItemLinksComponent implements OnInit {
     }
 
 
+    protected readonly Utils = Utils;
 }

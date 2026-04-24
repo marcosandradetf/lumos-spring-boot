@@ -59,19 +59,6 @@ public class MaterialStockViewController {
         );
     }
 
-    @GetMapping("/mobile/stock/get-truck-stock")
-    public ResponseEntity<?> getStock(
-            @RequestParam(value = "uuid") UUID uuid,
-            @RequestParam(value = "teamId", required = false) Long teamId
-    ) {
-        return materialStockViewService.getMaterialsForMaintenance(uuid, teamId);
-    }
-
-    @GetMapping("/mobile/stock/v2/get-truck-stock")
-    public ResponseEntity<?> getStockV2() {
-        return materialStockViewService.getTruckStock(null);
-    }
-
     @GetMapping("/mobile/stock/v3/get-truck-stock")
     public ResponseEntity<?> getStockV3(@RequestParam(value = "teamId") Long teamId) {
         return materialStockViewService.getTruckStock(teamId);

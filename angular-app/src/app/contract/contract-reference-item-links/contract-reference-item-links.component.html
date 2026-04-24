@@ -109,7 +109,7 @@
               </p>
             </div>
 
-            <p-tag [value]="loading ? 'Carregando' : (items.length + ' registros')"
+            <p-tag [value]="loading ? 'Carregando' : (currentRecordCount + ' registros')"
                    [severity]="loading ? 'warn' : 'info'"></p-tag>
           </div>
         </div>
@@ -118,213 +118,162 @@
           Carregando itens e materiais...
         </div>
 
-        <div *ngIf="!loading && items.length === 0" class="p-6 text-sm text-slate-500 dark:text-slate-400">
-          Nenhum item encontrado.
+        <div *ngIf="!loading && !hasCurrentModeRecords" class="p-6 text-sm text-slate-500 dark:text-slate-400">
+          {{ isItemMode ? 'Nenhum item encontrado.' : 'Nenhum material encontrado.' }}
         </div>
 
-        <div *ngIf="!loading && items.length > 0" class="hidden overflow-x-auto md:block">
-          <table class="w-full table-fixed border-collapse">
-            <thead class="bg-slate-50 dark:bg-slate-800/60">
-            <tr class="text-left text-xs uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
-              <th class="w-[32%] px-3 py-3">Registro</th>
-              <th *ngIf="isMaterialMode" class="w-[34%] px-3 py-3">Material Vinculado</th>
-              <th *ngIf="isItemMode" class="w-[34%] px-3 py-3">Item Vinculado</th>
-              <th class="w-[18%] px-3 py-3">Status</th>
-              <th class="w-[16%] px-3 py-3">Salvar</th>
-            </tr>
-            </thead>
+        @if(isItemMode) {
+          <div *ngIf="itemModeItems.length > 0" class="hidden overflow-x-auto md:block">
+            <table class="w-full table-fixed border-collapse">
+              <thead class="bg-slate-50 dark:bg-slate-800/60">
+              <tr class="text-left text-xs uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
+                <th class="w-[32%] px-3 py-3">Registro</th>
+                <th class="w-[34%] px-3 py-3">Item Vinculado</th>
+                <th class="w-[18%] px-3 py-3">Status</th>
+                <th class="w-[16%] px-3 py-3">Salvar</th>
+              </tr>
+              </thead>
 
-            <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-            <tr *ngFor="let item of items; let i = index" class="align-top bg-white dark:bg-neutral-900">
-              <td class="px-3 py-4">
-                <div class="space-y-3">
-                  <div
-                    tooltipPosition="bottom"
-                    [pTooltip]="item.description"
-                    [showDelay]="200"
-                    class="cursor-default truncate rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium dark:border-slate-700 dark:bg-slate-800/60">
-                    {{ item.description }}
-                  </div>
+              <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+              <tr *ngFor="let item of itemModeItems; let i = index" class="align-top bg-white dark:bg-neutral-900">
+                <td class="px-3 py-4">
+                  <div class="space-y-3">
+                    <div
+                      tooltipPosition="bottom"
+                      [pTooltip]="item.description"
+                      [showDelay]="200"
+                      class="cursor-default truncate rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium dark:border-slate-700 dark:bg-slate-800/60">
+                      {{ item.description }}
+                    </div>
 
-                  <div class="flex flex-wrap items-center gap-2">
+                    <div class="flex flex-wrap items-center gap-2">
                     <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200">
                       {{ item.type || 'Tipo não definido' }}
                     </span>
-                    <span class="text-xs text-slate-500 dark:text-slate-400">
+                      <span class="text-xs text-slate-500 dark:text-slate-400">
                       {{ getLinkCountLabel(item) }}
                     </span>
+                    </div>
                   </div>
-                </div>
-              </td>
+                </td>
 
-              <td *ngIf="isMaterialMode" class="px-3 py-4">
-                <div class="space-y-2">
-                  <p-multiSelect [(ngModel)]="item.materialLinks" name="material{{i}}"
-                                 [options]="allMaterials"
-                                 optionLabel="materialName"
-                                 dataKey="materialId"
-                                 [filter]="true"
-                                 filterBy="materialName,nameForImport,unitBase"
-                                 display="chip"
-                                 [maxSelectedLabels]="2"
-                                 selectedItemsLabel="{0} materiais selecionados"
-                                 defaultLabel="Adicionar ou editar material"
-                                 styleClass="w-full"
-                                 appendTo="body"
-                                 (onChange)="onMaterialSelect(item, $event.value)">
-                    <ng-template let-material pTemplate="item">
-                      <div class="flex flex-col">
-                        <span class="font-medium">{{ material.materialName }}</span>
-                        <small class="text-slate-500">
-                          {{ material.nameForImport || '-' }} • {{ material.unitBase || '-' }}
-                        </small>
-                      </div>
-                    </ng-template>
-                  </p-multiSelect>
+                <td class="px-3 py-4">
+                  <div class="space-y-2">
+                    <p-listbox [(ngModel)]="item.dependencyLinks"
+                               name="linkedItem{{i}}"
+                               [options]="getLinkedItemOptions(item)"
+                               optionLabel="description"
+                               dataKey="linkKey"
+                               [multiple]="true"
+                               [checkbox]="false"
+                               [filter]="true"
+                               filterBy="description,type"
+                               [metaKeySelection]="false"
+                               listStyleClass="max-h-80"
+                               styleClass="w-full"
+                               (ngModelChange)="onDependencySelect(item, $event)">
+                      <ng-template let-linkedItem pTemplate="item">
+                        <div class="flex flex-col">
+                          <span class="font-medium">{{ linkedItem.description }}</span>
+                          <small class="text-slate-500">Tipo: {{ linkedItem.type || '-' }}</small>
+                        </div>
+                      </ng-template>
+                    </p-listbox>
 
-                  <div class="flex items-center justify-between gap-2">
                     <small class="text-slate-500 dark:text-slate-400">
-                      {{ requiresMaterial(item) ? 'Obrigatório para este tipo.' : 'Opcional para este tipo.' }}
+                      {{ requiresDependency(item) ? 'Obrigatório para ' + Utils.capitalize(item.type ?? '') : 'Não exigido para este tipo.' }}
                     </small>
-
-                    <button pButton type="button" icon="pi pi-plus" label="Criar material" class="p-button-text p-button-sm"
-                            (click)="openMaterialScreen()"></button>
                   </div>
-                </div>
-              </td>
+                </td>
 
-              <td *ngIf="isItemMode" class="px-3 py-4">
-                <div class="space-y-2">
-                  <p-multiSelect [(ngModel)]="item.dependencyLinks" name="linkedItem{{i}}"
-                                 [options]="getLinkedItemOptions(item)"
-                                 optionLabel="description"
-                                 dataKey="linkKey"
-                                 [filter]="true"
-                                 filterBy="description,type"
-                                 display="chip"
-                                 [maxSelectedLabels]="2"
-                                 selectedItemsLabel="{0} itens selecionados"
-                                 defaultLabel="Adicionar ou editar item de referência"
-                                 styleClass="w-full"
-                                 appendTo="body"
-                                 (onChange)="onDependencySelect(item, $event.value)">
+                <td class="px-3 py-4">
+                  <div class="space-y-2">
+                    <p-tag [value]="getStatusLabel(item)" [severity]="getStatusSeverity(item)"></p-tag>
+                    <p class="text-xs leading-5 text-slate-500 dark:text-slate-400">
+                      {{ getStatusMessage(item) }}
+                    </p>
+                  </div>
+                </td>
+
+                <td class="px-3 py-4">
+                  <button class="btn btn-primary btn-sm w-full justify-center h-full p-2" type="button" (click)="saveItem(item)" [disabled]="saving">
+                    <i class="pi pi-save"></i>
+                    <span>{{ singleSaveButtonLabel }}</span>
+                  </button>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div *ngIf="itemModeItems.length > 0" class="space-y-4 p-4 md:hidden">
+            <article *ngFor="let item of itemModeItems; let i = index"
+                     class="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+              <div class="mb-4 flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="truncate font-semibold text-slate-900 dark:text-slate-100">
+                    {{ item.description }}
+                  </p>
+                  <p class="text-sm text-slate-500 dark:text-slate-400">
+                    {{ item.type || 'Tipo não definido' }}
+                  </p>
+                </div>
+
+                <p-tag [value]="getStatusLabel(item)" [severity]="getStatusSeverity(item)"></p-tag>
+              </div>
+
+              <div class="space-y-4">
+                <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
+                  {{ getLinkCountLabel(item) }}. Edite abaixo e salve quando concluir.
+                </div>
+
+                <div>
+                  <label class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Item Vinculado
+                  </label>
+                  <p-listbox [(ngModel)]="item.dependencyLinks"
+                             name="mobileLinkedItem{{i}}"
+                             [options]="getLinkedItemOptions(item)"
+                             optionLabel="description"
+                             dataKey="linkKey"
+                             [multiple]="true"
+                             [checkbox]="false"
+                             [filter]="true"
+                             filterBy="description,type"
+                             [metaKeySelection]="false"
+                             listStyleClass="max-h-80"
+                             styleClass="w-full"
+                             (ngModelChange)="onDependencySelect(item, $event)">
                     <ng-template let-linkedItem pTemplate="item">
                       <div class="flex flex-col">
                         <span class="font-medium">{{ linkedItem.description }}</span>
                         <small class="text-slate-500">Tipo: {{ linkedItem.type || '-' }}</small>
                       </div>
                     </ng-template>
-                  </p-multiSelect>
-
-                  <small class="text-slate-500 dark:text-slate-400">
-                    {{ requiresDependency(item) ? 'Obrigatório para Serviço/Projeto.' : 'Não exigido para este tipo.' }}
-                  </small>
+                  </p-listbox>
                 </div>
-              </td>
 
-              <td class="px-3 py-4">
-                <div class="space-y-2">
-                  <p-tag [value]="getStatusLabel(item)" [severity]="getStatusSeverity(item)"></p-tag>
-                  <p class="text-xs leading-5 text-slate-500 dark:text-slate-400">
-                    {{ getStatusMessage(item) }}
-                  </p>
-                </div>
-              </td>
+                <p class="text-xs leading-5 text-slate-500 dark:text-slate-400">
+                  {{ getStatusMessage(item) }}
+                </p>
 
-              <td class="px-3 py-4">
-                <button class="btn btn-primary btn-sm w-full justify-center h-full p-2" type="button" (click)="saveItem(item)" [disabled]="saving">
+                <button class="btn btn-primary btn-sm w-full" type="button" (click)="saveItem(item)" [disabled]="saving">
                   <i class="pi pi-save"></i>
-                  <span>{{ singleSaveButtonLabel }}</span>
+                  <span>{{ saving ? 'Salvando...' : singleSaveButtonLabel }}</span>
                 </button>
-              </td>
-            </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div *ngIf="!loading && items.length > 0" class="space-y-4 p-4 md:hidden">
-          <article *ngFor="let item of items; let i = index"
-                   class="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
-            <div class="mb-4 flex items-start justify-between gap-3">
-              <div class="min-w-0">
-                <p class="truncate font-semibold text-slate-900 dark:text-slate-100">
-                  {{ item.description }}
-                </p>
-                <p class="text-sm text-slate-500 dark:text-slate-400">
-                  {{ item.type || 'Tipo não definido' }}
-                </p>
               </div>
-
-              <p-tag [value]="getStatusLabel(item)" [severity]="getStatusSeverity(item)"></p-tag>
-            </div>
-
-            <div class="space-y-4">
-              <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
-                {{ getLinkCountLabel(item) }}. Edite abaixo e salve quando concluir.
-              </div>
-
-              <div>
-                <label *ngIf="isMaterialMode" class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Material Vinculado
-                </label>
-                <label *ngIf="isItemMode" class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Item Vinculado
-                </label>
-                <p-multiSelect *ngIf="isMaterialMode" [(ngModel)]="item.materialLinks" name="mobileMaterial{{i}}"
-                               [options]="allMaterials"
-                               optionLabel="materialName"
-                               dataKey="materialId"
-                               [filter]="true"
-                               filterBy="materialName,nameForImport,unitBase"
-                               display="chip"
-                               [maxSelectedLabels]="2"
-                               selectedItemsLabel="{0} materiais selecionados"
-                               defaultLabel="Adicionar ou editar material"
-                               styleClass="w-full"
-                               appendTo="body"
-                               (onChange)="onMaterialSelect(item, $event.value)">
-                  <ng-template let-material pTemplate="item">
-                    <div class="flex flex-col">
-                      <span class="font-medium">{{ material.materialName }}</span>
-                      <small class="text-slate-500">
-                        {{ material.nameForImport || '-' }} • {{ material.unitBase || '-' }}
-                      </small>
-                    </div>
-                  </ng-template>
-                </p-multiSelect>
-                <p-multiSelect *ngIf="isItemMode" [(ngModel)]="item.dependencyLinks" name="mobileLinkedItem{{i}}"
-                               [options]="getLinkedItemOptions(item)"
-                               optionLabel="description"
-                               dataKey="linkKey"
-                               [filter]="true"
-                               filterBy="description,type"
-                               display="chip"
-                               [maxSelectedLabels]="2"
-                               selectedItemsLabel="{0} itens selecionados"
-                               defaultLabel="Adicionar ou editar item de referência"
-                               styleClass="w-full"
-                               appendTo="body"
-                               (onChange)="onDependencySelect(item, $event.value)">
-                  <ng-template let-linkedItem pTemplate="item">
-                    <div class="flex flex-col">
-                      <span class="font-medium">{{ linkedItem.description }}</span>
-                      <small class="text-slate-500">Tipo: {{ linkedItem.type || '-' }}</small>
-                    </div>
-                  </ng-template>
-                </p-multiSelect>
-              </div>
-
-              <p class="text-xs leading-5 text-slate-500 dark:text-slate-400">
-                {{ getStatusMessage(item) }}
-              </p>
-
-              <button class="btn btn-primary btn-sm w-full" type="button" (click)="saveItem(item)" [disabled]="saving">
-                <i class="pi pi-save"></i>
-                <span>{{ saving ? 'Salvando...' : singleSaveButtonLabel }}</span>
-              </button>
-            </div>
-          </article>
-        </div>
+            </article>
+          </div>
+        } @else {
+          <app-contract-reference-material-links
+            [items]="materialModeItems"
+            [materials]="allMaterials"
+            [loading]="loading"
+            [saving]="saving"
+            (materialItemsChange)="onMaterialItemsChange($event.materialId, $event.selectedItemIds)"
+            (saveRequested)="saveMaterialLinks()"
+            (createMaterialRequested)="openMaterialScreen()"></app-contract-reference-material-links>
+        }
       </section>
     </form>
   </div>

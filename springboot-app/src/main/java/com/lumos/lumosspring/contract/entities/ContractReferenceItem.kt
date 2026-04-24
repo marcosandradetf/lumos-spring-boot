@@ -13,6 +13,9 @@ class ContractReferenceItem : TenantEntity() {
 
     var description: String = ""
 
+    @Column("description_unaccent")
+    var descriptionUnaccent: String = ""
+
     @Column("name_for_import")
     var nameForImport: String? = null
 

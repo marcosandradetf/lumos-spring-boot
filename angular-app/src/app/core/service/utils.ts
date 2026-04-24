@@ -162,5 +162,15 @@ export class Utils {
         return '';
     }
 
+    static capitalize(str: string): string {
+        return str
+            .toLocaleLowerCase('pt-BR')
+            .split(' ')
+            .map(word =>
+                word ? word[0].toLocaleUpperCase('pt-BR') + word.slice(1) : word
+            )
+            .join(' ');
+    }
+
 
 }
