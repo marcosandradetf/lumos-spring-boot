@@ -3,13 +3,14 @@ import {Title} from '@angular/platform-browser';
 import {PrimeBreadcrumbComponent} from "../../shared/components/prime-breadcrumb/prime-breadcrumb.component";
 import {SharedState} from '../../core/service/shared-state';
 import {NgClass, NgForOf, NgIf} from '@angular/common';
-import {RouterLink} from '@angular/router';
+import {Router, RouterLink} from '@angular/router';
 import {DashboardService} from './dashboard.service';
+import {UtilsService} from '../../core/service/utils.service';
 
 @Component({
     selector: 'app-dashboard',
     standalone: true,
-    imports: [PrimeBreadcrumbComponent, NgForOf, NgIf, RouterLink, NgClass],
+    imports: [NgForOf, NgIf, RouterLink, NgClass],
     templateUrl: './dashboard.component.html',
     styleUrl: './dashboard.component.scss'
 })
@@ -122,13 +123,19 @@ export class DashboardComponent implements OnInit {
     constructor(
         private titleService: Title,
         private service: DashboardService,
+        private utilsService: UtilsService,
+        private router: Router
     ) {
 
 
     }
 
     ngOnInit() {
-        this.titleService.setTitle("Lumos");
+        this.utilsService.onboarding$.subscribe(v => {
+           if (v) void this.router.navigate(['/configuracoes/onboarding']);
+        });
+
+        this.titleService.setTitle("Lumos IP");
         SharedState.setCurrentPath(['Dashboard']);
         this.loading = true;
         this.loadMetrics();

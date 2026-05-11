@@ -104,7 +104,7 @@ export class ExecutionNoWorkServiceComponent implements OnInit {
     // ========================
 
     ngOnInit(): void {
-        this.title.setTitle("Validação de execução operacional");
+        this.title.setTitle("Lumos IP - Validação de execução operacional");
         SharedState.setCurrentPath(["Execuções", "Validar Execução"]);
 
         this.loading.set(true);

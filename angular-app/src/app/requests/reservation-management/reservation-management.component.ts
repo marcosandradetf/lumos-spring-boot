@@ -41,7 +41,7 @@ export class ReservationManagementComponent {
                 private executionService: ExecutionService) {
 
         SharedState.setCurrentPath(["Solicitações ao Estoquista", "Ordens de serviço de instalações"])
-        this.titleService.setTitle("Ordens de serviço de instalações");
+        this.titleService.setTitle("Lumos IP - Ordens de serviço de instalações");
         this.isAdmin = this.authService.getUser().getRoles().includes('ADMIN');
 
         this.executionService.getPendingReservesForStockist().subscribe({
@@ -79,8 +79,14 @@ export class ReservationManagementComponent {
 
     openContextMenu(event: MouseEvent, management: ReserveRequest) {
         event.preventDefault();
+
+        if(this.menu?.visible && this.currentIds.includes(management.directExecutionId ?? 0)) {
+            this.menu?.hide();
+            return;
+        }
+
         this.description = management ? management.description : null;
-        this.type = management.comment;
+        this.type = management.preMeasurementId !== null ? 'PRE_MEASUREMENT' : 'DIRECT_EXECUTION';
         if (management.directExecutionId !== null) {
             this.currentIds = [management.directExecutionId];
         } else if (management.preMeasurementId !== null) {

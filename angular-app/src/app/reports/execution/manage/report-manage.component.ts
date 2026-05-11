@@ -128,7 +128,7 @@ export class ReportManageComponent implements OnInit {
 
     ngOnInit(): void {
         SharedState.setCurrentPath(["Execuções Realizadas", "Relatórios Personalizados"]);
-        this.title.setTitle("Gerenciamento de Execuções");
+        this.title.setTitle("Lumos IP - Gerenciamento de Execuções");
         this.loading = true
 
         const ua = navigator.userAgent;

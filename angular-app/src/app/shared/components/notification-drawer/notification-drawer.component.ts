@@ -1,11 +1,12 @@
-import {Component, inject, OnInit} from '@angular/core';
+import {Component, inject} from '@angular/core';
 import {Drawer} from 'primeng/drawer';
 import {SharedState} from '../../../core/service/shared-state';
-import {AsyncPipe, DatePipe, NgClass, NgForOf, NgIf, NgOptimizedImage} from '@angular/common';
-import {SidebarComponent} from '../sidebar/sidebar.component';
+import {AsyncPipe, DatePipe, NgClass, NgForOf, NgIf} from '@angular/common';
 import {Router} from '@angular/router';
 import {Ripple} from 'primeng/ripple';
 import {FcmService} from '../../../core/service/fcm.service';
+import {DomSanitizer, SafeResourceUrl} from '@angular/platform-browser';
+import {AuthService} from '../../../core/auth/auth.service';
 
 @Component({
     selector: 'app-notification-drawer',
@@ -25,10 +26,38 @@ import {FcmService} from '../../../core/service/fcm.service';
 export class NotificationDrawerComponent {
     notifications: any[] = [];
     private fcmService = inject(FcmService);
+    private sanitizer = inject(DomSanitizer);
+    private authService = inject(AuthService);
+    protected readonly SharedState = SharedState;
+    protected router = inject(Router);
+
+    notificationStatus = 'default';
+    embeddedDocOpen = false;
+    embeddedDocTitle = '';
+    embeddedDocDescription = '';
+    embeddedDocUrl: SafeResourceUrl | null = null;
+    readonly notificationGuideUrl = 'https://lumosip.com.br/como-usar/15-web-config/01-enable-notifications/';
 
     // No seu componente do Drawer
     notificationsGrouped: { [key: string]: any[] } = {};
     groupKeys: string[] = [];
+
+    message: Record<string, {
+        summary: string;
+        detail: string;
+        acceptDescription: string;
+    }> = {
+        'default': {
+            summary: 'Notificações desativadas',
+            detail: 'Para não perder nenhuma atualização importante, é necessário permitir as notificações do Lumos no seu dispositivo.',
+            acceptDescription: 'Ativar agora',
+        },
+        'denied': {
+            summary: 'Notificações bloqueadas',
+            detail: 'Você bloqueou notificações do navegador. Para não perder nenhuma atualização importante, é essencial permitir as notificações do Lumos no seu dispositivo.',
+            acceptDescription: 'Como ativar',
+        }
+    };
 
     async loadNotifications() {
         const data = await this.fcmService.getHistory();
@@ -52,7 +81,7 @@ export class NotificationDrawerComponent {
                 dateLabel = 'Ontem';
             } else {
                 // Ex: 15 de Março
-                dateLabel = date.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' });
+                dateLabel = date.toLocaleDateString('pt-BR', {day: 'numeric', month: 'long'});
             }
 
             if (!groups[dateLabel]) groups[dateLabel] = [];
@@ -63,15 +92,15 @@ export class NotificationDrawerComponent {
         this.groupKeys = Object.keys(groups); // Mantém a ordem dos grupos
     }
 
-    protected readonly SharedState = SharedState;
-
-    constructor(protected router: Router,) {
-
-    }
-
     async onDrawerChange(open: boolean) {
-        await this.loadNotifications();
         SharedState.showNotificationDrawer$.next(open);
+        if (!open) return;
+
+        this.fcmService.notificationStatus$.subscribe(notificationStatus => {
+            this.notificationStatus = notificationStatus;
+        });
+
+        await this.loadNotifications();
     }
 
     async openNotification(notification: any) {
@@ -98,23 +127,65 @@ export class NotificationDrawerComponent {
 
     getIconBg(type: string) {
         switch (type) {
-            case 'ERROR': return 'bg-red-100 dark:bg-red-900/30';
-            case 'ALERT': return 'bg-orange-100 dark:bg-orange-900/30';
-            case 'ALERT_BANNER': return 'bg-red-100 dark:bg-red-900/30';
-            case 'SUCCESS': return 'bg-green-100 dark:bg-green-900/30';
-            default: return 'bg-blue-100 dark:bg-blue-900/30';
+            case 'ERROR':
+                return 'bg-red-100 dark:bg-red-900/30';
+            case 'ALERT':
+                return 'bg-orange-100 dark:bg-orange-900/30';
+            case 'ALERT_BANNER':
+                return 'bg-red-100 dark:bg-red-900/30';
+            case 'SUCCESS':
+                return 'bg-green-100 dark:bg-green-900/30';
+            default:
+                return 'bg-blue-100 dark:bg-blue-900/30';
         }
     }
 
     getIconClass(type: string) {
         switch (type) {
-            case 'ERROR': return 'pi pi-times text-red-600';
-            case 'ALERT': return 'pi pi-exclamation-triangle text-orange-600';
-            case 'ALERT_BANNER': return 'pi pi-exclamation-triangle text-red-600';
-            case 'SUCCESS': return 'pi pi-check text-green-600';
-            default: return 'pi pi-info-circle text-blue-600';
+            case 'ERROR':
+                return 'pi pi-times text-red-600';
+            case 'ALERT':
+                return 'pi pi-exclamation-triangle text-orange-600';
+            case 'ALERT_BANNER':
+                return 'pi pi-exclamation-triangle text-red-600';
+            case 'SUCCESS':
+                return 'pi pi-check text-green-600';
+            default:
+                return 'pi pi-info-circle text-blue-600';
         }
     }
 
+    getIcon(status: string): string {
+        switch (status) {
+            case 'default':
+                return 'pi pi-bell text-blue-500';
+            case 'denied':
+                return 'pi pi-bell-slash text-orange-500';
+            default:
+                return 'pi pi-info-circle text-blue-500';
+        }
+    }
 
+    async onButtonClick() {
+        if (this.notificationStatus === 'denied') {
+            this.openNotificationGuide();
+        } else {
+            await this.fcmService.getPermission(this.authService.getUser().getRoles());
+        }
+    }
+
+    openNotificationGuide() {
+        void this.onDrawerChange(false);
+        this.embeddedDocTitle = 'Ativando as Notificações';
+        this.embeddedDocDescription = 'Guia para permitir notificações no navegador e receber alertas operacionais do Lumos.';
+        this.embeddedDocUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.notificationGuideUrl);
+        this.embeddedDocOpen = true;
+    }
+
+    closeEmbeddedDoc() {
+        this.embeddedDocOpen = false;
+        this.embeddedDocTitle = '';
+        this.embeddedDocDescription = '';
+        this.embeddedDocUrl = null;
+    }
 }

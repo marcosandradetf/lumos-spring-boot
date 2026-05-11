@@ -14,9 +14,10 @@ import {LoadingOverlayComponent} from '../../shared/components/loading-overlay/l
 import {ZXingScannerModule} from '@zxing/ngx-scanner';
 import {BarcodeFormat} from '@zxing/library';
 import {QRCodeModule} from 'angularx-qrcode';
-import {ActivatedRoute, Router} from '@angular/router';
+import {ActivatedRoute, Router, RouterLink} from '@angular/router';
 import {AuthService} from '../../core/auth/auth.service';
 import {SharedState} from '../../core/service/shared-state';
+import {ButtonBackComponent} from '../../shared/components/button-back/button-back.component';
 
 @Component({
     selector: 'app-material-form',
@@ -32,6 +33,8 @@ import {SharedState} from '../../core/service/shared-state';
         LoadingOverlayComponent,
         ZXingScannerModule,
         QRCodeModule,
+        RouterLink,
+        ButtonBackComponent,
     ],
     templateUrl: './material-form.component.html',
     styleUrl: './material-form.component.scss'
@@ -48,6 +51,14 @@ export class MaterialFormComponent implements OnInit {
         BarcodeFormat.ITF
     ];
 
+    origin: {
+        label: string,
+        data: any,
+        route: string,
+        query: any,
+        attribute: string,
+    } | null = null;
+
     constructor(private fb: FormBuilder,
                 protected utils: UtilsService,
                 protected router: Router,
@@ -57,6 +68,11 @@ export class MaterialFormComponent implements OnInit {
                 private route: ActivatedRoute,
                 private authService: AuthService,
     ) {
+        const navigation = this.router.getCurrentNavigation();
+        if (navigation?.extras.state) {
+            this.origin = navigation.extras.state['origin'];
+            console.log(this.origin)
+        }
     }
 
     ngOnInit(): void {
@@ -92,7 +108,7 @@ export class MaterialFormComponent implements OnInit {
             this.generateMaterialName();
         });
 
-        this.title.setTitle('Cadastrar Material');
+        this.title.setTitle('Lumos IP - Cadastrar Material');
 
 
         this.stockService.findAllTypeSubtype().subscribe(types => {
@@ -364,7 +380,7 @@ export class MaterialFormComponent implements OnInit {
         this.qrExpired = false;
         this.authService.getQrcodeToken().subscribe({
             next: (data) => {
-                this.endpoint = `https://lumos.thryon.com.br/auth/login?token=${data.token}&redirect=/estoque/cadastrar-material`;
+                this.endpoint = `https://app.lumosip.com.br/auth/login?token=${data.token}&redirect=/estoque/cadastrar-material`;
                 console.log(this.endpoint);
                 let expiresIn = data.expiresIn--;
                 const interval = setInterval(() => {
@@ -389,4 +405,5 @@ export class MaterialFormComponent implements OnInit {
         })
         this.showQrCode = true
     }
+
 }

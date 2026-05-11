@@ -98,4 +98,11 @@ class ContractController(
     fun getItemsForMob(): ResponseEntity<List<PContractReferenceItemDTO>> {
         return contractService.getItemsForMob()
     }
+
+    @GetMapping("/contracts/reference-items-management/check-if-pending-link")
+    fun checkIfHasPendingLink(): Map<String, Boolean> {
+        return contractReferenceItemManagementService.checkIfHasPendingLink(
+            Utils.getCurrentTenantId()
+        )
+    }
 }

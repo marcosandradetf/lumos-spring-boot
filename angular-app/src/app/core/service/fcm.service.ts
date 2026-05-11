@@ -23,13 +23,28 @@ export class FcmService {
     private utils = inject(UtilsService);
     notifications$ = this.notificationCount.asObservable();
 
-    private hasNotifications = new BehaviorSubject<boolean>(true);
-    hasNotifications$ = this.hasNotifications.asObservable()
+    private notificationStatus = new BehaviorSubject<'granted' | 'denied' | 'default'>("default");
+    notificationStatus$ = this.notificationStatus.asObservable()
 
     ref: DynamicDialogRef | undefined;
     private tenant = localStorage.getItem('tenant') ?? '';
 
     constructor() {
+        switch (Notification.permission) {
+            case 'granted':
+                this.notificationStatus.next('granted');
+                break;
+
+            case 'denied':
+                this.notificationStatus.next('denied');
+                break;
+
+            case 'default':
+            default:
+                this.notificationStatus.next('default');
+                break;
+        }
+
         void this.zone.run(async () => {
             await this.syncCountFromDB();
         });
@@ -240,26 +255,22 @@ export class FcmService {
     }
 
     async getPermission(roles: string[]) {
-        switch (Notification.permission) {
+        switch (this.notificationStatus.getValue()) {
             case 'granted':
                 await this.subscribeFCMToken(roles);
-                this.hasNotifications.next(true);
                 break;
 
             case 'denied':
-                this.hasNotifications.next(false);
                 break;
 
             case 'default':
             default:
-                console.info('Permissão de notificações ainda não respondida.');
                 const permission = await Notification.requestPermission();
+                this.notificationStatus.next(permission);
                 if (permission === 'granted') {
                     await this.subscribeFCMToken(roles);
-                    this.hasNotifications.next(true);
                 } else {
                     console.warn('Permissão de notificações não concedida.');
-                    this.hasNotifications.next(false);
                 }
                 break;
         }
@@ -273,7 +284,6 @@ export class FcmService {
             if (token) this.subscribeOnTopic(token, roles);
         } catch (err) {
             console.error('Erro ao pegar token FCM:', err);
-            this.hasNotifications.next(false);
         }
     }
 
@@ -417,9 +427,5 @@ export class FcmService {
             console.error("Erro ao buscar histórico:", error);
             return null;
         }
-    }
-
-    setPermission(b: boolean) {
-        this.hasNotifications.next(b);
     }
 }

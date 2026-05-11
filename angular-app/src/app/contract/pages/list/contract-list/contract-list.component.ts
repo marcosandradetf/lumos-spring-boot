@@ -34,6 +34,7 @@ import {InputNumber} from 'primeng/inputnumber';
 import {Popover} from 'primeng/popover';
 import {LoadingOverlayComponent} from '../../../../shared/components/loading-overlay/loading-overlay.component';
 import {GuideStateComponent} from '../../../../guide-state/guide-state.component';
+import {forkJoin} from 'rxjs';
 
 @Component({
     selector: 'app-contract-list',
@@ -151,26 +152,45 @@ export class ContractListComponent implements OnInit {
         private titleService: Title,
         private minioService: FileService
     ) {
-    }
 
-    ngOnInit() {
-        this.loading = true;
         this.route.queryParams.subscribe(params => {
             this.reason = params['for'];
 
             if (this.reason.toLowerCase() === 'view') {
-                this.titleService.setTitle("Visualizar Contratos");
+                this.titleService.setTitle("Lumos IP - Visualizar Contratos");
                 SharedState.setCurrentPath(['Contratos', 'Visualizar Contratos']);
             } else if (this.reason.toLowerCase() === 'execution') {
-                this.titleService.setTitle("Selecionar contrato");
-                SharedState.setCurrentPath(['Ordem de serviço', 'Selecionar contrato']);
+                this.titleService.setTitle("Lumos IP - Gerar Ordem de Serviço");
+                SharedState.setCurrentPath(['Ordens de serviço', 'Nova ordem de serviço']);
             } else {
-                this.titleService.setTitle("Importar Pré-Medição");
+                this.titleService.setTitle("Lumos IP - Importar Pré-Medição");
                 SharedState.setCurrentPath(['Importar Pré-Medição', 'Selecionar contrato']);
             }
         });
+    }
 
-        this.getContracts();
+    ngOnInit() {
+        this.loading = true;
+
+        forkJoin({
+            contracts: this.contractService.getAllContracts(this.filters),
+            checkIfHasPendingLink: this.contractService.checkIfHasPendingLink()
+        }).subscribe({
+            next: ({contracts, checkIfHasPendingLink}) => {
+                this.contracts = contracts;
+                this.contractsBackup = contracts;
+
+                this.loading = false;
+                if (this.contracts.length > 0) this.showMenu = false;
+                else this.utils.showMessage("Não existe nenhum contrato para os filtros selecionados", "info", "");
+
+                console.log(checkIfHasPendingLink);
+            },
+            error: err => {
+                Utils.handleHttpError(err, this.router);
+                this.loading = false;
+            }
+        });
 
     }
 
@@ -181,7 +201,7 @@ export class ContractListComponent implements OnInit {
                 this.contractsBackup = c;
             },
             error: err => {
-                this.utils.showMessage(err.error.message ?? err.error.error ?? err.error, 'error');
+                Utils.handleHttpError(err, this.router);
                 this.loading = false;
             },
             complete: () => {

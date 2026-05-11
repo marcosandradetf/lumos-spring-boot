@@ -198,4 +198,39 @@ object Utils {
         return if (digits.length == 14) digits else null
     }
 
+    fun isValidCNPJ(cnpj: String): Boolean {
+        // Remove tudo que não for número
+        val cleanCnpj = cnpj.replace("\\D".toRegex(), "")
+
+        // Deve ter 14 dígitos
+        if (cleanCnpj.length != 14) return false
+
+        // Evita sequências inválidas (ex: 00000000000000)
+        if (cleanCnpj.all { it == cleanCnpj[0] }) return false
+
+        // Pesos para cálculo
+        val weightsFirst = intArrayOf(5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2)
+        val weightsSecond = intArrayOf(6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2)
+
+        // Calcula primeiro dígito verificador
+        val sumFirst = weightsFirst.mapIndexed { i, weight ->
+            Character.getNumericValue(cleanCnpj[i]) * weight
+        }.sum()
+
+        val modFirst = sumFirst % 11
+        val firstDigit = if (modFirst < 2) 0 else 11 - modFirst
+
+        // Calcula segundo dígito verificador
+        val sumSecond = weightsSecond.mapIndexed { i, weight ->
+            Character.getNumericValue(cleanCnpj[i]) * weight
+        }.sum()
+
+        val modSecond = sumSecond % 11
+        val secondDigit = if (modSecond < 2) 0 else 11 - modSecond
+
+        // Verifica se bate com os dígitos finais
+        return cleanCnpj[12].digitToInt() == firstDigit &&
+                cleanCnpj[13].digitToInt() == secondDigit
+    }
+
 }

@@ -53,7 +53,7 @@ export class ImportMaterialsComponent {
               private materialService: MaterialService,
               private title: Title, protected router: Router,
               private fileServerService: FileServerService) {
-    this.title.setTitle('Importar Materiais');
+    this.title.setTitle('Lumos IP - Importar materiais');
 
   }
 

@@ -6,6 +6,16 @@ module.exports = {
     "./src/**/*.{html,ts}",
   ],
   theme: {
+    fontSize: {
+      xs: ['12px', { lineHeight: '16px' }],
+      sm: ['13px', { lineHeight: '18px' }],
+      base: ['14.5px', { lineHeight: '20px' }],
+      md: ['15.5px', { lineHeight: '22px' }],
+      lg: ['17px', { lineHeight: '24px' }],
+      xl: ['19px', { lineHeight: '26px' }],
+      '2xl': ['22px', { lineHeight: '28px' }],
+      '3xl': ['26px', { lineHeight: '32px' }],
+    },
     extend: {
       fontFamily: {
         sans: [

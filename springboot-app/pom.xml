@@ -1,30 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.3.4</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <relativePath /> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.lumos</groupId>
     <artifactId>lumos-spring</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>lumos-spring</name>
     <description>lumos-spring</description>
-    <url/>
+    <url />
     <licenses>
-        <license/>
+        <license />
     </licenses>
     <developers>
-        <developer/>
+        <developer />
     </developers>
     <scm>
-        <connection/>
-        <developerConnection/>
-        <tag/>
-        <url/>
+        <connection />
+        <developerConnection />
+        <tag />
+        <url />
     </scm>
     <properties>
         <java.version>21</java.version>
@@ -141,7 +142,8 @@
         <!--            <scope>test</scope>-->
         <!--        </dependency>-->
 
-        <!-- Gera um índice de beans em tempo de build, reduzindo drasticamente o tempo de inicialização -->
+        <!-- Gera um índice de beans em tempo de build, reduzindo drasticamente o tempo de
+        inicialização -->
         <!--        <dependency>-->
         <!--            <groupId>org.springframework</groupId>-->
         <!--            <artifactId>spring-context-indexer</artifactId>-->
@@ -174,7 +176,9 @@
     </dependencies>
 
     <build>
-        <!--        <testSourceDirectory>target/generated-test-sources/test-annotations</testSourceDirectory>-->
+
+        <!--
+        <testSourceDirectory>target/generated-test-sources/test-annotations</testSourceDirectory>-->
         <plugins>
             <!-- Kotlin Compiler Plugin -->
             <plugin>
@@ -200,6 +204,12 @@
                 <configuration>
                     <jvmTarget>21</jvmTarget>
                     <compilerExecutionStrategy>in-process</compilerExecutionStrategy>
+
+                    <sourceDirs>
+                        <sourceDir>${project.basedir}/src/main/kotlin</sourceDir>
+                        <sourceDir>${project.basedir}/src/main/java</sourceDir>
+                    </sourceDirs>
+
                     <compilerPlugins>
                         <plugin>spring</plugin>
                     </compilerPlugins>
@@ -257,7 +267,7 @@
                 <configuration>
                     <source>21</source>
                     <target>21</target>
-<!--                    <compilerArgs>&#45;&#45;enable-preview</compilerArgs>-->
+                    <!--                    <compilerArgs>&#45;&#45;enable-preview</compilerArgs>-->
                 </configuration>
             </plugin>
         </plugins>

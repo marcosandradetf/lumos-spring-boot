@@ -1,17 +1,25 @@
 package com.lumos.lumosspring.authentication.model;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.ReadOnlyProperty;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.domain.Persistable;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.util.UUID;
 
 @Table
-public class Tenant {
+public class Tenant implements Persistable<UUID> {
     @Id
-    UUID tenantId;
-    Long tenantNumber;
-    String description;
-    String bucket;
+    private UUID tenantId;
+    @ReadOnlyProperty
+    private Long tenantNumber;
+    private String description;
+    private String bucket;
+
+    @Transient
+    private boolean isNewEntry = false;
+
 
     public UUID getTenantId() {
         return tenantId;
@@ -43,5 +51,23 @@ public class Tenant {
 
     public void setBucket(String bucket) {
         this.bucket = bucket;
+    }
+
+    public boolean isNewEntry() {
+        return isNewEntry;
+    }
+
+    public void setNewEntry(boolean newEntry) {
+        isNewEntry = newEntry;
+    }
+
+    @Override
+    public UUID getId() {
+        return tenantId;
+    }
+
+    @Override
+    public boolean isNew() {
+        return isNewEntry;
     }
 }

@@ -119,7 +119,7 @@ export class MapComponent implements AfterViewInit, OnDestroy, OnInit {
     }
 
     ngOnInit(): void {
-        this.titleService.setTitle('Mapa de execuções');
+        this.titleService.setTitle('Lumos IP - Mapa de execuções');
         SharedState.setCurrentPath(['Dashboard', 'Mapa de execuções']);
         this.loading = true;
         window.addEventListener('open-photo', (event: any) => {

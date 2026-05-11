@@ -7,11 +7,13 @@ import com.lumos.lumosspring.billing.service.SubscriptionLifecycleService
 import com.lumos.lumosspring.lead.model.LeadRequest
 import com.lumos.lumosspring.lead.repository.LeadRequestRepository
 import com.lumos.lumosspring.notifications.service.EmailService
+import com.lumos.lumosspring.scheduler.AsyncTenantContext
 import com.lumos.lumosspring.user.model.AppUser
 import com.lumos.lumosspring.user.model.Role
 import com.lumos.lumosspring.user.model.UserStatus
 import com.lumos.lumosspring.user.repository.UserRepository
 import com.lumos.lumosspring.util.ErrorResponse
+import com.lumos.lumosspring.util.Utils
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -43,68 +45,89 @@ class LeadService(
     /**
      * Cria tenant, usuário admin, subscription (trial ou plano pago ACTIVE) e devolve o mesmo payload do login (access + cookie refresh).
      *
-     * @param planName catálogo em [com.lumos.lumosspring.plan.controller.PublicPlanCatalogController] (ex.: Essencial, Profissional, Enterprise)
+     * @param operationFocus catálogo em [com.lumos.lumosspring.plan.controller.PublicPlanCatalogController] (ex.: Essencial, Profissional, Enterprise)
      * @param useTrial se true, [SubscriptionStatus.TRIAL] com 14 dias; se false, [SubscriptionStatus.ACTIVE] sem trial (checkout real virá depois)
      */
     @Transactional
     fun startFreeTest(
+        useTrial: Boolean = true,
         firstName: String,
         lastName: String,
+        phone: String = "",
         email: String,
+        company: String = "",
+        cnpj: String,
+        teamSize: String = "",
+        operationFocus: String,
+        currentMoment: String,
+        message: String? = null,
         password: String,
         response: HttpServletResponse,
-        phone: String = "",
-        company: String = "",
-        teamSize: String = "",
-        message: String? = null,
-        planName: String = "Profissional",
-        useTrial: Boolean = true,
         isMobile: Boolean = false,
     ): ResponseEntity<*> {
         val emailNorm = email.trim().lowercase()
+        val cnpjNorm = cnpj.replace("\\D".toRegex(), "")
         if (emailNorm.isBlank()) {
             return ResponseEntity.badRequest().body(ErrorResponse("E-mail é obrigatório."))
         }
         if (password.length < MIN_PASSWORD_LENGTH) {
-            return ResponseEntity.badRequest().body(ErrorResponse("Senha deve ter pelo menos $MIN_PASSWORD_LENGTH caracteres."))
+            return ResponseEntity.badRequest()
+                .body(ErrorResponse("Senha deve ter pelo menos $MIN_PASSWORD_LENGTH caracteres."))
         }
-        if (userRepository.findByUsernameIgnoreCase(emailNorm).isPresent) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(ErrorResponse("Este e-mail já está cadastrado. Faça login ou recupere a senha."))
+
+        val companyArray = company.split(" ")
+        if (companyArray.isEmpty()) {
+            return ResponseEntity.badRequest().body(ErrorResponse("Empresa é obrigatório."))
+        }
+        val usernameNorm = "admin-${companyArray[0].trim().lowercase()}"
+
+        if (!Utils.isValidCNPJ(cnpj)) {
+            return ResponseEntity.badRequest().body(ErrorResponse("CNPJ inválido."))
+        }
+
+        if (userRepository.findByUsernameOrCpfCnpjIgnoreCase(
+                usernameNorm,
+                cnpjNorm
+            ).isPresent
+        ) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse("Este CNPJ ou esse Username já está cadastrado. Faça login ou recupere a senha."))
         }
 
         val newTenantId = UUID.randomUUID()
         val tenant = Tenant().apply {
-            setTenantId(newTenantId)
-            setDescription(
-                listOfNotNull(company.ifBlank { null }, "Trial").joinToString(" — ").ifBlank { "Lumos Trial" },
-            )
-            setBucket("tenant-${newTenantId.toString().replace("-", "")}")
+            this.tenantId = newTenantId
+            this.description = listOfNotNull(company.ifBlank { null }, "Trial").joinToString(" — ").ifBlank { "Lumos Trial" }
+            this.bucket = "lumos"
+            this.isNewEntry = true
         }
         tenantRepository.save(tenant)
+        AsyncTenantContext.setTenant(newTenantId)
 
-        val cpf = generateUniqueCpf()
         val newUserId = UUID.randomUUID()
-        val now = OffsetDateTime.now()
         val user = AppUser().apply {
-            setUserId(newUserId)
+            this.userId = newUserId
             isNewEntry = true
-            username = emailNorm
+            username = usernameNorm
             this.password = passwordEncoder.encode(password)
             name = firstName.trim()
             this.lastName = lastName.trim()
             this.email = emailNorm
-            this.cpf = cpf
+            this.cpfCnpj = cnpjNorm
             status = UserStatus.ACTIVE
             mustChangePassword = false
             support = false
             tenantId = newTenantId
-            createdAt = now
+            createdAt = OffsetDateTime.now()
+            phoneNumber = phone.filter { it.isDigit() }
+            mustChangePassword = false
+            activationAttemptCount = 0
         }
-        val saved = userRepository.save(user)
+        userRepository.save(user)
 
-        insertUserRole(saved.getUserId(), Role.Values.ADMIN.roleId)
+        insertUserRole(newUserId, Role.Values.ADMIN.roleId)
 
-        val plan = planName.trim().ifBlank { "Profissional" }
+        val plan = operationFocus.trim().ifBlank { "Profissional" }
         if (useTrial) {
             subscriptionLifecycleService.createTrialSubscription(newTenantId, plan)
         } else {
@@ -119,9 +142,13 @@ class LeadService(
             company = company,
             teamSize = teamSize,
             message = message,
+            cnpj = cnpj,
+            operationFocus = operationFocus,
+            currentMoment = currentMoment,
+            useTrial = useTrial,
         )
 
-        return tokenService.issueTokensForNewUser(saved.getUserId(), response, isMobile)
+        return tokenService.issueTokensForNewUser(newUserId, response, isMobile)
     }
 
     private fun insertUserRole(userId: UUID, roleId: Long) {
@@ -137,35 +164,6 @@ class LeadService(
         )
     }
 
-    /**
-     * CPF sintético válido e único (login usa e-mail como username; CPF não é exibido no trial).
-     */
-    private fun generateUniqueCpf(): String {
-        repeat(80) {
-            val cpf = generateRandomValidCpf()
-            if (userRepository.findByCpfIgnoreCase(cpf).isEmpty) {
-                return cpf
-            }
-        }
-        throw IllegalStateException("Não foi possível gerar CPF único para o cadastro")
-    }
-
-    private fun generateRandomValidCpf(): String {
-        val r = ThreadLocalRandom.current()
-        while (true) {
-            val d = IntArray(9) { r.nextInt(10) }
-            if (d.all { it == d[0] }) continue
-            var s1 = 0
-            for (i in 0 until 9) s1 += d[i] * (10 - i)
-            val dv1 = if (s1 % 11 < 2) 0 else 11 - (s1 % 11)
-            var s2 = 0
-            for (i in 0 until 9) s2 += d[i] * (11 - i)
-            s2 += dv1 * 2
-            val dv2 = if (s2 % 11 < 2) 0 else 11 - (s2 % 11)
-            return d.joinToString("") + dv1 + dv2
-        }
-    }
-
     private fun saveLeadAndNotifyComercial(
         firstName: String,
         lastName: String,
@@ -174,6 +172,10 @@ class LeadService(
         company: String,
         teamSize: String,
         message: String?,
+        cnpj: String,
+        operationFocus: String,
+        currentMoment: String,
+        useTrial: Boolean
     ) {
         val leadRequest = LeadRequest().apply {
             type = "FREE_TEST_SIGNUP"
@@ -190,23 +192,89 @@ class LeadService(
         leadRequestRepository.save(leadRequest)
 
         try {
-            val subject = "🚀 Novo Teste Grátis (conta criada): ${company.ifBlank { email }}"
+            val subject = "🚀 Novo Teste Grátis: ${company.ifBlank { email }}"
+
+            // Filtra apenas números para o link do WhatsApp
+            val cleanPhone = phone.filter { it.isDigit() }
+
+            // Mensagens pré-definidas
+            val waText = "Olá, $firstName! Sou do Lumos IP. Vi que você iniciou seu primeiro acesso para a $company. Parabéns por modernizar sua operação! 🚀 Gostaria de agendar um treinamento rápido de 15 min para configurarmos seus primeiros contratos juntos?"
+            val emailMsg = "Olá, $firstName, tudo bem?\n\nNotei que você ativou o teste gratuito do Lumos IP para a $company. Nosso objetivo é garantir que você tenha visibilidade total da sua operação de campo.\n\nEstou à disposição para um treinamento rápido. Qual o melhor horário para conversarmos?"
+
+            // Encoders
+            val encodedWa = java.net.URLEncoder.encode(waText, "UTF-8")
+            val encodedEmailSubject = java.net.URLEncoder.encode("Boas-vindas ao Lumos IP - $company", "UTF-8")
+            val encodedEmailBody = java.net.URLEncoder.encode(emailMsg, "UTF-8")
+
+            val waLink = "https://wa.me/$cleanPhone?text=$encodedWa"
+            val mailtoLink = "mailto:$email?subject=$encodedEmailSubject&body=$encodedEmailBody"
+
             val emailBody = """
-            <div style="font-family: sans-serif; max-width: 600px; color: #18181b;">
-                <h2 style="color: #10b981;">Conta trial criada</h2>
-                <p>Um usuário acabou de criar conta e já recebeu acesso ao sistema.</p>
-                <div style="background: #f4f4f5; padding: 20px; border-radius: 12px; border: 1px solid #e4e4e7;">
-                    <p><strong>Nome:</strong> $firstName $lastName</p>
-                    <p><strong>E-mail (login):</strong> <a href="mailto:$email">$email</a></p>
-                    <p><strong>Empresa:</strong> ${company.ifBlank { "—" }}</p>
-                    <p><strong>WhatsApp:</strong> ${phone.ifBlank { "—" }}</p>
-                    <p><strong>Time:</strong> ${teamSize.ifBlank { "—" }}</p>
+                <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; color: #1f2937; line-height: 1.5;">
+                    <div style="background-color: #10b981; padding: 20px; border-radius: 12px 12px 0 0; text-align: center;">
+                        <h2 style="color: white; margin: 0;">🚀 Nova Conta Criada</h2>
+                        <p style="color: #ecfdf5; margin: 5px 0 0 0;">O trial para a <strong>${company.ifBlank { "Empresa não informada" }}</strong> já está ativo.</p>
+                    </div>
+                    
+                    <div style="background: #ffffff; padding: 25px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                        
+                        <h4 style="color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; font-size: 12px; margin-bottom: 15px;">Ações de Conversão</h4>
+                        <div style="margin-bottom: 30px; display: flex; gap: 10px;">
+                            <a href="$waLink" style="background-color: #25d366; color: white; padding: 12px 20px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 14px;">
+                                🟢 WhatsApp
+                            </a>
+                            &nbsp;
+                            <a href="$mailtoLink" style="background-color: #3b82f6; color: white; padding: 12px 20px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 14px;">
+                                🔵 Enviar E-mail
+                            </a>
+                        </div>
+            
+                        <hr style="border: 0; border-top: 1px solid #f3f4f6; margin-bottom: 25px;">
+            
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding-bottom: 20px;">
+                                    <h4 style="color: #6b7280; text-transform: uppercase; font-size: 12px; margin: 0 0 5px 0;">Responsável</h4>
+                                    <p style="margin: 0; font-weight: 600;">$firstName $lastName</p>
+                                    <p style="margin: 2px 0 0 0; font-size: 14px; color: #4b5563;">$email</p>
+                                </td>
+                                <td style="padding-bottom: 20px;">
+                                    <h4 style="color: #6b7280; text-transform: uppercase; font-size: 12px; margin: 0 0 5px 0;">CNPJ</h4>
+                                    <p style="margin: 0; font-weight: 600;">${cnpj.ifBlank { "—" }}</p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding-bottom: 20px;">
+                                    <h4 style="color: #6b7280; text-transform: uppercase; font-size: 12px; margin: 0 0 5px 0;">Operação</h4>
+                                    <p style="margin: 0; font-weight: 600;">Plano: ${operationFocus.ifBlank { "—" }}</p>
+                                </td>
+                                <td style="padding-bottom: 20px;">
+                                    <h4 style="color: #6b7280; text-transform: uppercase; font-size: 12px; margin: 0 0 5px 0;">Equipe</h4>
+                                    <p style="margin: 0; font-weight: 600;">${teamSize.ifBlank { "—" }} colab.</p>
+                                </td>
+                            </tr>
+                        </table>
+            
+                        <div style="background-color: #f9fafb; padding: 15px; border-radius: 8px; border-left: 4px solid #10b981;">
+                            <h4 style="margin: 0 0 5px 0; font-size: 12px; color: #6b7280; text-transform: uppercase;">Momento da Empresa</h4>
+                            <p style="margin: 0; font-size: 14px;">$currentMoment</p>
+                        </div>
+            
+                        <div style="margin-top: 20px;">
+                            <h4 style="margin: 0 0 5px 0; font-size: 12px; color: #6b7280; text-transform: uppercase;">Mensagem Adicional</h4>
+                            <p style="margin: 0; font-size: 14px; color: #4b5563; font-style: italic;">"${(message ?: "Nenhuma mensagem enviada.").ifBlank { "Cadastro self-service." }}"</p>
+                        </div>
+                    </div>
+                    
+                    <p style="text-align: center; font-size: 12px; color: #9ca3af; margin-top: 20px;">
+                        Este é um e-mail automático gerado pelo sistema <strong>Lumos IP</strong>.
+                    </p>
                 </div>
-            </div>
             """.trimIndent()
+
             emailService.sendEmail("comercial@lumosip.com.br", subject, emailBody)
         } catch (e: Exception) {
-            println("Erro ao enviar e-mail comercial (trial cadastrado): ${e.message}")
+            println("Erro ao processar e-mail comercial: ${e.message}")
         }
     }
 
@@ -250,7 +318,12 @@ class LeadService(
                     <p><strong>Cliente:</strong> $firstName $lastName</p>
                     <p><strong>Empresa:</strong> $company</p>
                     <p><strong>E-mail:</strong> <a href="mailto:$email">$email</a></p>
-                    <p><strong>WhatsApp:</strong> <a href="https://wa.me/${phone.replace(Regex("[^0-9]"), "")}">$phone</a></p>
+                    <p><strong>WhatsApp:</strong> <a href="https://wa.me/${
+                phone.replace(
+                    Regex("[^0-9]"),
+                    ""
+                )
+            }">$phone</a></p>
                     <p><strong>Tamanho do Time:</strong> $teamSize</p>
                     <hr style="border: 0; border-top: 1px solid #d4d4d8; margin: 15px 0;">
                     <p><strong>Mensagem do cliente:</strong><br>${message ?: "Nenhuma"}</p>

@@ -87,16 +87,6 @@ class MaterialStockViewService(
     }
 
     fun findMaterialsByContractReference(contractReferenceItemId: Long, teamId: Long): ResponseEntity<Any> {
-//        val materials = if (type != "NULL" && linking != "NULL") {
-//            materialStockViewRepository.findAllByLinkingAndType(
-//                linking.lowercase(),
-//                type.lowercase(),
-//                teamId
-//            )
-//        } else {
-//            materialStockViewRepository.findAllByType(type.lowercase(), teamId)
-//        }
-
         val materials = materialStockViewRepository.findMaterialsByContractReference(contractReferenceItemId, teamId)
 
         return ResponseEntity.ok(materials);

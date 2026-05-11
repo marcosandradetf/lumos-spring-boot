@@ -1,19 +1,27 @@
-import {Component, EventEmitter, Input, OnChanges, Output, SimpleChanges} from '@angular/core';
+import {
+    Component,
+    EventEmitter,
+    Input,
+    OnChanges,
+    Output,
+    SimpleChanges
+} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {ButtonDirective} from 'primeng/button';
 import {ListboxModule} from 'primeng/listbox';
 import {NgClass, NgForOf, NgIf} from '@angular/common';
-import {PrimeTemplate} from 'primeng/api';
+import {FilterService, PrimeTemplate} from 'primeng/api';
 import {Tag} from 'primeng/tag';
 import {Tooltip} from 'primeng/tooltip';
 import type {
     EditableLinkedReferenceItem,
     MaterialOption
 } from '../contract-reference-item-links.component';
+import {RouterLink} from '@angular/router';
 
-interface MaterialRowSelection {
-    materialId: number;
-    selectedItemIds: number[];
+interface ItemMaterialSelection {
+    itemId: number;
+    selectedMaterialIds: number[];
 }
 
 @Component({
@@ -26,79 +34,111 @@ interface MaterialRowSelection {
         NgForOf,
         NgIf,
         PrimeTemplate,
-        Tag,
         Tooltip,
-        NgClass
+        NgClass,
+        RouterLink
     ],
   templateUrl: './contract-reference-material-links.component.html',
   styleUrl: './contract-reference-material-links.component.scss'
 })
 export class ContractReferenceMaterialLinksComponent implements OnChanges {
+    private static readonly CUSTOM_FILTER_MODE = 'containsAllTermsIgnoreAccent';
+
     @Input() items: EditableLinkedReferenceItem[] = [];
     @Input() materials: MaterialOption[] = [];
     @Input() loading: boolean = false;
     @Input() saving: boolean = false;
 
-    @Output() materialItemsChange = new EventEmitter<MaterialRowSelection>();
+    @Output() itemMaterialsChange = new EventEmitter<ItemMaterialSelection>();
     @Output() saveRequested = new EventEmitter<void>();
     @Output() createMaterialRequested = new EventEmitter<void>();
 
-    materialSelections: Record<number, number[]> = {};
-    activeMaterialId: number | null = null;
+    itemFilters: Record<number, string> = {};
+    customFilterMatchMode: string = ContractReferenceMaterialLinksComponent.CUSTOM_FILTER_MODE;
+
+    itemSelections: Record<number, number[]> = {};
+    activeItemId: number | null = null;
+
+    constructor(private readonly filterService: FilterService) {
+        this.filterService.register(
+            ContractReferenceMaterialLinksComponent.CUSTOM_FILTER_MODE,
+            (value: unknown, filter: unknown): boolean => this.containsAllTermsIgnoreAccent(value, filter)
+        );
+    }
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes['items'] || changes['materials']) {
-            this.materialSelections = this.materials.reduce<Record<number, number[]>>((acc, material) => {
-                acc[material.materialId] = this.items
-                    .filter(item => item.materialLinks.some(link => link.materialId === material.materialId))
-                    .map(item => item.contractReferenceItemId);
+            this.itemSelections = this.items.reduce<Record<number, number[]>>((acc, item) => {
+                acc[item.contractReferenceItemId] = item.materialLinks.map(link => link.materialId);
                 return acc;
             }, {});
 
-            if (this.activeMaterialId !== null && !this.materials.some(material => material.materialId === this.activeMaterialId)) {
-                this.activeMaterialId = null;
+            if (this.activeItemId !== null && !this.items.some(item => item.contractReferenceItemId === this.activeItemId)) {
+                this.activeItemId = null;
             }
         }
     }
 
-    get linkedItemOptions(): EditableLinkedReferenceItem[] {
-        return this.items;
+    getLinkedMaterialsCount(itemId: number): number {
+        return this.itemSelections[itemId]?.length ?? 0;
     }
 
-    getLinkedItemsCount(materialId: number): number {
-        return this.materialSelections[materialId]?.length ?? 0;
-    }
-
-    getLinkedItemsLabel(materialId: number): string {
-        const count = this.getLinkedItemsCount(materialId);
+    getLinkedMaterialsLabel(itemId: number): string {
+        const count = this.getLinkedMaterialsCount(itemId);
         return count === 0
-            ? 'Nenhum item referencial vinculado'
-            : `${count} ${count === 1 ? 'item referencial vinculado' : 'itens referenciais vinculados'}`;
+            ? 'Nenhum material vinculado'
+            : `${count} ${count === 1 ? 'material vinculado' : 'materiais vinculados'}`;
     }
 
-    getStatusLabel(materialId: number): string {
-        return this.getLinkedItemsCount(materialId) > 0 ? 'Vinculado' : 'Sem vinculo';
+
+    toggleEditor(item: EditableLinkedReferenceItem): void {
+        const isClosing = this.activeItemId === item.contractReferenceItemId;
+
+        this.activeItemId = isClosing ? null : item.contractReferenceItemId;
+
+        if (!isClosing) {
+            this.itemFilters[item.contractReferenceItemId] = item.type ?? '';
+        } else {
+            this.itemFilters[item.contractReferenceItemId] = '';
+        }
     }
 
-    getStatusSeverity(materialId: number): 'success' | 'warn' {
-        return this.getLinkedItemsCount(materialId) > 0 ? 'success' : 'warn';
+    isEditing(itemId: number): boolean {
+        return this.activeItemId === itemId;
     }
 
-    toggleEditor(materialId: number): void {
-        this.activeMaterialId = this.activeMaterialId === materialId ? null : materialId;
+    trackByItemId(_: number, item: EditableLinkedReferenceItem): number {
+        return item.contractReferenceItemId;
     }
 
-    isEditing(materialId: number): boolean {
-        return this.activeMaterialId === materialId;
+    onSelectionChange(itemId: number, selectedMaterialIds: number[] | null): void {
+        const nextValue = selectedMaterialIds ?? [];
+        this.itemSelections[itemId] = nextValue;
+        this.itemMaterialsChange.emit({itemId, selectedMaterialIds: nextValue});
     }
 
-    trackByMaterialId(_: number, material: MaterialOption): number {
-        return material.materialId;
+    private containsAllTermsIgnoreAccent(value: unknown, filter: unknown): boolean {
+        const normalizedValue = this.normalizeForSearch(value);
+        const normalizedFilter = this.normalizeForSearch(filter);
+
+        if (!normalizedFilter) {
+            return true;
+        }
+
+        if (!normalizedValue) {
+            return false;
+        }
+
+        const terms = normalizedFilter.split(' ').filter(Boolean);
+        return terms.every(term => normalizedValue.includes(term));
     }
 
-    onSelectionChange(materialId: number, selectedItemIds: number[] | null): void {
-        const nextValue = selectedItemIds ?? [];
-        this.materialSelections[materialId] = nextValue;
-        this.materialItemsChange.emit({materialId, selectedItemIds: nextValue});
+    private normalizeForSearch(input: unknown): string {
+        return String(input ?? '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .trim()
+            .replace(/\s+/g, ' ');
     }
 }

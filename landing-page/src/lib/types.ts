@@ -17,6 +17,7 @@ export interface NavigationCTA {
   label: string;
   href: string;
   variant: 'primary' | 'secondary' | 'ghost';
+  id: string;
 }
 
 export interface HeaderNavigation {

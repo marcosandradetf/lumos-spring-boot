@@ -5,12 +5,13 @@ services:
     network_mode: host
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - /home/marcos/nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
     restart: always
 
 
   springboot-app:
     build: ./springboot-app
+    image: marcosdev1/lumos-backend:latest
     container_name: springboot-app
     network_mode: host
 
@@ -28,10 +29,11 @@ services:
       R2_BUCKET_NAME: ${R2_BUCKET_NAME}
       RESEND_API_KEY: ${RESEND_API_KEY}
       RESEND_WEBHOOK_SECRET: ${RESEND_WEBHOOK_SECRET}
+      RESEND_SEND_EMAIL_ENABLED: ${RESEND_SEND_EMAIL_ENABLED}
       JAVA_TOOL_OPTIONS: >
         -XX:+UseG1GC
         -XX:InitialRAMPercentage=30.0
-        -XX:MaxRAMPercentage=70.0
+        -XX:MaxRAMPercentage=60.0
         -XX:MaxMetaspaceSize=256m
         -XX:+ExitOnOutOfMemoryError
         --enable-preview
@@ -44,12 +46,13 @@ services:
   puppeteer-service:
     build:
       context: ./puppeteer-service
+    image: marcosdev1/puppeteer-service:latest
     container_name: puppeteer-service
     ports:
       - "127.0.0.1:3000:3000"
     environment:
       NODE_ENV: production
-    mem_limit: 400m
+    mem_limit: 800m
     restart: always
 
 networks:

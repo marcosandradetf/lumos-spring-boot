@@ -68,7 +68,14 @@ export class AccountDrawerComponent {
     }
 
     logout() {
-        this.authService.logout().subscribe();
+        this.authService.logout().subscribe({
+            next: () => {
+                localStorage.clear();
+            },
+            error: (err) => {
+                localStorage.clear();
+            },
+        });
         SharedState.showAccountDrawer$.next(false);
     }
 

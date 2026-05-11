@@ -1,0 +1,9 @@
+<button
+  type="button"
+  [routerLink]="origin?.route ?? '/'"
+  [state]="navigationState"
+  [queryParams]="origin?.query ?? {}"
+  class="flex items-center active:opacity-40 transition-opacity text-sm font-bold tracking-wider text-slate-700 dark:text-slate-300 uppercase">
+  <i class="pi pi-chevron-left font-bold text-lg mr-2"></i>
+  <span>{{ origin?.label ?? 'Voltar' }}</span>
+</button>

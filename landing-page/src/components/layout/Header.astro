@@ -68,6 +68,7 @@ const primaryCTA = headerNav.cta.find((cta) => cta.variant === 'primary');
           ghostCTAs.map((cta) => (
             <a
               href={cta.href}
+              id={cta.id}
               class="text-text-muted hover:text-text transition-colors text-sm font-medium rounded-md px-2 py-1 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background focus:outline-none"
             >
               {cta.label}
@@ -78,6 +79,7 @@ const primaryCTA = headerNav.cta.find((cta) => cta.variant === 'primary');
           primaryCTA && (
             <a
               href={primaryCTA.href}
+              id={primaryCTA.id}
               class="px-4 py-2 rounded-md bg-primary text-white text-sm font-medium hover:bg-primary-dark transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               {primaryCTA.label}
@@ -149,6 +151,7 @@ const primaryCTA = headerNav.cta.find((cta) => cta.variant === 'primary');
         ghostCTAs.map((cta) => (
           <a
             href={cta.href}
+            id={cta.id}
             class="block px-3 py-3 rounded-md text-text-muted hover:text-text hover:bg-background transition-colors text-base font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
           >
             {cta.label}
@@ -159,6 +162,7 @@ const primaryCTA = headerNav.cta.find((cta) => cta.variant === 'primary');
         primaryCTA && (
           <a
             href={primaryCTA.href}
+            id={primaryCTA.id}
             class="block px-3 py-3 rounded-md bg-primary text-white hover:bg-primary-dark transition-colors text-base font-medium text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
           >
             {primaryCTA.label}
@@ -177,6 +181,38 @@ const primaryCTA = headerNav.cta.find((cta) => cta.variant === 'primary');
   const mobileMenuBackdrop = document.getElementById('mobile-menu-backdrop');
   const menuIconOpen = document.getElementById('menu-icon-open');
   const menuIconClose = document.getElementById('menu-icon-close');
+  const accessToken = localStorage.getItem('accessToken');
+
+  const signInElements = document.querySelectorAll<HTMLElement>('#sign-in');
+  const freeTestElements = document.querySelectorAll<HTMLElement>('#free-test');
+
+  if (accessToken) {
+    const decoded = parseJwt(accessToken);
+
+    const nome = decoded.fullname.split(' ')[0];
+    const username = decoded.username;
+
+    signInElements.forEach((el) => {
+      el.innerHTML = `<strong>${username}</strong><br>${nome}`;
+    });
+
+    freeTestElements.forEach((el) => {
+      el.style.display = 'none';
+    });
+  }
+
+  function parseJwt(token: string) {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+
+    return JSON.parse(jsonPayload);
+  }
 
   function updateMenuPosition() {
     if (header && mobileMenuPanel) {

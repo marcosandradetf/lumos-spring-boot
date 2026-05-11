@@ -60,7 +60,7 @@ export class ImportPreMeasurementsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.title.setTitle('Importar Pré-Medições');
+    this.title.setTitle('Lumos IP - Importar Pré-Medições');
 
     const contractId = this.route.snapshot.paramMap.get('id');
     if (contractId == null) {

@@ -108,7 +108,7 @@ export class InstallationComponent implements OnInit {
 
     ngOnInit() {
         SharedState.setCurrentPath(['Execuções Realizadas', 'Relatórios de Instalações']);
-        this.title.setTitle('Relatórios de instalações');
+        this.title.setTitle('Lumos IP - Relatórios de instalações');
         const ua = navigator.userAgent;
         this.isApple = /iPad|iPhone|iPod|Mac/.test(ua);
         this.setDefaultDateRange();

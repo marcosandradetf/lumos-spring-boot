@@ -1,164 +1,192 @@
 <header>
   @if (authService.isLoggedIn$ | async) {
-  <div class="card">
-    <p-menubar styleClass="rounded-none border-none">
-      <ng-template #start>
-        <div class="flex items-center w-full min-w-0">
-          <div
-            *ngIf="!menuOpen"
-            (click)="toggleMenu()" [title]="menuOpen ? 'Recolher Menu' : 'Expandir Menu'" class="
-                  hidden md:block
-                  flex items-center justify-center
-                  rounded-lg
-                  p-1
-                  bg-gray-100 border border-gray-200
-                  dark:bg-zinc-800 dark:border-zinc-700
-                ">
-            <button type="button" class="
-                    flex items-center justify-center
-                    w-7 h-7
-                    rounded-md
-                    bg-white text-gray-600
-                    hover:bg-gray-50 hover:text-gray-900
-                    dark:bg-zinc-900 dark:text-zinc-300
-                    dark:hover:bg-zinc-700 dark:hover:text-white
-                    transition-colors transition-transform duration-200
-                    focus:outline-none focus:ring-2 focus:ring-indigo-500
-                  ">
-              <span [ngClass]="menuOpen ? 'pi-chevron-left' : 'pi-chevron-right'" class="pi text-sm"></span>
-            </button>
-          </div>
+    <div class="card">
+      <p-menubar styleClass="rounded-none border-none bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md sticky top-0 z-50">
+        <ng-template #start>
+          <div class="flex items-center w-full min-w-0 gap-1 sm:gap-2">
 
-          <div (click)="SharedState.showMenuDrawer$.next(true);" [title]="menuOpen ? 'Recolher Menu' : 'Expandir Menu'"
-               class="
-                  md:hidden
-                  flex items-center justify-center
-                  rounded-lg
-                  p-1
-                  bg-gray-100 border border-gray-200
-                  dark:bg-zinc-800 dark:border-zinc-700
-                ">
-            <button (click)="SharedState.showMenuDrawer$.next(true);" type="button" class="
-                    flex items-center justify-center
-                    w-7 h-7
-                    rounded-md
-                    bg-white text-gray-600
-                    hover:bg-gray-50 hover:text-gray-900
-                    dark:bg-zinc-900 dark:text-zinc-300
-                    dark:hover:bg-zinc-700 dark:hover:text-white
-                    transition-colors transition-transform duration-200
-                    focus:outline-none focus:ring-2 focus:ring-indigo-500
-                  ">
-              <span class="pi pi-bars text-sm"></span>
-            </button>
-          </div>
-
-          <div
-            *ngIf="!menuOpen"
-            class="flex items-center gap-2.5 cursor-pointer group select-none ml-4"
-            (click)="router.navigate([''])"
-          >
-            <!-- Ícone -->
-            <div class="
-    flex items-center justify-center
-    w-8 h-8
-    rounded-lg
-    bg-gradient-to-br from-blue-200 to-indigo-200
-    shadow-sm
-    group-hover:shadow-md
-    transition-all duration-200
-  ">
-              <img
-                ngSrc="/public/icon-192.png"
-                alt="Lumos"
-                height="24"
-                width="24"
-                class="opacity-90"
-              />
+            <div *ngIf="!menuOpen" (click)="toggleMenu()"
+                 class="hidden xl:flex items-center justify-center p-1 rounded-full bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:bg-white dark:hover:bg-zinc-700 transition-all cursor-pointer active:scale-90">
+              <button type="button" class="flex items-center justify-center w-7 h-7 rounded-full bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 shadow-sm transition-colors">
+                <span [ngClass]="menuOpen ? 'pi-chevron-left' : 'pi-chevron-right'" class="pi text-[10px]"></span>
+              </button>
             </div>
-          </div>
 
+            <div (click)="SharedState.showMenuDrawer$.next(true);"
+                 class="xl:hidden flex items-center justify-center p-1 rounded-full bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 active:scale-90 transition-all cursor-pointer">
+              <button type="button" class="flex items-center justify-center w-7 h-7 rounded-full bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 shadow-sm">
+                <span class="pi pi-bars text-xs"></span>
+              </button>
+            </div>
 
-          <app-prime-breadcrumb [path]="(SharedState.currentPath$ | async) ?? []">
-          </app-prime-breadcrumb>
-          <h3 class="text-medium pr-5 font-medium">{{ (SharedState.title$ | async) ?? '' }}</h3>
-
-        </div>
-
-
-      </ng-template>
-      <ng-template #end>
-
-        <div class="flex items-center justify-center">
-
-          <div (click)="hasNotification ? SharedState.toggleNotificationDrawer() : showBlockedNotificationInfo()" class="mr-4 group relative flex items-center justify-center w-11 h-11 rounded-xl transition-all duration-300 active:scale-90 cursor-pointer
-           bg-slate-100 hover:bg-indigo-50 dark:bg-gray-800 dark:hover:bg-gray-700
-           border border-transparent hover:border-indigo-200 dark:hover:border-gray-600 shadow-sm">
-
-            @let hasNotification = (hasNotifications$ | async) ?? true;
-
-            <i class="pi pi-bell text-lg transition-all duration-300 group-hover:rotate-[15deg]
-              text-slate-600 dark:text-gray-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400"
-              [title]="hasNotification ? 'Abrir notificações' : 'Você bloqueou notificações. Ative nas configurações do navegador.'">
-            </i>
-
-            @if(hasNotification) {
-            @let count = (notificationCount$ | async) ?? 0;
-
-            @if(count > 0) {
-            <span class="absolute top-1 right-1 flex h-3 w-3">
-              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-              <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-            </span>
-
-            <span class="absolute -top-1.5 -right-1.5 flex items-center justify-center
-                         min-w-[20px] h-5 px-1 bg-red-600 text-white
-                         text-[10px] font-extrabold rounded-full border-2 border-white dark:border-gray-900
-                         shadow-lg transform scale-100 group-hover:scale-110 transition-transform">
-              {{ count > 99 ? '99+' : count }}
-            </span>
-            }
-            } @else {
-            <span
-              class="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center
-                     bg-amber-100 dark:bg-amber-900/30 rounded-full text-amber-500 shadow-sm border border-amber-200 dark:border-amber-800">
-              <i class="pi pi-exclamation-triangle text-[10px]"></i>
-            </span>
-            }
-          </div>
-
-          <div class="flex items-center justify-center gap-3">
             <div
-              class="group relative p-0.5 rounded-full transition-all duration-300 hover:ring-2 hover:ring-indigo-500/50 dark:hover:ring-indigo-400/40">
-
-              <p-avatar [image]="'https://primefaces.org/cdn/primeng/images/demo/avatar/amyelsner.png'"
-                [label]="authService.getUser().username.charAt(0).toUpperCase()" shape="circle"
-                (click)="SharedState.toggleAccountDrawer()" styleClass="cursor-pointer transition-all duration-300 shadow-sm border border-gray-200 dark:border-gray-700
-                  dark:bg-indigo-900 bg-gray-100 dark:text-indigo-100 text-gray-700
-                  w-11 h-11 text-lg font-bold hover:opacity-90" />
-
-              <span class="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-green-500
-                 ring-2 ring-white dark:ring-gray-900 shadow-sm">
-              </span>
-
+              *ngIf="hideBackButton"
+              [ngClass]="menuOpen ? 'hidden' : ''"
+              class="flex items-center gap-2.5 cursor-pointer group select-none ml-2"
+              (click)="router.navigate([''])"
+            >
+              <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-blue-200 to-indigo-200 shadow-sm group-hover:shadow-md transition-all duration-200">
+                <img ngSrc="/public/icon-192.png" alt="Lumos" height="22" width="22" class="opacity-90" />
+              </div>
             </div>
 
-            <div class="hidden md:flex flex-col items-start cursor-pointer" (click)="SharedState.toggleAccountDrawer()">
-              <span class="text-sm font-bold text-gray-800 dark:text-gray-100 leading-none">
-                {{ authService.getUser().username }}
+            <button
+              *ngIf="!hideBackButton"
+              type="button"
+              (click)="goBack()"
+              class="flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800/50 transition-all active:scale-95 text-slate-600 dark:text-zinc-300"
+            >
+              <i class="pi pi-chevron-left text-[13px] flex items-center justify-center mt-[1px]"></i>
+
+              <span class="text-[15px] font-medium tracking-tight leading-none ">
+                Voltar
               </span>
-              <span class="text-[11px] text-gray-500 dark:text-gray-400 font-medium">
-                Minha Conta
-              </span>
+            </button>
+
+            <p-divider layout="vertical" *ngIf="!hideBackButton" styleClass="h-5 mx-1 hidden md:block"></p-divider>
+
+            <div class="flex flex-col ml-1 leading-tight hidden md:block">
+              <app-prime-breadcrumb [path]="(SharedState.currentPath$ | async) ?? []" />
+              <h3 class="text-[16px] font-bold tracking-tight text-slate-800 dark:text-zinc-100 truncate mt-0.5">
+                {{ (SharedState.title$ | async) ?? '' }}
+              </h3>
             </div>
           </div>
-        </div>
-      </ng-template>
-    </p-menubar>
-  </div>
+        </ng-template>
+
+        <ng-template #end>
+          <div class="flex items-center gap-2">
+
+            <div class="relative flex items-center group cursor-pointer" (click)="openSpotlight()">
+              <i class="pi pi-search absolute left-3 text-slate-400 text-sm group-hover:text-indigo-500 transition-colors"></i>
+
+              <div class="lg:hidden flex h-9 pl-9 rounded-full bg-slate-100 dark:bg-zinc-800/50 border border-transparent
+               items-center text-slate-400 text-[13px] font-medium transition-all group-hover:bg-slate-200/50 dark:group-hover:bg-zinc-800">
+              </div>
+
+              <div class="hidden lg:flex h-9 pl-9 pr-24 rounded-full bg-slate-100 dark:bg-zinc-800/50 border border-transparent
+               items-center text-slate-400 text-[13px] font-medium transition-all group-hover:bg-slate-200/50 dark:group-hover:bg-zinc-800 ">
+                Buscar no sistema...
+              </div>
+
+              <div class="absolute right-3 hidden lg:flex items-center gap-1 pointer-events-none opacity-40">
+                <span class="text-[10px] font-bold border rounded px-1.5 py-0.5 bg-white dark:bg-zinc-800">⌘/ctrl</span>
+                <span class="text-[10px] font-bold border rounded px-1.5 py-0.5 bg-white dark:bg-zinc-800">K</span>
+              </div>
+
+            </div>
+
+            <div
+              (click)="SharedState.toggleNotificationDrawer()"
+              class="group relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 active:scale-90 cursor-pointer
+         bg-slate-100 hover:bg-indigo-50 dark:bg-gray-800 dark:hover:bg-gray-700
+         border border-transparent shadow-sm">
+              <i class="pi pi-bell text-lg text-slate-600 dark:text-gray-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400"></i>
+              @if (notificationStatus !== 'denied') {
+                <span class="absolute top-1 right-1 flex h-3 w-3">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" [class.bg-red-400]="notificationCount > 0"></span>
+            <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+            <span class="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[20px] h-5 px-1 bg-red-600 text-white text-[10px] font-extrabold rounded-full border-2 border-white dark:border-gray-900 shadow-lg">
+              {{ notificationCount > 99 ? '99+' : notificationCount }}
+            </span>
+          </span>
+              } @else {
+                <span class="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center bg-amber-100 dark:bg-amber-900/30 rounded-full text-amber-500 shadow-sm border border-amber-200 dark:border-amber-800">
+            <i class="pi pi-exclamation-triangle text-[10px]"></i>
+          </span>
+              }
+            </div>
+
+            <div class="flex items-center gap-3">
+              <div class="group relative p-0.5 rounded-full transition-all duration-300 hover:ring-2 hover:ring-indigo-500/50">
+                <p-avatar [image]="'https://primefaces.org/cdn/primeng/images/demo/avatar/amyelsner.png'"
+                          [label]="authService.getUser().fullName.charAt(0).toUpperCase()" shape="circle"
+                          (click)="SharedState.toggleAccountDrawer()" styleClass="cursor-pointer shadow-sm border border-gray-200 dark:border-gray-700 w-10 h-10 text-lg font-bold"/>
+                <span class="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-green-500 ring-2 ring-white dark:ring-gray-900 shadow-sm"></span>
+              </div>
+              <div class="hidden md:flex flex-col items-start cursor-pointer" (click)="SharedState.toggleAccountDrawer()">
+          <span class="text-sm font-bold text-slate-800 dark:text-zinc-100 leading-none">
+            {{ authService.getUser().username }}
+          </span>
+                <span class="text-[11px] text-slate-500 dark:text-zinc-400 font-medium">Minha Conta</span>
+              </div>
+            </div>
+
+          </div>
+        </ng-template>
+      </p-menubar>
+    </div>
   } @else {
-  <div class="flex justify-center items-center">
-    <img class="rounded" ngSrc="/icon-192.png" alt="logo" height="25" width="25">
-  </div>
+    <div class="flex justify-center items-center">
+      <img class="rounded" ngSrc="/icon-192.png" alt="logo" height="25" width="25">
+    </div>
   }
 </header>
+
+
+<div *ngIf="isSpotlightOpen"
+     class="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] px-4 backdrop-blur-sm bg-slate-900/20 dark:bg-black/40 h-screen"
+     (click)="closeSpotlight()">
+
+  <div class="w-full max-w-2xl bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-zinc-800 overflow-hidden animate-in fade-in zoom-in duration-200"
+       (click)="$event.stopPropagation()">
+
+    <div class="flex items-center p-4 border-b border-slate-100 dark:border-zinc-800">
+      <i class="pi pi-search text-indigo-500 mr-3 text-lg"></i>
+      <input
+        #spotlightInput
+        type="text"
+        placeholder="O que você está procurando?"
+        (input)="onSearch($event)"
+        class="w-full bg-transparent border-none outline-none text-lg text-slate-800 dark:text-zinc-100 placeholder:text-slate-400"
+      />
+      <button (click)="closeSpotlight()" class="text-[10px] font-bold border rounded px-2 py-1 opacity-50 hover:opacity-100 transition-opacity">ESC</button>
+    </div>
+
+    <div class="max-h-[60vh] overflow-y-auto p-2 mac-scroll">
+
+      <div *ngIf="searchResults.length === 0 && searchQuery.length > 1" class="p-8 text-center">
+        <i class="pi pi-search text-3xl opacity-20 mb-2"></i>
+        <p class="text-slate-500">Nenhum resultado encontrado para "{{searchQuery}}"</p>
+      </div>
+
+      <div *ngFor="let res of searchResults; let i = index"
+           (click)="selectResult(res)"
+           class="group flex items-center justify-between p-3 rounded-2xl cursor-pointer transition-all"
+           [ngClass]="{
+        'bg-indigo-50 dark:bg-indigo-500/20': i === selectedIndex,
+        'hover:bg-slate-50 dark:hover:bg-zinc-800/50': i !== selectedIndex
+     }">
+
+        <div class="flex items-center gap-4">
+          <div class="w-10 h-10 flex items-center justify-center rounded-xl transition-colors"
+               [ngClass]="i === selectedIndex
+                    ? 'bg-white dark:bg-zinc-700 shadow-sm'
+                    : 'bg-slate-100 dark:bg-zinc-800'">
+            <i [class]="res.icon" class="text-indigo-500 text-lg"></i>
+          </div>
+
+          <div class="flex flex-col min-w-0">
+      <span class="text-sm font-semibold text-slate-700 dark:text-zinc-200 truncate">
+        {{ res.label }}
+      </span>
+            <span class="text-[11px] text-slate-400 font-medium tracking-tight truncate">
+        {{ res.path }}
+      </span>
+          </div>
+        </div>
+
+        <i class="pi pi-chevron-right text-[10px] mr-2 transition-all duration-200"
+           [ngClass]="i === selectedIndex
+                ? 'opacity-100 translate-x-0'
+                : 'opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0'">
+        </i>
+      </div>
+    </div>
+
+    <div class="p-3 bg-slate-50 dark:bg-zinc-800/50 border-t border-slate-100 dark:border-zinc-800 flex gap-4 justify-center">
+      <span class="text-[10px] text-slate-400"><b class="dark:text-zinc-300">↑↓</b> para navegar</span>
+      <span class="text-[10px] text-slate-400"><b class="dark:text-zinc-300">↵</b> para selecionar</span>
+    </div>
+  </div>
+</div>

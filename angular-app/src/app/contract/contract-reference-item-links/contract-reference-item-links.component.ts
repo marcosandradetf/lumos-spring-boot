@@ -1,7 +1,7 @@
-import {CommonModule} from '@angular/common';
+import {CommonModule, Location} from '@angular/common';
 import {Component, OnInit} from '@angular/core';
 import {FormsModule} from '@angular/forms';
-import {ActivatedRoute, Router, RouterOutlet} from '@angular/router';
+import {ActivatedRoute, Router, RouterLink, RouterOutlet} from '@angular/router';
 import {forkJoin} from 'rxjs';
 
 import {MessageService} from 'primeng/api';
@@ -20,6 +20,8 @@ import {SharedState} from '../../core/service/shared-state';
 import {
     ContractReferenceMaterialLinksComponent
 } from './contract-reference-material-links/contract-reference-material-links.component';
+import {Title} from '@angular/platform-browser';
+import {ButtonBackComponent} from '../../shared/components/button-back/button-back.component';
 
 export interface MaterialOption {
     materialId: number;
@@ -67,7 +69,7 @@ type LinkOperationMode = 'item' | 'material';
 })
 export class ContractReferenceItemLinksComponent implements OnInit {
     readonly dependencyDrivenTypes = new Set(['SERVIÇO', 'PROJETO', 'BRAÇO']);
-    readonly materialOptionalTypes = new Set(['EXTENSÃO DE REDE', 'MANUTENÇÃO']);
+    readonly dependencyDrivenTypesMaterials = new Set(['SERVIÇO', 'PROJETO', 'MANUTENÇÃO', 'EXTENSÃO DE REDE', 'CEMIG']);
 
     operationMode: LinkOperationMode = 'item';
     items: EditableLinkedReferenceItem[] = [];
@@ -85,16 +87,22 @@ export class ContractReferenceItemLinksComponent implements OnInit {
         private readonly route: ActivatedRoute,
         private readonly contractService: ContractService,
         private readonly materialService: MaterialService,
+        protected readonly location: Location,
+        protected readonly title: Title
     ) {
     }
 
     ngOnInit(): void {
-        SharedState.setCurrentPath(['Contratos','Vincular Serviços']);
-
         this.route.queryParamMap.subscribe(params => {
             const requestedMode = params.get('operation');
             this.operationMode = requestedMode === 'item' ? 'item' : 'material';
         });
+
+        this.title.setTitle(this.isItemMode ? "Lumos IP - Vínculo de Itens Referenciais" : "Vínculo de Itens Referenciais a Materiais");
+        SharedState.setCurrentPath([
+            'Contratos',
+            this.isItemMode ? "Vincular Serviços" : "Víncular Materiais"
+        ]);
 
         forkJoin({
             referenceItems: this.contractService.getReferenceItemLinkManagement(),
@@ -117,6 +125,7 @@ export class ContractReferenceItemLinksComponent implements OnInit {
 
                 this.items = referenceItems.map(item => this.mapToEditableItem(item));
                 this.refreshModeItems();
+
                 this.loading = false;
             },
             error: (error) => {
@@ -126,30 +135,23 @@ export class ContractReferenceItemLinksComponent implements OnInit {
         });
     }
 
-    requiresMaterial(item: EditableLinkedReferenceItem): boolean {
-        if (!item.type) {
-            return false;
-        }
-
-        if (this.requiresDependency(item)) {
-            return false;
-        }
-
-        return !this.materialOptionalTypes.has(item.type);
-    }
-
     requiresDependency(item: EditableLinkedReferenceItem): boolean {
         return !!item.type && this.dependencyDrivenTypes.has(item.type);
     }
 
+    requiresMaterialDependency(item: EditableLinkedReferenceItem): boolean {
+        return !!item.type && !this.dependencyDrivenTypesMaterials.has(item.type);
+    }
+
     get pageTitle(): string {
-        return this.isItemMode ? 'Vínculo de Itens Referenciais' : 'Vínculo de Materiais Referenciais (Trabalhar somente com base de materiais!)';
+        return this.isItemMode ? 'Vínculo de Itens Referenciais' : 'Vínculo de Materiais a Itens Referenciais';
     }
 
     get pageDescription(): string {
-        return this.isItemMode
-            ? 'Nesta operação você vincula apenas itens de referência. Os materiais permanecem preservados e fora de edição.'
-            : 'Nesta operação você vincula apenas materiais. Os itens de referência permanecem preservados e fora de edição.';
+        if (this.isItemMode) {
+            return 'Vincule serviços e projetos aos itens. Você também pode associar dependências entre itens (ex: Braço 🔗 Cabo).';
+        }
+        return 'Vincule itens contratuais de referência aos materiais.';
     }
 
     get sectionTitle(): string {
@@ -199,41 +201,28 @@ export class ContractReferenceItemLinksComponent implements OnInit {
     }
 
     getLinkedItemOptions(currentItem: EditableLinkedReferenceItem): LinkedReferenceItemOption[] {
-        return this.persistedReferenceItems.filter(option =>
-            option.contractReferenceItemId !== currentItem.contractReferenceItemId
-        );
-    }
+        const status = currentItem.status;
+        const itemSearch = status.split("com ")[1].trim().toLowerCase();
 
-    onMaterialSelect(item: EditableLinkedReferenceItem, selected: MaterialOption[] | null): void {
-        item.materialLinks = selected ?? [];
-        item.status = this.resolveStatus(item);
+        return this.persistedReferenceItems.filter(option =>
+            option.contractReferenceItemId !== currentItem.contractReferenceItemId && (option.type?.toLowerCase() === itemSearch || itemSearch === "item")
+        );
     }
 
     onDependencySelect(item: EditableLinkedReferenceItem, selected: LinkedReferenceItemOption[] | null): void {
         item.dependencyLinks = selected ?? [];
-        item.status = this.resolveStatus(item);
     }
 
-    onMaterialItemsChange(materialId: number, selectedItemIds: number[]): void {
-        const material = this.allMaterials.find(option => option.materialId === materialId);
-        if (!material) {
+
+    onItemMaterialsChange(itemId: number, selectedMaterialIds: number[]): void {
+        const item = this.materialModeItems.find(i => i.contractReferenceItemId === itemId);
+        if (!item) {
             return;
         }
 
-        this.materialModeItems.forEach(item => {
-            const shouldContainMaterial = selectedItemIds.includes(item.contractReferenceItemId);
-            const hasMaterial = item.materialLinks.some(link => link.materialId === materialId);
-
-            if (shouldContainMaterial && !hasMaterial) {
-                item.materialLinks = [...item.materialLinks, material];
-            }
-
-            if (!shouldContainMaterial && hasMaterial) {
-                item.materialLinks = item.materialLinks.filter(link => link.materialId !== materialId);
-            }
-
-            item.status = this.resolveStatus(item);
-        });
+        item.materialLinks = selectedMaterialIds
+            .map(materialId => this.allMaterials.find(m => m.materialId === materialId))
+            .filter(Boolean) as MaterialOption[];
     }
 
     openMaterialScreen(): void {
@@ -352,7 +341,7 @@ export class ContractReferenceItemLinksComponent implements OnInit {
     }
 
     getStatusLabel(item: EditableLinkedReferenceItem): string {
-        return item.status === 'ACTIVE' ? 'Ativo' : 'Pendente de validacao';
+        return item.status === 'ACTIVE' ? 'Ativo' : item.status;
     }
 
     getStatusSeverity(item: EditableLinkedReferenceItem): 'success' | 'warn' {
@@ -360,31 +349,9 @@ export class ContractReferenceItemLinksComponent implements OnInit {
     }
 
     getStatusMessage(item: EditableLinkedReferenceItem): string {
-        if (this.isItemMode) {
-            return this.requiresDependency(item)
-                ? Utils.capitalize(item.type ?? '') + ' exige item de referencia vinculado.'
-                : 'Este tipo nao exige item vinculado, mas a relacao pode ser mantida aqui.';
-        }
-
-        if (this.isMaterialMode) {
-            return this.requiresMaterial(item)
-                ? 'Este tipo exige material vinculado para ativacao.'
-                : 'Este tipo nao exige material, mas o vinculo pode ser mantido aqui.';
-        }
-
-        if (item.status === 'ACTIVE') {
-            return 'Todos os vinculos obrigatorios foram informados.';
-        }
-
-        if (this.requiresDependency(item)) {
-            return 'Servico e projeto exigem item de referencia vinculado.';
-        }
-
-        if (this.requiresMaterial(item)) {
-            return 'Este tipo exige material vinculado para ativacao.';
-        }
-
-        return 'Revise os vinculos e salve novamente.';
+        return this.requiresDependency(item)
+            ? Utils.capitalize(item.type ?? '') + ' exige item de referencia vinculado.'
+            : 'Este tipo nao exige item vinculado, mas a relacao pode ser mantida aqui.';
     }
 
     getLinkCountLabel(item: EditableLinkedReferenceItem): string {
@@ -422,18 +389,6 @@ export class ContractReferenceItemLinksComponent implements OnInit {
             })),
             status: item.status,
         };
-    }
-
-    private resolveStatus(item: EditableLinkedReferenceItem): 'ACTIVE' | 'PENDING_VALIDATION' {
-        if (this.requiresDependency(item) && item.dependencyLinks.length === 0) {
-            return 'PENDING_VALIDATION';
-        }
-
-        if (this.requiresMaterial(item) && item.materialLinks.length === 0) {
-            return 'PENDING_VALIDATION';
-        }
-
-        return 'ACTIVE';
     }
 
     private toPayload(item: EditableLinkedReferenceItem): SaveContractReferenceItemLinksDTO {
@@ -480,7 +435,7 @@ export class ContractReferenceItemLinksComponent implements OnInit {
 
     private refreshModeItems(): void {
         this.itemModeItems = this.items.filter(item => this.requiresDependency(item));
-        this.materialModeItems = this.items.filter(item => !this.requiresDependency(item));
+        this.materialModeItems = this.items.filter(item => this.requiresMaterialDependency(item));
     }
 
 

@@ -11,7 +11,7 @@ import {Title} from '@angular/platform-browser';
 })
 export class ExecutionFinishedComponent {
     constructor(private title: Title) {
-        this.title.setTitle("Execuções - Finalizadas")
+        this.title.setTitle("Lumos IP - Execuções - Finalizadas")
         SharedState.setCurrentPath(["Execuções","Finalizadas"]);
     }
 }

@@ -1,41 +1,42 @@
 // app/app.routes.ts
-import { Routes } from '@angular/router';
-import { AuthGuard } from './core/auth/auth.guard';
-import { ServiceRequestMapComponent } from './maintenance/request/service-request-map.component';
+import {Routes} from '@angular/router';
+import {AuthGuard} from './core/auth/auth.guard';
+import {ServiceRequestMapComponent} from './maintenance/request/service-request-map.component';
 import {
     ContractReferenceItemFormComponent
 } from './contract/contract-reference-item-form/contract-reference-item-form.component';
 import {
     ContractReferenceItemLinksComponent
 } from './contract/contract-reference-item-links/contract-reference-item-links.component';
-import { MaterialFormComponent } from './stock/material-form/material-form.component';
-import { ServerErrorComponent } from './server-error/server-error.component';
-import { StockistsComponent } from './stock/stockists/stockists.component';
+import {MaterialFormComponent} from './stock/material-form/material-form.component';
+import {ServerErrorComponent} from './server-error/server-error.component';
+import {StockistsComponent} from './stock/stockists/stockists.component';
 
 
 export const routes: Routes = [
     // start path login
     {
         path: 'auth/login',
-        loadComponent: () => import('./core/auth/pages/login/login.component').then(m => m.LoginComponent)
+        loadComponent: () => import('./core/auth/pages/login/login.component').then(m => m.LoginComponent),
+        data: {hideBackButton: true} // Rota pai
+    },
+    {
+        path: 'auth/auto-login',
+        loadComponent: () => import('./core/auth/pages/auto-login/auto-login.component').then(m => m.AutoLoginComponent),
+        data: {hideBackButton: true} // Rota pai
     },
     {
         path: 'primeiro-acesso',
-        loadComponent: () => import('./core/auth/pages/first-access/first-access.component').then(m => m.FirstAccessComponent)
+        loadComponent: () => import('./core/auth/pages/first-access/first-access.component').then(m => m.FirstAccessComponent),
+        data: {hideBackButton: true} // Rota pai
     },
     // end
-
-    // doc
-    {
-        path: 'documentacao',
-        loadComponent: () => import('./doc/doc.component').then(m => m.DocComponent)
-    },
 
     {
         path: 'acesso-negado/:section',
         loadComponent: () => import('./shared/components/no-access/no-access.component').then(n => n.NoAccessComponent),
         canActivate: [AuthGuard],
-        data: { role: [''], path: '' },
+        data: {role: [''], path: ''},
     },
 
     // start billing paths
@@ -43,13 +44,13 @@ export const routes: Routes = [
         path: 'cobranca',
         loadComponent: () => import('./billing/billing.component').then(m => m.BillingComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN'], path: 'cobranca' },
+        data: {role: ['ADMIN'], path: 'cobranca'},
     },
     {
         path: 'acesso-indisponivel',
         loadComponent: () => import('./billing/unavailable-access.component').then(m => m.UnavailableAccessComponent),
         canActivate: [AuthGuard],
-        data: { role: [], path: 'acesso-indisponivel' },
+        data: {role: [], path: 'acesso-indisponivel'},
     },
     // end billing paths
 
@@ -58,87 +59,121 @@ export const routes: Routes = [
         path: 'estoque/cadastrar-material',
         loadComponent: () => import('./stock/material-form/material-form.component').then(m => m.MaterialFormComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'estoque' },
+        data: {
+            role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE', 'ANALISTA', 'RESPONSAVEL_TECNICO'],
+            path: 'estoque',
+
+            title: 'Cadastro de Materiais',
+            icon: 'pi pi-plus-circle text-green-500',
+        },
     },
     {
         path: 'estoque/editar-material',
         loadComponent: () => import('./stock/material-form/material-form.component').then(m => m.MaterialFormComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'estoque' },
+        data: {
+            role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'estoque'
+        },
     },
     {
         path: 'estoque/catalogo-materiais',
         loadComponent: () => import('./stock/material/material-page.component').then(m => m.MaterialPageComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'estoque' },
+        data: {
+            title: 'Catálogo de Materiais',
+            icon: 'pi pi-table text-neutral-500',
+            role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'estoque'
+        },
     },
     {
         path: 'estoque/grupos',
         loadComponent: () => import('./stock/groups/groups.component').then(m => m.GroupsComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque' },
+        data: {role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque'},
     },
     {
         path: 'estoque/tipos',
         loadComponent: () => import('./stock/types/types.component').then(m => m.TypesComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN'], path: 'estoque' },
+        data: {role: ['ADMIN'], path: 'estoque'},
     },
     {
         path: 'estoque/movimentar-estoque',
         loadComponent: () => import('./stock/stock-movement/stock-movement.component').then(m => m.StockMovementComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque' },
+        data: {
+            title: 'Movimentar Estoque',
+            icon: 'pi pi-arrow-right-arrow-left text-blue-500',
+            role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque'
+        },
     },
     {
         path: 'estoque/movimentar-estoque-pendente',
         loadComponent: () => import('./stock/stock-movement-pending/stock-movement-pending.component').then(m => m.StockMovementPendingComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ESTOQUISTA_CHEFE'], path: 'estoque' },
+        data: {
+            title: 'Movimentações de Estoque Pendentes',
+            icon: 'pi pi-clock text-yellow-500',
+            role: ['ADMIN', 'ESTOQUISTA_CHEFE'], path: 'estoque'
+        },
     },
     {
         path: 'estoque/movimentar-estoque-aprovado',
         loadComponent: () => import('./stock/stock-movement-approvated/stock-movement-approvated.component').then(m => m.StockMovementApprovatedComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque' },
+        data: {
+            role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque'
+        },
     },
     {
         path: 'estoque/almoxarifados',
         loadComponent: () => import('./stock/deposits/deposits.component').then(m => m.DepositsComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ANALISTA', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque' },
+        data: {
+            title: 'Almoxarifados',
+            icon: 'pi pi-home text-blue-500',
+            role: ['ADMIN', 'ANALISTA', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque'
+        },
     },
 
     {
         path: 'estoque/caminhoes',
         loadComponent: () => import('./stock/truck-deposits/deposits.component').then(d => d.TruckDepositComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ANALISTA', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque' },
+        data: {
+            title: 'Caminhões / Veículos',
+            icon: 'pi pi-truck text-blue-500',
+            role: ['ADMIN', 'ANALISTA', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque'
+        },
     },
     {
         path: 'configuracoes/importar-planilha',
         loadComponent: () => import('./stock/import-materials/import-materials.component').then(m => m.ImportMaterialsComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque' },
+        data: {role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque'},
     },
 
 
-    { path: 'estoque', redirectTo: 'estoque/materiais' },
+    {path: 'estoque', redirectTo: 'estoque/materiais'},
     // end
 
     // start contract paths
-    { path: 'contratos', redirectTo: 'contratos/dashboard' },
+    {path: 'contratos', redirectTo: 'contratos/dashboard'},
     {
         path: 'contratos/dashboard',
         loadComponent: () => import('./contract/pages/dashboard/dashboard.component').then(m => m.DashboardComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ANALISTA'], path: 'contratos' },
+        data: {role: ['ADMIN', 'ANALISTA'], path: 'contratos'},
     },
     {
         path: 'contratos/itens-contratuais/cadastro',
         component: ContractReferenceItemFormComponent,
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ANALISTA'], path: 'contratos' },
+        data: {
+            title: 'Catálogo de Itens Contratuais',
+            icon: 'pi pi-database text-neutral-500',
+            role: ['ADMIN', 'ANALISTA'], path: 'contratos'
+        },
     },
     {
         path: 'contratos/itens-contratuais/vinculos',
@@ -150,38 +185,67 @@ export const routes: Routes = [
             }
         ],
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ANALISTA'], path: 'contratos' },
+        data: {
+            title: 'Vincular Itens Contratuais',
+            icon: 'pi pi-link text-cyan-500',
+            role: ['ADMIN', 'ANALISTA'], path: 'contratos'
+        },
     },
     {
         path: 'contratos/criar',
         loadComponent: () => import('./contract/pages/create/create.component').then(m => m.CreateComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ANALISTA'], path: 'contratos' },
+        data: {
+            title: 'Novo Contrato',
+            icon: 'pi pi-plus-circle text-green-500',
+            role: ['ADMIN', 'ANALISTA'], path: 'contratos'
+        },
     },
     {
         path: 'contratos/editar',
         loadComponent: () => import('./contract/pages/create/create.component').then(m => m.CreateComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ANALISTA'], path: 'contratos' },
+        data: {role: ['ADMIN', 'ANALISTA'], path: 'contratos'},
     },
     {
         path: 'contratos/listar',
         loadComponent: () => import('./contract/pages/list/contract-list/contract-list.component').then(c => c.ContractListComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ANALISTA'], path: 'contratos' },
+        data: {
+            title: 'Listar Contratos',
+            icon: 'pi pi-folder-open text-blue-500',
+            role: ['ADMIN', 'ANALISTA'], path: 'contratos'
+        },
     },
+
+    {
+        path: 'contratos/listar',
+        loadComponent: () => import('./contract/pages/list/contract-list/contract-list.component').then(c => c.ContractListComponent),
+        canActivate: [AuthGuard],
+        data: {
+            title: 'Nova Ordem de Serviço Sem Pré-medição',
+            icon: 'pi pi-plus text-green-500',
+            query: {for: 'execution'},
+            role: ['ADMIN', 'ANALISTA'], path: 'contratos'
+        },
+    },
+
 
     {
         path: 'contratos/instalacoes-pendentes',
         loadComponent: () => import('./contract/pending-executions/pending-executions.component').then(e => e.PendingExecutionsComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes' },
+        data: {
+            title: 'Vincular Instalações',
+            icon: 'pi pi-link text-emerald-500',
+            role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'
+        },
     },
     {
         path: 'contratos/validar-execucao/:id',
         loadComponent: () => import('./contract/validate-execution/execution-no-work-service.component').then(e => e.ExecutionNoWorkServiceComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes' },
+        data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
     },
     // end
 
@@ -215,11 +279,11 @@ export const routes: Routes = [
                 loadComponent: () => import('./stock/material-form/material-form.component').then(m => m.MaterialFormComponent),
             },
             {
-                path: 'itens-contratuais/cadastro',
+                path: 'itens-contratuais',
                 component: ContractReferenceItemFormComponent,
             },
             {
-                path: 'itens-contratuais/vinculos',
+                path: 'itens-contratuais-vinculos',
                 component: ContractReferenceItemLinksComponent,
                 children: [
                     {
@@ -234,37 +298,53 @@ export const routes: Routes = [
             }
         ],
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'configuracoes' },
+        data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'configuracoes', hideBackButton: true},
     },
     {
         path: 'configuracoes/usuarios',
         loadComponent: () => import('./manage/user/user.component').then(m => m.UserComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN'], path: 'configuracoes' },
+        data: {
+            title: 'Usuários',
+            icon: 'pi pi-users text-blue-500',
+            role: ['ADMIN'], path: 'configuracoes'
+        },
     },
     {
         path: 'configuracoes/equipes',
         loadComponent: () => import('./manage/team/team.component').then(m => m.TeamComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'configuracoes' },
+        data: {
+            title: 'Equipes Operacionais',
+            icon: 'pi pi-sitemap text-blue-500',
+            role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'configuracoes'
+        },
     },
     {
         path: 'configuracoes/estoquistas',
         component: StockistsComponent,
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'configuracoes' },
+        data: {
+            title: 'Estoquistas',
+            icon: 'pi pi-id-card text-blue-500',
+            role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'configuracoes'
+        },
     },
     {
         path: 'configuracoes/empresa',
         loadComponent: () => import('./manage/team/team.component').then(m => m.TeamComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN'], path: 'configuracoes' },
+        data: {role: ['ADMIN'], path: 'configuracoes'},
     },
     {
         path: 'configuracoes/conta',
         loadComponent: () => import('./manage/account/account.component').then(a => a.AccountComponent),
         canActivate: [AuthGuard],
-        data: { role: [], path: 'conta' },
+        data: {
+            title: 'Minha Conta',
+            icon: 'pi pi-user text-blue-500',
+            role: [], path: 'conta'
+        },
     },
     // end
 
@@ -273,31 +353,48 @@ export const routes: Routes = [
         path: 'pre-medicao/:status',
         loadComponent: () => import('./pre-measurement/pre-measurement-home/pre-measurement.component').then(p => p.PreMeasurementComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes' },
+        data: {
+            title: 'Pré-medições para Análise',
+            icon: 'pi pi-exclamation-circle text-yellow-500',
+            routeParams: {status: 'pendente'},
+            role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'
+        },
+    },
+
+    {
+        path: 'pre-medicao/:status',
+        loadComponent: () => import('./pre-measurement/pre-measurement-home/pre-measurement.component').then(p => p.PreMeasurementComponent),
+        canActivate: [AuthGuard],
+        data: {
+            title: 'Nova Ordem de Serviço Com Pré-medição',
+            icon: 'pi pi-plus-circle text-green-500',
+            routeParams: {status: 'disponivel'},
+            role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'
+        },
     },
     {
         path: 'pre-medicao/relatorio/:id/:step',
         loadComponent: () => import('./pre-measurement/pre-measurement-report/pre-measurement-report.component').then(p => p.PreMeasurementReportComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes' },
+        data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
     },
     {
         path: 'pre_medicao/editar',
         loadComponent: () => import('./pre-measurement/pre-measurement-edit/pre-measurement-edit.component').then(p => p.PreMeasurementEditComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes' },
+        data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
     },
     {
         path: 'pre-medicao/importar/contrato/:id',
         loadComponent: () => import('./pre-measurement/import-pre-measurements/import-pre-measurements.component').then(p => p.ImportPreMeasurementsComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes' },
+        data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
     },
     {
         path: 'pre_medicao/visualizar',
         loadComponent: () => import('./pre-measurement/pre-measurement-view/pre-measurement-view.component').then(p => p.PreMeasurementViewComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes' },
+        data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
     },
     //
 
@@ -306,21 +403,23 @@ export const routes: Routes = [
         path: 'execucao/pre-medicao/:id',
         loadComponent: () => import('./executions/pre-measurement-available/measurement-details.component').then(m => m.MeasurementDetailsComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes' },
+        data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
     },
 
     {
         path: 'ordens-de-servico/nova',
         loadComponent: () => import('./executions/execution-no-pre-measurement/execution-no-pre-measurement.component').then(e => e.ExecutionNoPreMeasurementComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes' },
+        data: {
+            role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'
+        },
     },
 
     {
         path: 'execucoes/:status',
         loadComponent: () => import('./executions/execution-progress/execution-progress.component').then(e => e.ExecutionProgressComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes' },
+        data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
     },
     //end
 
@@ -329,19 +428,39 @@ export const routes: Routes = [
         path: 'requisicoes/instalacoes/gerenciamento-estoque',
         loadComponent: () => import('./requests/reservation-management/reservation-management.component').then(r => r.ReservationManagementComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas' },
+        data: {
+            title: 'Gerenciar Ordens de Serviço',
+            icon: 'pi pi-briefcase text-blue-500',
+            role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas'
+        },
     },
     {
         path: 'requisicoes/gerenciamento/execucao',
         loadComponent: () => import('./requests/reservation-management-select/reservation-management-select.component').then(r => r.ReservationManagementSelectComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas' },
+        data: {role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas'},
     },
     {
         path: 'requisicoes',
         loadComponent: () => import('./requests/reservation-pending/reservation-pending.component').then(r => r.ReservationPendingComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas' },
+        data: {
+            title: 'Requisições Pendentes de Aprovação',
+            icon: 'pi pi-clock text-yellow-500',
+            query: { status: 'PENDING' },
+            role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas'
+        },
+    },
+    {
+        path: 'requisicoes',
+        loadComponent: () => import('./requests/reservation-pending/reservation-pending.component').then(r => r.ReservationPendingComponent),
+        canActivate: [AuthGuard],
+        data: {
+            title: 'Requisições Disponíveis para Coleta',
+            icon: 'pi pi-check-circle text-green-500',
+            query: { status: 'APPROVED' },
+            role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas'
+        },
     },
     //end
 
@@ -360,6 +479,8 @@ export const routes: Routes = [
         loadComponent: () => import('./reports/execution/maintenance/maintenance.component').then(r => r.MaintenanceComponent),
         canActivate: [AuthGuard],
         data: {
+            title: 'Relatórios de Manutenções',
+            icon: 'pi pi-wrench text-blue-500',
             role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ANALISTA', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'],
             path: 'relatorios'
         },
@@ -368,13 +489,19 @@ export const routes: Routes = [
         path: 'relatorios/instalacoes',
         loadComponent: () => import('./reports/execution/installation/installation.component').then(r => r.InstallationComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ANALISTA',], path: 'relatorios' },
+        data: {
+            title: 'Relatórios de Instalacoes',
+            icon: 'pi pi-lightbulb text-blue-500',
+            role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ANALISTA',], path: 'relatorios'
+        },
     },
     {
         path: 'relatorios/estoque/saida-saldo-instalacao',
         loadComponent: () => import('./reports/material-reservation/material-reservation.component').then(r => r.MaterialReservationComponent),
         canActivate: [AuthGuard],
         data: {
+            title: 'Relatório de Saída/Saldo por Instalação',
+            icon: 'pi pi-hammer text-orange-400',
             role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ANALISTA', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'],
             path: 'relatorios'
         },
@@ -383,7 +510,11 @@ export const routes: Routes = [
         path: 'relatorios/execucoes/analitico-de-operacoes',
         loadComponent: () => import('./reports/execution/operation/operation.component').then(r => r.OperationComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ANALISTA'], path: 'relatorios' },
+        data: {
+            title: 'Relatório Analítico de Operações',
+            icon: 'pi pi-sliders-h text-blue-500',
+            role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ANALISTA'], path: 'relatorios'
+        },
     },
 
     // out
@@ -399,38 +530,62 @@ export const routes: Routes = [
         path: 'dashboard',
         loadComponent: () => import('./dashboard/home/dashboard.component').then(d => d.DashboardComponent),
         canActivate: [AuthGuard],
-        data: { role: [], path: 'dashboard' },
+        data: {
+            title: 'Dashboard',
+            icon: 'pi pi-home text-blue-500',
+            role: [], path: 'dashboard', hideBackButton: true
+        },
     },
 
     {
         path: 'dashboard/mapa-execucoes',
         loadComponent: () => import('./dashboard/map/map.component').then(d => d.MapComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ANALISTA', 'SUPPORT', 'RESPONSAVEL_TECNICO'], path: 'dashboard' },
+        data: {
+            title: 'Mapa de Execuções',
+            icon: 'pi pi-map-marker text-blue-500',
+            role: ['ADMIN', 'ANALISTA', 'SUPPORT', 'RESPONSAVEL_TECNICO'], path: 'dashboard'
+        },
     },
     {
         path: 'dashboard/visao-executiva',
         loadComponent: () => import('./dashboard/executive/executive.component').then(d => d.ExecutiveComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ANALISTA', 'SUPPORT', 'RESPONSAVEL_TECNICO'], path: 'dashboard' },
+        data: {
+            title: 'Dashboard de Visão Executiva',
+            icon: 'pi pi-compass text-purple-700',
+            role: ['ADMIN', 'ANALISTA', 'SUPPORT', 'RESPONSAVEL_TECNICO'], path: 'dashboard'
+        },
     },
     {
         path: 'dashboard/produtividade-equipe',
         loadComponent: () => import('./dashboard/team/team-operational-dashboard.component').then(d => d.TeamOperationalDashboardComponent),
         canActivate: [AuthGuard],
-        data: { role: ['ADMIN', 'ANALISTA', 'SUPPORT', 'RESPONSAVEL_TECNICO'], path: 'dashboard' },
+        data: {
+            title: 'Dashboard de Produtividade da Equipe',
+            icon: 'pi pi-users text-green-500',
+            role: ['ADMIN', 'ANALISTA', 'SUPPORT', 'RESPONSAVEL_TECNICO'], path: 'dashboard'
+        },
     },
 
     {
         path: 'abrir-chamado',
         component: ServiceRequestMapComponent,
-        data: { mode: 'manual' }
+        data: {
+            title: 'Abrir Chamado',
+            icon: 'pi pi-phone text-blue-500',
+            mode: 'manual'
+        }
     },
 
     {
         path: 'modo-ronda',
         component: ServiceRequestMapComponent,
-        data: { mode: 'round' }
+        data: {
+            title: 'Modo Ronda',
+            icon: 'pi pi-map text-blue-500',
+            mode: 'round'
+        }
     },
 
 

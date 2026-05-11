@@ -72,7 +72,7 @@ export class CreateComponent implements OnInit {
     embeddedDocDescription = '';
     embeddedDocUrl: SafeResourceUrl | null = null;
     readonly notificationGuideUrl = 'https://lumosip.com.br/como-usar/15-web-config/01-enable-notifications/';
-    protected hasNotifications$ = inject(FcmService).hasNotifications$;
+    protected hasNotifications$ = inject(FcmService).notificationStatus$;
 
     contract: CreateContractDTO = {
         contractId: null,
@@ -168,7 +168,7 @@ export class CreateComponent implements OnInit {
         }
 
 
-        this.title.setTitle('Cadastrar Contrato');
+        this.title.setTitle('Lumos IP - Cadastrar Contrato');
 
 
         forkJoin({

@@ -31,10 +31,17 @@ public class EmailService {
     @Value("${resend.from.email}")
     private String from;
 
+    @Value("${resend.send.email.enabled}")
+    private Boolean resendSendEmailEnabled = true;
+
 
     public CreateEmailResponse sendEmail(String to, String subject, String message) {
         if (to == null || subject == null || message == null) {
             throw new Utils.BusinessException("Missing required fields: to, subject, message");
+        }
+
+        if (!resendSendEmailEnabled) {
+            return null;
         }
 
         try {

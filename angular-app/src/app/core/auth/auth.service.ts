@@ -93,36 +93,29 @@ export class AuthService {
         return this.http.post<any>(`${this.apiUrl}/login`, { username, password }, { withCredentials: true }).pipe(
             tap(response => {
                 this.isLoading.next(false);
-                const decodedToken = jwtDecode<DecodedToken>(response.accessToken);
-
-                const userId = decodedToken.sub;
-                const roles = decodedToken.scope.split(' ');
-                const fullName = decodedToken.fullname;
-                const email = decodedToken.email;
-                const tenant = decodedToken.tenant;
-                const usernameDecoded = decodedToken.username;
-                const support = decodedToken.support;
-
-                this.user.initialize(
-                    userId,
-                    usernameDecoded,
-                    response.accessToken,
-                    roles,
-                    fullName,
-                    tenant,
-                    [],
-                    email,
-                    support
-                );
-                if (typeof window !== 'undefined' && window.localStorage) {
-                    localStorage.setItem('user', JSON.stringify(this.user));
-                    localStorage.setItem('tenant', tenant);
-                }
-                this.isLoggedInSubject.next(true);
-                void this.fcmService.getPermission(roles);
+                this.applyAuthResponse(response.accessToken);
             }),
             catchError(error => {
 
+                this.isLoading.next(false);
+                throw error;
+            })
+        );
+    }
+
+    autoLoginWithRefreshToken(): Observable<void> {
+        this.isLoading.next(true);
+        return this.http.post<{ accessToken: string }>(
+            `${this.apiUrl}/refresh-token`,
+            {},
+            { withCredentials: true }
+        ).pipe(
+            tap(response => {
+                this.applyAuthResponse(response.accessToken);
+                this.isLoading.next(false);
+            }),
+            map(() => void 0),
+            catchError(error => {
                 this.isLoading.next(false);
                 throw error;
             })
@@ -247,34 +240,43 @@ export class AuthService {
         const param = new HttpParams().set("token", token);
         return this.http.post<any>(`${this.apiUrl}/login-with-qrcode-token`, param, { withCredentials: true }).pipe(
             tap(response => {
-                const decodedToken = jwtDecode<DecodedToken>(response.accessToken);
-
-                const userId = decodedToken.sub;
-                const roles = decodedToken.scope.split(' ');
-                const fullName = decodedToken.fullname;
-                const email = decodedToken.email;
-                const tenant = decodedToken.tenant;
-                const usernameDecoded = decodedToken.username;
-                const support = decodedToken.support;
-
-                this.user.initialize(
-                    userId,
-                    usernameDecoded,
-                    response.accessToken,
-                    roles,
-                    fullName,
-                    tenant,
-                    [],
-                    email,
-                    support
-                );
-                if (typeof window !== 'undefined' && window.localStorage) localStorage.setItem('user', JSON.stringify(this.user));
-                this.isLoggedInSubject.next(true);
+                this.applyAuthResponse(response.accessToken);
             }),
             catchError(error => {
                 throw error;
             })
         );
+    }
+
+    private applyAuthResponse(accessToken: string) {
+        const decodedToken = jwtDecode<DecodedToken>(accessToken);
+
+        const userId = decodedToken.sub;
+        const roles = decodedToken.scope.split(' ');
+        const fullName = decodedToken.fullname;
+        const email = decodedToken.email;
+        const tenant = decodedToken.tenant;
+        const usernameDecoded = decodedToken.username;
+        const support = decodedToken.support;
+
+        this.user.initialize(
+            userId,
+            usernameDecoded,
+            accessToken,
+            roles,
+            fullName,
+            tenant,
+            [],
+            email,
+            support
+        );
+
+        if (typeof window !== 'undefined' && window.localStorage) {
+            localStorage.setItem('user', JSON.stringify(this.user));
+            localStorage.setItem('tenant', tenant);
+        }
+
+        this.isLoggedInSubject.next(true);
     }
 
     getQrcodeToken() {

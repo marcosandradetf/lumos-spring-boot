@@ -137,6 +137,7 @@ export class Utils {
     }
 
     static handleHttpError(error: any, router: Router) {
+        console.log(error);
         if (error.status === 0) {
             // 🔥 erro de rede / backend offline
             console.error('Servidor inacessível ou sem conexão');

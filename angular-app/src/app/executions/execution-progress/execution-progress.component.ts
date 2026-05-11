@@ -95,7 +95,7 @@ export class ExecutionProgressComponent implements OnInit {
                     this.status = params.get('status') ?? 'aguardando-estoque';
                     const statusConfig = this.statuses[this.status];
 
-                    this.title.setTitle('O.S - ' + statusConfig.title);
+                    this.title.setTitle('Lumos IP - O.S | ' + statusConfig.title);
                     SharedState.setCurrentPath(["Ordens de Serviço", statusConfig.title]);
 
                     this.loading = true;

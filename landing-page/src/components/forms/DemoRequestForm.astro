@@ -1,4 +1,6 @@
 ---
+import { Icon } from 'astro-icon/components';
+
 /**
  * DemoRequestForm - Demo request form with validation
  *
@@ -28,13 +30,32 @@ interface Props {
   action?: string;
   /** HTTP method for form submission */
   method?: 'POST' | 'GET';
+  /** Form behavior and copy */
+  variant?: 'demo' | 'free-test';
   /** Enable Netlify Forms integration */
   netlify?: boolean;
   /** Form name for Netlify Forms */
   formName?: string;
+  /** Plan sent to the free-test controller */
+  planName?: string;
+  /** Redirect target after a successful submission */
+  redirectUrl?: string;
+  /** Submit button label */
+  submitLabel?: string;
 }
 
-const { action = '', method = 'POST', netlify = false, formName = 'demo-request' } = Astro.props;
+const {
+  action = '',
+  method = 'POST',
+  variant = 'demo',
+  netlify = false,
+  formName = 'demo-request',
+  planName = 'Profissional',
+  redirectUrl = '',
+  submitLabel = variant === 'free-test' ? 'Criar meu teste grátis' : 'Enviar Formulário',
+} = Astro.props;
+
+const isFreeTest = variant === 'free-test';
 ---
 
 <form
@@ -43,6 +64,8 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
   method={method}
   class="space-y-5"
   data-netlify={netlify ? 'true' : undefined}
+  data-variant={variant}
+  data-redirect={redirectUrl}
   name={netlify ? formName : undefined}
   novalidate
 >
@@ -56,144 +79,651 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
 
   <!-- Netlify hidden field -->
   {netlify && <input type="hidden" name="form-name" value={formName} />}
+  {isFreeTest && <input type="hidden" name="planName" value={planName} />}
+  {isFreeTest && <input type="hidden" name="useTrial" value="true" />}
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-    <div>
-      <label for="demo-firstName" class="block text-sm font-medium text-text mb-2">
-        Primeiro Nome <span class="text-red-500">*</span>
-      </label>
-      <input
-        type="text"
-        id="demo-firstName"
-        name="firstName"
-        required
-        minlength="2"
-        class="w-full px-4 py-3 rounded-lg border border-border bg-background text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
-        placeholder="José"
-      />
-      <p class="mt-1 text-sm text-red-500 hidden" data-error="demo-firstName"></p>
-    </div>
-    <div>
-      <label for="demo-lastName" class="block text-sm font-medium text-text mb-2">
-        Sobrenome <span class="text-red-500">*</span>
-      </label>
-      <input
-        type="text"
-        id="demo-lastName"
-        name="lastName"
-        required
-        minlength="2"
-        class="w-full px-4 py-3 rounded-lg border border-border bg-background text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
-        placeholder="Silva"
-      />
-      <p class="mt-1 text-sm text-red-500 hidden" data-error="demo-lastName"></p>
-    </div>
-  </div>
+  {
+    isFreeTest ? (
+      <div class="space-y-6">
+        <div class="rounded-xl border border-border bg-background/70 p-4">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <p class="text-sm font-bold text-text">
+                Conte com o suporte do nosso time para começar
+              </p>
+              <p class="mt-1 text-xs text-text-muted">
+                Respondemos rápido para ajudar você a tirar valor do teste.
+              </p>
+            </div>
+            <span
+              id="wizard-progress-number"
+              class="shrink-0 text-xs font-bold uppercase tracking-widest text-primary"
+            >
+              1/5
+            </span>
+          </div>
+          <div class="mt-4 h-2 overflow-hidden rounded-full bg-border">
+            <div
+              id="wizard-progress-bar"
+              class="h-full w-1/5 rounded-full bg-primary transition-all duration-300"
+            />
+          </div>
+        </div>
 
-  <div>
-    <label for="demo-email" class="block text-sm font-medium text-text mb-2">
-      Email Corporativo <span class="text-red-500">*</span>
-    </label>
-    <input
-      type="email"
-      id="demo-email"
-      name="email"
-      required
-      class="w-full px-4 py-3 rounded-lg border border-border bg-background text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
-      placeholder="jose@empresa.com.br"
-    />
-    <p class="mt-1 text-sm text-red-500 hidden" data-error="demo-email"></p>
-  </div>
+        <div class="wizard-step space-y-6" data-wizard-step>
+          <div class="space-y-4 pt-1">
+            <p class="text-2xl font-light leading-snug text-text">
+              <strong class="font-bold">
+                Assuma o controle total da sua operação de Iluminação Pública.
+              </strong>
+            </p>
+            <p class="text-base leading-relaxed text-text-muted">
+              Conecte suas equipes de campo ao faturamento em tempo real. O Lumos elimina o gap
+              entre o serviço executado e a medição aprovada, substituindo planilhas frágeis por
+              gestão de dados auditáveis.
+            </p>
+            <p class="text-sm font-semibold italic text-text">
+              14 dias grátis. Não precisa de cartão de crédito.
+            </p>
+          </div>
 
-  <div>
-    <label for="phone" class="block text-sm font-medium text-text mb-2">
-      Melhor telefone <span class="text-red-500">*</span>
-    </label>
-    <input
-      maxlength="11"
-      type="number"
-      id="phone"
-      name="phone"
-      required
-      class="w-full px-4 py-3 rounded-lg border border-border bg-background text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
-      placeholder="Ex. 31990909090"
-    />
-    <p class="mt-1 text-sm text-red-500 hidden" data-error="phone"></p>
-  </div>
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div class="rounded-lg border border-border bg-background px-3 py-4">
+              <p class="text-sm font-bold text-text">Georreferenciamento</p>
+              <p class="mt-1 text-xs leading-relaxed text-text-muted">
+                Visualize cada ponto de iluminação e equipe no mapa.
+              </p>
+            </div>
+            <div class="rounded-lg border border-border bg-background px-3 py-4">
+              <p class="text-sm font-bold text-text">Blindagem Contratual</p>
+              <p class="mt-1 text-xs leading-relaxed text-text-muted">
+                Gere relatórios de faturamento baseados no que foi realmente executado.
+              </p>
+            </div>
+            <div class="rounded-lg border border-border bg-background px-3 py-4">
+              <p class="text-sm font-bold text-text">Conte com o Suporte</p>
+              <p class="mt-1 text-xs leading-relaxed text-text-muted">
+                Não te jogamos no sistema sozinho.
+              </p>
+            </div>
+          </div>
 
-  <div>
-    <label for="demo-company" class="block text-sm font-medium text-text mb-2">
-      Empresa <span class="text-red-500">*</span>
-    </label>
-    <input
-      type="text"
-      id="demo-company"
-      name="company"
-      required
-      class="w-full px-4 py-3 rounded-lg border border-border bg-background text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
-      placeholder="Empresa Ltda"
-    />
-    <p class="mt-1 text-sm text-red-500 hidden" data-error="demo-company"></p>
-  </div>
+          <button
+            type="button"
+            class="w-full cursor-pointer rounded-lg bg-primary px-6 py-4 font-semibold text-white transition-colors hover:bg-primary-dark"
+            data-wizard-next
+          >
+            Iniciar teste grátis
+          </button>
 
-  <div>
-    <label for="demo-teamSize" class="block text-sm font-medium text-text mb-2">
-      Tamanho da Equipe <span class="text-red-500">*</span>
-    </label>
-    <div class="relative">
-      <select
-        id="demo-teamSize"
-        name="teamSize"
-        required
-        class="w-full px-4 py-3 pr-10 rounded-lg border border-border bg-background text-text focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors appearance-none cursor-pointer"
-      >
-        <option value="">Selecione o tamanho da sua equipe</option>
-        <option value="1-10">1-10 colaboradores</option>
-        <option value="11-50">11-50 colaboradores</option>
-        <option value="51-200">51-200 colaboradores</option>
-        <option value="200+">200+ colaboradores</option>
-      </select>
-      <div
-        class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-text-muted"
-      >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"
-          ></path>
-        </svg>
+          <div class="text-center">
+            <a
+              href="https://app.lumosip.com.br/auth/login"
+              class="text-sm font-semibold text-text-muted underline hover:text-primary"
+            >
+              Já tem uma conta? Fazer login.
+            </a>
+          </div>
+        </div>
+
+        <div class="wizard-step hidden space-y-5" data-wizard-step>
+          <div>
+            <p class="text-lg font-semibold text-text">
+              Bem-vindo. Queremos te conhecer melhor para personalizar sua experiência.
+            </p>
+            <p class="mt-1 text-sm text-text-muted">
+              Depois disso, perguntamos sobre sua empresa e deixamos o acesso para o final.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div>
+              <label for="demo-firstName" class="block text-sm font-medium text-text mb-2">
+                Nome <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="demo-firstName"
+                name="firstName"
+                required
+                minlength="2"
+                autocomplete="given-name"
+                class="w-full px-4 py-3 rounded-lg border border-border bg-background text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+                placeholder="Ex.: José"
+              />
+              <p class="mt-1 text-sm text-red-500 hidden" data-error="demo-firstName" />
+            </div>
+            <div>
+              <label for="demo-lastName" class="block text-sm font-medium text-text mb-2">
+                Sobrenome <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="demo-lastName"
+                name="lastName"
+                required
+                minlength="2"
+                autocomplete="family-name"
+                class="w-full px-4 py-3 rounded-lg border border-border bg-background text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+                placeholder="Ex.: Silva"
+              />
+              <p class="mt-1 text-sm text-red-500 hidden" data-error="demo-lastName" />
+            </div>
+          </div>
+
+          <div>
+            <label for="phone" class="block text-sm font-medium text-text mb-2">
+              Celular <span class="text-red-500">*</span>
+            </label>
+            <input
+              maxlength="16"
+              type="tel"
+              id="phone"
+              name="phone"
+              required
+              autocomplete="tel"
+              class="w-full px-4 py-3 rounded-lg border border-border bg-background text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+              placeholder="Ex. (31) 9 9090-9090"
+            />
+            <p class="mt-1 text-sm text-red-500 hidden" data-error="phone" />
+          </div>
+
+          <div>
+            <label for="demo-email" class="block text-sm font-medium text-text mb-2">
+              E-mail <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="email"
+              id="demo-email"
+              name="email"
+              required
+              autocomplete="email"
+              class="w-full px-4 py-3 rounded-lg border border-border bg-background text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+              placeholder="Ex.: jose@gmail.com"
+            />
+            <p class="mt-1 text-sm text-red-500 hidden" data-error="demo-email" />
+
+            <p class="mt-1 text-xs text-text-muted">
+              Nosso time pode entrar em contato para ajudar você a aproveitar melhor o teste.
+            </p>
+          </div>
+
+          <div class="flex flex-col-reverse gap-3 sm:flex-row">
+            <button
+              type="button"
+              class="flex-1 rounded-lg border border-border px-5 py-3 font-semibold text-text transition-colors hover:border-primary hover:text-primary"
+              data-wizard-back
+            >
+              Voltar
+            </button>
+            <button
+              type="button"
+              class="flex-1 cursor-pointer rounded-lg bg-primary px-5 py-3 font-semibold text-white transition-colors hover:bg-primary-dark"
+              data-wizard-next
+            >
+              Avançar
+            </button>
+          </div>
+        </div>
+
+        <div class="wizard-step hidden space-y-5" data-wizard-step>
+          <div>
+            <h3 class="text-lg font-semibold text-text">O que melhor define sua operação?</h3>
+            <p class="mt-1 text-sm text-text-muted">
+              Assim conseguimos destacar o que faz mais sentido no primeiro acesso.
+            </p>
+          </div>
+
+          <div>
+            <label for="demo-company" class="block text-sm font-medium text-text mb-2">
+              Nome da empresa <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="demo-company"
+              name="company"
+              required
+              autocomplete="organization"
+              class="w-full px-4 py-3 rounded-lg border border-border bg-background text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+              placeholder="Ex.: Empresa Ltda"
+            />
+            <p class="mt-1 text-sm text-red-500 hidden" data-error="demo-company" />
+          </div>
+
+          <div>
+            <label for="demo-cnpj" class="block text-sm font-medium text-[var(--color-text)] mb-2">
+              CNPJ da Empresa <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <input
+                type="text"
+                inputmode="numeric"
+                id="demo-cnpj"
+                name="cnpj"
+                required
+                maxlength="18"
+                autocomplete="off"
+                class="w-full px-4 py-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:ring-2 focus:ring-[var(--color-primary)]/50 focus:border-[var(--color-primary)] transition-all outline-none"
+                placeholder="Ex.: 00.000.000/0000-00"
+              />
+            </div>
+            <p class="mt-2 text-[11px] leading-relaxed text-[var(--color-text-muted)]">
+              <strong class="text-[var(--color-text)]">Acesso Institucional:</strong> Utilizamos o
+              CNPJ para configurar o ambiente exclusivo da sua concessionária ou consórcio.
+            </p>
+            <p class="mt-1 text-xs text-red-500 hidden" data-error="demo-cnpj" />
+          </div>
+
+          <div>
+            <label for="demo-teamSize" class="block text-sm font-medium text-text mb-2">
+              Tamanho da equipe <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <select
+                id="demo-teamSize"
+                name="teamSize"
+                required
+                class="w-full px-4 py-3 pr-10 rounded-lg border border-border bg-background text-text focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors appearance-none cursor-pointer"
+              >
+                <option value="">Selecione o tamanho da sua equipe</option>
+                <option value="1-10">1-10 colaboradores</option>
+                <option value="11-50">11-50 colaboradores</option>
+                <option value="51-200">51-200 colaboradores</option>
+                <option value="200+">200+ colaboradores</option>
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-text-muted">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </div>
+            </div>
+            <p class="mt-1 text-sm text-red-500 hidden" data-error="demo-teamSize" />
+          </div>
+
+          <div>
+            <p class="mb-4 text-sm font-bold uppercase tracking-wide text-[var(--color-primary)]">
+              Qual cenário mais parece com a sua operação hoje? <span class="text-red-500">*</span>
+            </p>
+            <input id="demo-operationFocus" type="hidden" name="operationFocus" required />
+
+            <div class="grid grid-cols-1 gap-4">
+              <button
+                type="button"
+                class="wizard-choice group relative rounded-xl border-2 border-[var(--color-border)] bg-[var(--color-surface)] p-5 text-left transition-all hover:border-[var(--color-primary)]/50"
+                data-choice-target="demo-operationFocus"
+                data-choice-value="Essencial"
+              >
+                <div class="flex items-start gap-4">
+                  <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary)]/10 text-[var(--color-primary)] group-[.bg-primary\/10]:bg-white">
+                    <Icon name="lucide:lightbulb" class="h-6 w-6" />
+                  </div>
+                  <div>
+                    <span class="block font-bold text-[var(--color-text)]">
+                      Operação mais simples, com foco em rotina
+                    </span>
+                    <span class="mt-1 block text-xs leading-relaxed text-[var(--color-text-muted)]">
+                      Quero organizar contratos, estoque, ordens de serviço e relatórios
+                      operacionais no dia a dia.
+                    </span>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                class="wizard-choice group relative rounded-xl border-2 border-[var(--color-border)] bg-[var(--color-surface)] p-5 text-left transition-all hover:border-[var(--color-primary)]/50"
+                data-choice-target="demo-operationFocus"
+                data-choice-value="Profissional"
+              >
+                <div class="flex items-start gap-4">
+                  <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary)]/10 text-[var(--color-primary)] group-[.bg-primary\/10]:bg-white">
+                    <Icon name="lucide:truck" class="h-6 w-6" />
+                  </div>
+                  <div>
+                    <span class="block font-bold text-[var(--color-text)]">
+                      Operação em crescimento, com equipe de campo ativa
+                    </span>
+                    <span class="mt-1 block text-xs leading-relaxed text-[var(--color-text-muted)]">
+                      Preciso de mais recursos de campo como coordenadas, relatórios fotográficos,
+                      assinatura digital e gestão de chamados da prefeitura.
+                    </span>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                class="wizard-choice group relative rounded-xl border-2 border-[var(--color-border)] bg-[var(--color-surface)] p-5 text-left transition-all hover:border-[var(--color-primary)]/50"
+                data-choice-target="demo-operationFocus"
+                data-choice-value="Enterprise"
+              >
+                <div class="flex items-start gap-4">
+                  <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary)]/10 text-[var(--color-primary)] group-[.bg-primary\/10]:bg-white">
+                    <Icon name="lucide:file-check" class="h-6 w-6" />
+                  </div>
+                  <div>
+                    <span class="block font-bold text-[var(--color-text)]">
+                      Operação avançada, com controle completo
+                    </span>
+                    <span class="mt-1 block text-xs leading-relaxed text-[var(--color-text-muted)]">
+                      Preciso de mapa em tempo real, portal do cidadão, validação visual, uso
+                      offline, suporte dedicado e customizações sob demanda.
+                    </span>
+                  </div>
+                </div>
+              </button>
+            </div>
+            <p class="mt-2 text-sm text-red-500 hidden" data-error="demo-operationFocus" />
+            <div class="flex justify-end mt-2">
+              <a
+                class="text-xs font-semibold text-blue-500 hover:text-blue-700 hover:font-bold"
+                target="_blank"
+                href="/precos"
+              >
+                Saiba mais
+              </a>
+            </div>
+          </div>
+
+          <div class="flex flex-col-reverse gap-3 sm:flex-row">
+            <button
+              type="button"
+              class="flex-1 rounded-lg border border-border px-5 py-3 font-semibold text-text transition-colors hover:border-primary hover:text-primary"
+              data-wizard-back
+            >
+              Voltar
+            </button>
+            <button
+              type="button"
+              class="flex-1 cursor-pointer rounded-lg bg-primary px-5 py-3 font-semibold text-white transition-colors hover:bg-primary-dark"
+              data-wizard-next
+            >
+              Avançar
+            </button>
+          </div>
+        </div>
+
+        <div class="wizard-step hidden space-y-5" data-wizard-step>
+          <div>
+            <h3 class="text-lg font-semibold text-text">Qual o momento da sua empresa?</h3>
+            <p class="mt-1 text-sm text-text-muted">
+              Essa resposta ajuda nosso time a orientar o teste sem perder tempo.
+            </p>
+          </div>
+
+          <div>
+            <input id="demo-currentMoment" type="hidden" name="currentMoment" required />
+            <div class="space-y-3">
+              {[
+                'Tenho operação, mas ainda controlo muita coisa por planilha',
+                'Já uso um sistema, mas quero mais clareza em campo',
+                'Estou estruturando uma nova operação',
+                'Quero entender se o Lumos serve para minha empresa',
+              ].map((moment) => (
+                <button
+                  type="button"
+                  class="wizard-choice flex w-full items-center gap-3 rounded-lg border border-border bg-background p-4 text-left transition-colors hover:border-primary"
+                  data-choice-target="demo-currentMoment"
+                  data-choice-value={moment}
+                >
+                  <span class="h-3 w-3 shrink-0 rounded-full border border-current" />
+                  <span class="text-sm font-semibold text-text">{moment}</span>
+                </button>
+              ))}
+            </div>
+            <p class="mt-1 text-sm text-red-500 hidden" data-error="demo-currentMoment" />
+          </div>
+
+          <div>
+            <label for="demo-message" class="block text-sm font-medium text-text mb-2">
+              Qual rotina você quer melhorar primeiro?{' '}
+              <span class="text-text-muted">(Opcional)</span>
+            </label>
+            <textarea
+              id="demo-message"
+              name="message"
+              rows="3"
+              class="w-full px-4 py-3 rounded-lg border border-border bg-background text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary resize-none transition-colors"
+              placeholder="Ex. acompanhar equipes em campo, controlar contratos ou organizar chamados..."
+            />
+          </div>
+
+          <div class="flex flex-col-reverse gap-3 sm:flex-row">
+            <button
+              type="button"
+              class="flex-1 rounded-lg border border-border px-5 py-3 font-semibold text-text transition-colors hover:border-primary hover:text-primary"
+              data-wizard-back
+            >
+              Voltar
+            </button>
+            <button
+              type="button"
+              class="flex-1 cursor-pointer rounded-lg bg-primary px-5 py-3 font-semibold text-white transition-colors hover:bg-primary-dark"
+              data-wizard-next
+            >
+              Avançar
+            </button>
+          </div>
+        </div>
+
+        <div class="wizard-step hidden space-y-5" data-wizard-step>
+          <div>
+            <h3 class="text-lg font-semibold text-text">Estamos quase lá.</h3>
+            <p class="mt-1 text-sm text-text-muted">
+              Agora defina o acesso que você vai usar para entrar no Lumos.
+            </p>
+          </div>
+
+          <div>
+            <p class="text-sm text-text-muted mt-1">
+              Seu usuário de acesso será:{' '}
+              <span id="demo-user-display" class="font-bold text-primary">
+                admin-empresa
+              </span>
+            </p>
+          </div>
+
+          <div>
+            <label for="demo-password" class="block text-sm font-medium text-text mb-2">
+              Senha <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="password"
+              id="demo-password"
+              name="password"
+              required
+              minlength="8"
+              autocomplete="new-password"
+              class="w-full px-4 py-3 rounded-lg border border-border bg-background text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+              placeholder="Mínimo de 8 caracteres"
+            />
+            <p class="mt-2 text-xs leading-relaxed text-text-muted">
+              Use pelo menos 8 caracteres entre letras e números.
+            </p>
+            <p class="mt-1 text-sm text-red-500 hidden" data-error="demo-password" />
+          </div>
+
+          <button
+            type="button"
+            class="w-full rounded-lg border border-border px-5 py-3 font-semibold text-text transition-colors hover:border-primary hover:text-primary"
+            data-wizard-back
+          >
+            Voltar
+          </button>
+        </div>
       </div>
-    </div>
-    <p class="mt-1 text-sm text-red-500 hidden" data-error="demo-teamSize"></p>
-  </div>
+    ) : (
+      <>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div>
+            <label for="demo-firstName" class="block text-sm font-medium text-text mb-2">
+              Primeiro Nome <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="demo-firstName"
+              name="firstName"
+              required
+              minlength="2"
+              class="w-full px-4 py-3 rounded-lg border border-border bg-background text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+              placeholder="José"
+            />
+            <p class="mt-1 text-sm text-red-500 hidden" data-error="demo-firstName" />
+          </div>
+          <div>
+            <label for="demo-lastName" class="block text-sm font-medium text-text mb-2">
+              Sobrenome <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="demo-lastName"
+              name="lastName"
+              required
+              minlength="2"
+              class="w-full px-4 py-3 rounded-lg border border-border bg-background text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+              placeholder="Silva"
+            />
+            <p class="mt-1 text-sm text-red-500 hidden" data-error="demo-lastName" />
+          </div>
+        </div>
 
-  <div>
-    <label for="demo-message" class="block text-sm font-medium text-text mb-2">
-      Qual é o problema que você está tentando resolver? <span class="text-text-muted">(Opcional)</span>
-    </label>
-    <textarea
-      id="demo-message"
-      name="message"
-      rows="3"
-      class="w-full px-4 py-3 rounded-lg border border-border bg-background text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary resize-none transition-colors"
-      placeholder="Conte-nos sobre os seus desafios..."></textarea>
-  </div>
+        <div>
+          <label for="demo-email" class="block text-sm font-medium text-text mb-2">
+            Email Corporativo <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="email"
+            id="demo-email"
+            name="email"
+            required
+            class="w-full px-4 py-3 rounded-lg border border-border bg-background text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+            placeholder="jose@gmail.com"
+          />
+          <p class="mt-1 text-sm text-red-500 hidden" data-error="demo-email" />
+        </div>
+
+        <div>
+          <label for="phone" class="block text-sm font-medium text-text mb-2">
+            Melhor telefone <span class="text-red-500">*</span>
+          </label>
+          <input
+            maxlength="11"
+            type="number"
+            id="phone"
+            name="phone"
+            required
+            class="w-full px-4 py-3 rounded-lg border border-border bg-background text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+            placeholder="Ex. 31990909090"
+          />
+          <p class="mt-1 text-sm text-red-500 hidden" data-error="phone" />
+        </div>
+
+        <div>
+          <label for="demo-company" class="block text-sm font-medium text-text mb-2">
+            Empresa <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            id="demo-company"
+            name="company"
+            required
+            class="w-full px-4 py-3 rounded-lg border border-border bg-background text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+            placeholder="Empresa Ltda"
+          />
+          <p class="mt-1 text-sm text-red-500 hidden" data-error="demo-company" />
+        </div>
+
+        <div>
+          <label for="demo-teamSize" class="block text-sm font-medium text-text mb-2">
+            Tamanho da Equipe <span class="text-red-500">*</span>
+          </label>
+          <div class="relative">
+            <select
+              id="demo-teamSize"
+              name="teamSize"
+              required
+              class="w-full px-4 py-3 pr-10 rounded-lg border border-border bg-background text-text focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors appearance-none cursor-pointer"
+            >
+              <option value="">Selecione o tamanho da sua equipe</option>
+              <option value="1-10">1-10 colaboradores</option>
+              <option value="11-50">11-50 colaboradores</option>
+              <option value="51-200">51-200 colaboradores</option>
+              <option value="200+">200+ colaboradores</option>
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-text-muted">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </div>
+          </div>
+          <p class="mt-1 text-sm text-red-500 hidden" data-error="demo-teamSize" />
+        </div>
+
+        <div>
+          <label for="demo-message" class="block text-sm font-medium text-text mb-2">
+            Qual rotina você quer melhorar primeiro? <span class="text-text-muted">(Opcional)</span>
+          </label>
+          <textarea
+            id="demo-message"
+            name="message"
+            rows="3"
+            class="w-full px-4 py-3 rounded-lg border border-border bg-background text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary resize-none transition-colors"
+            placeholder="Ex. acompanhar equipes em campo, controlar contratos ou organizar chamados..."
+          />
+        </div>
+      </>
+    )
+  }
 
   <!-- Form status messages -->
   <div id="demo-form-status" class="hidden">
     <div
       id="demo-form-success"
       class="hidden p-6 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 backdrop-blur-sm transition-all animate-in fade-in zoom-in duration-300"
-      >
+    >
       <div class="flex items-start gap-4">
-        <div class="shrink-0 w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        <div
+          class="shrink-0 w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-6 h-6 text-emerald-500"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            ><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline
+              points="22 4 12 14.01 9 11.01"></polyline></svg
+          >
         </div>
         <div>
           <p class="text-[var(--color-text)] font-bold text-lg">Solicitação confirmada!</p>
           <p class="text-[var(--color-text-muted)] text-sm mt-1 leading-relaxed">
-            Seu ambiente está sendo preparado. Retornaremos em instantes com as instruções de acesso ao sistema.
+            {
+              isFreeTest
+                ? 'Sua conta foi criada. Você já pode acessar o Lumos com o e-mail e a senha cadastrados.'
+                : 'Seu ambiente está sendo preparado. Retornaremos em instantes com as instruções de acesso ao sistema.'
+            }
           </p>
           <div class="mt-4 flex gap-3">
-            <a href="/como-usar" class="text-xs font-bold uppercase tracking-wider text-[var(--color-primary)] hover:underline">Ver Guia Rápido de como usar →</a>
+            <a
+              href={isFreeTest ? 'https://lumos.thryon.com.br/auth/login' : '/como-usar'}
+              class="text-xs font-bold uppercase tracking-wider text-[var(--color-primary)] hover:underline"
+            >
+              {isFreeTest ? 'Acessar o Lumos' : 'Ver Guia Rápido de como usar →'}
+            </a>
           </div>
         </div>
       </div>
@@ -203,7 +733,7 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
       class="hidden p-4 rounded-lg bg-red-100 dark:bg-red-950 border border-red-300 dark:border-red-800"
     >
       <p class="text-red-900 dark:text-red-100 font-medium">Algo deu errado</p>
-      <p class="text-red-800 dark:text-red-300 text-sm mt-1">
+      <p id="demo-form-error-message" class="text-red-800 dark:text-red-300 text-sm mt-1">
         Por favor, tente novamente ou entre em contato conosco diretamente por e-mail.
       </p>
     </div>
@@ -212,9 +742,9 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
   <button
     type="submit"
     id="demo-submit-button"
-    class="w-full cursor-pointer px-6 py-4 rounded-lg bg-primary text-white font-semibold hover:bg-primary-dark transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+    class={`w-full cursor-pointer px-6 py-4 rounded-lg bg-primary text-white font-semibold hover:bg-primary-dark transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed items-center justify-center gap-2 ${isFreeTest ? 'hidden' : 'flex'}`}
   >
-    <span id="demo-button-text">Enviar Formulário</span>
+    <span id="demo-button-text">{submitLabel}</span>
     <span id="demo-button-loading" class="hidden">
       <svg
         class="animate-spin inline-block w-5 h-5 mr-2"
@@ -248,8 +778,9 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
   </button>
 
   <p class="text-xs text-text-muted text-center">
-    Ao enviar, você concorda com nossos termos. <a href="/privacidade" class="underline hover:text-primary"
-      >Política de Privacidade</a
+    Ao enviar, você concorda com nossos termos. <a
+      href="/privacidade"
+      class="underline hover:text-primary">Política de Privacidade</a
     >.
   </p>
 </form>
@@ -263,6 +794,69 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
   const formStatus = document.getElementById('demo-form-status');
   const formSuccess = document.getElementById('demo-form-success');
   const formError = document.getElementById('demo-form-error');
+  const formErrorMessage = document.getElementById('demo-form-error-message');
+  const variant = form.dataset.variant;
+  const wizardSteps = Array.from(form.querySelectorAll<HTMLElement>('[data-wizard-step]'));
+  const progressNumber = document.getElementById('wizard-progress-number');
+  const progressBar = document.getElementById('wizard-progress-bar');
+  let currentWizardStep = 0;
+
+  const demoCompany = document.getElementById('demo-company') as HTMLInputElement;
+  // Supondo que você queira exibir isso em algum lugar ou preencher um campo oculto
+  const demoUserDisplay = document.getElementById('demo-user-display');
+
+  // Troque 'blur' por 'input' para ser em tempo real
+  demoCompany?.addEventListener('input', () => {
+    const companyName = demoCompany.value.trim();
+    if (companyName.length > 0) {
+      const adminSlug = companyName
+        .split(' ')[0]
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]/g, ''); // Garante que não tenha símbolos especiais
+
+      if (demoUserDisplay) {
+        demoUserDisplay.textContent = `admin-${adminSlug}`;
+      }
+    }
+  });
+
+  const cnpjInput = document.getElementById('demo-cnpj') as HTMLInputElement;
+  cnpjInput?.addEventListener('input', (e) => {
+    let value = cnpjInput.value.replace(/\D/g, '');
+    if (value.length > 14) value = value.slice(0, 14);
+
+    // Aplica a máscara dinamicamente
+    value = value.replace(/^(\d{2})(\d)/, '$1.$2');
+    value = value.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+    value = value.replace(/\.(\d{3})(\d)/, '.$1/$2');
+    value = value.replace(/(\d{4})(\d)/, '$1-$2');
+
+    cnpjInput.value = value;
+  });
+
+  const telInput = document.getElementById('phone') as HTMLInputElement;
+
+  telInput?.addEventListener('input', () => {
+    let value = telInput.value.replace(/\D/g, '');
+
+    // Limita a 11 dígitos (DDD + número com 9 dígitos)
+    if (value.length > 11) value = value.slice(0, 11);
+
+    // Aplica máscara dinâmica
+    if (value.length <= 10) {
+      // Telefone fixo: (31) 3190-9090
+      value = value.replace(/^(\d{2})(\d)/, '($1) $2');
+      value = value.replace(/(\d{4})(\d)/, '$1-$2');
+    } else {
+      // Celular: (31) 9 3190-9090
+      value = value.replace(/^(\d{2})(\d)/, '($1) $2 ');
+      value = value.replace(/(\d{1}) (\d{4})(\d)/, '$1 $2-$3');
+    }
+
+    telInput.value = value;
+  });
 
   // Validation rules
   const validationRules: Record<string, (value: string) => string | null> = {
@@ -282,9 +876,9 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
       if (!emailRegex.test(value)) return 'Por favor, insira um endereço de e-mail válido';
       return null;
     },
-    'phone': (value) => {
+    phone: (value) => {
       if (!value.trim()) return 'Telefone é obrigatório';
-      const phoneRegex = /^(?:\+55\s?)?(?:\(?\d{2}\)?\s?)(?:9\d{4}|\d{4})-?\d{4}$/;
+      const phoneRegex = /^\(\d{2}\)\s\d\s\d{4}-\d{4}$|^\(\d{2}\)\s\d{4}-\d{4}$/;
       if (!phoneRegex.test(value)) return 'Por favor, insira um telefone válido';
       return null;
     },
@@ -296,7 +890,33 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
       if (!value) return 'Por favor, selecione o tamanho da equipe';
       return null;
     },
+    // No seu objeto validationRules, substitua a regra do CPF por esta:
+    'demo-cnpj': (value) => {
+      if (!value.trim()) return 'CNPJ é obrigatório para o teste corporativo';
+
+      // Regex que aceita apenas os 14 números ou o formato com pontos/barras
+      const cnpjRegex = /^\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}$/;
+      if (!cnpjRegex.test(value)) return 'Insira um CNPJ válido (00.000.000/0000-00)';
+
+      return null;
+    },
   };
+
+  if (variant === 'free-test') {
+    validationRules['demo-operationFocus'] = (value) => {
+      if (!value.trim()) return 'Escolha a principal rotina da empresa';
+      return null;
+    };
+    validationRules['demo-currentMoment'] = (value) => {
+      if (!value.trim()) return 'Escolha o momento da sua empresa';
+      return null;
+    };
+    validationRules['demo-password'] = (value) => {
+      if (!value.trim()) return 'Senha é obrigatória';
+      if (value.length < 8) return 'A senha deve ter pelo menos 8 caracteres';
+      return null;
+    };
+  }
 
   // Show/hide error message
   function showError(fieldId: string, message: string | null) {
@@ -338,11 +958,74 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
     return isValid;
   }
 
+  function validateCurrentStep(): boolean {
+    const step = wizardSteps[currentWizardStep];
+    if (!step) return true;
+
+    const fields = Array.from(
+      step.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[id]')
+    ).filter((field) => validationRules[field.id]);
+
+    let isValid = true;
+    for (const field of fields) {
+      if (!validateField(field.id)) {
+        isValid = false;
+      }
+    }
+
+    if (!isValid) {
+      const firstError = step.querySelector('.border-red-500') as HTMLElement;
+      firstError?.focus();
+    }
+
+    return isValid;
+  }
+
+  function updateWizard() {
+    if (!wizardSteps.length) return;
+
+    wizardSteps.forEach((step, index) => {
+      step.classList.toggle('hidden', index !== currentWizardStep);
+    });
+
+    const total = wizardSteps.length;
+    if (progressNumber) progressNumber.textContent = `${currentWizardStep + 1}/${total}`;
+    if (progressBar) progressBar.style.width = `${((currentWizardStep + 1) / total) * 100}%`;
+
+    if (currentWizardStep === total - 1) {
+      submitButton.classList.remove('hidden');
+      submitButton.classList.add('flex');
+    } else if (variant === 'free-test') {
+      submitButton.classList.add('hidden');
+      submitButton.classList.remove('flex');
+    }
+  }
+
+  function setChoice(button: HTMLButtonElement) {
+    const targetId = button.dataset.choiceTarget;
+    const value = button.dataset.choiceValue || '';
+    if (!targetId) return;
+
+    const target = document.getElementById(targetId) as HTMLInputElement | null;
+    if (!target) return;
+
+    target.value = value;
+    validateField(targetId);
+
+    const group = form.querySelectorAll<HTMLButtonElement>(`[data-choice-target="${targetId}"]`);
+    group.forEach((choice) => {
+      const isSelected = choice === button;
+      choice.classList.toggle('border-primary', isSelected);
+      choice.classList.toggle('bg-primary/10', isSelected);
+      choice.classList.toggle('border-border', !isSelected);
+    });
+  }
+
   // Real-time validation on blur
   for (const fieldId of Object.keys(validationRules)) {
     const input = document.getElementById(fieldId) as HTMLInputElement | HTMLSelectElement | null;
     if (input) {
-      input.addEventListener('blur', () => validateField(fieldId));
+      // input.addEventListener('blur', () => validateField(fieldId));
       input.addEventListener('input', () => {
         const errorEl = document.querySelector(`[data-error="${fieldId}"]`);
         if (errorEl && !errorEl.classList.contains('hidden')) {
@@ -352,6 +1035,25 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
     }
   }
 
+  form.querySelectorAll<HTMLButtonElement>('[data-wizard-next]').forEach((button) => {
+    button.addEventListener('click', () => {
+      if (!validateCurrentStep()) return;
+      currentWizardStep = Math.min(currentWizardStep + 1, wizardSteps.length - 1);
+      updateWizard();
+    });
+  });
+
+  form.querySelectorAll<HTMLButtonElement>('[data-wizard-back]').forEach((button) => {
+    button.addEventListener('click', () => {
+      currentWizardStep = Math.max(currentWizardStep - 1, 0);
+      updateWizard();
+    });
+  });
+
+  form.querySelectorAll<HTMLButtonElement>('[data-choice-target]').forEach((button) => {
+    button.addEventListener('click', () => setChoice(button));
+  });
+
   // Form submission
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -360,6 +1062,14 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
     formStatus?.classList.add('hidden');
     formSuccess?.classList.add('hidden');
     formError?.classList.add('hidden');
+
+    if (variant === 'free-test' && currentWizardStep < wizardSteps.length - 1) {
+      if (validateCurrentStep()) {
+        currentWizardStep += 1;
+        updateWizard();
+      }
+      return;
+    }
 
     // Validate form
     if (!validateForm()) {
@@ -389,32 +1099,58 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
       const response = await fetch(action, {
         method: form.method || 'POST',
         body: formData,
+        credentials: 'include',
         headers: {
           Accept: 'application/json',
         },
       });
 
       if (response.ok) {
-        console.log('ok')
+        const data = await response.json();
         showSuccess();
+        localStorage.setItem('accessToken', data.accessToken);
+        const redirectUrl = `https://app.lumosip.com.br/auth/auto-login`;
+
+        setTimeout(() => {
+          window.location.href = redirectUrl;
+        }, 2000);
       } else {
-        showErrorState();
+        showErrorState(await getErrorMessage(response));
       }
     } catch {
       showErrorState();
     }
   });
 
+  async function getErrorMessage(response: Response): Promise<string | undefined> {
+    try {
+      const body = await response.json();
+      if (typeof body?.message === 'string') return body.message;
+      if (typeof body?.error === 'string') return body.error;
+    } catch {
+      return undefined;
+    }
+
+    return undefined;
+  }
+
   function showSuccess() {
     formStatus?.classList.remove('hidden');
     formSuccess?.classList.remove('hidden');
     form.reset();
+    currentWizardStep = 0;
+    updateWizard();
+    resetChoiceButtons();
     resetButtonState();
   }
 
-  function showErrorState() {
+  function showErrorState(message?: string) {
     formStatus?.classList.remove('hidden');
     formError?.classList.remove('hidden');
+    if (formErrorMessage) {
+      formErrorMessage.textContent =
+        message || 'Por favor, tente novamente ou entre em contato conosco diretamente por e-mail.';
+    }
     resetButtonState();
   }
 
@@ -424,4 +1160,13 @@ const { action = '', method = 'POST', netlify = false, formName = 'demo-request'
     buttonArrow?.classList.remove('hidden');
     buttonLoading?.classList.add('hidden');
   }
+
+  function resetChoiceButtons() {
+    form.querySelectorAll<HTMLButtonElement>('[data-choice-target]').forEach((choice) => {
+      choice.classList.remove('border-primary', 'bg-primary/10');
+      choice.classList.add('border-border');
+    });
+  }
+
+  updateWizard();
 </script>

@@ -132,8 +132,8 @@ export class ReservationManagementSelectComponent {
                 private teamService: TeamService,
                 private executionService: ExecutionService) {
 
-        this.title.setTitle('Gerenciamento de Estoque - Pré-instalação');
-        SharedState.setCurrentPath(['Solicitações ao Estoquista', 'Gerenciamento de estoque - Pré-instalação']);
+        this.title.setTitle('Lumos IP - Gerenciamento de Estoque | Pré-instalação');
+        SharedState.setCurrentPath(['Solicitações ao Estoquista', 'Gerenciar Estoque de OS']);
 
         this.formWhatsapp = this.fb.group({
             phone: [

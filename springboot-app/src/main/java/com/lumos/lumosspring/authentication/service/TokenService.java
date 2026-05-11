@@ -9,6 +9,7 @@ import com.lumos.lumosspring.authentication.model.RefreshToken;
 import com.lumos.lumosspring.authentication.repository.RefreshTokenRepository;
 import com.lumos.lumosspring.authentication.repository.TenantRepository;
 import com.lumos.lumosspring.authentication.repository.QrcodeTokenRepository;
+import com.lumos.lumosspring.scheduler.AsyncTenantContext;
 import com.lumos.lumosspring.team.repository.TeamQueryRepository;
 import com.lumos.lumosspring.team.repository.StockistRepository;
 import com.lumos.lumosspring.user.model.AppUser;
@@ -140,10 +141,11 @@ public class TokenService {
         // Configura o refreshToken como um cookie HTTP-Only
         if (!isMobile) {
             // Spring não suporta SameSite diretamente via Cookie API — definimos manualmente o header:
-            String cookieValue = "refreshToken=" + this.refreshToken +
+            String cookieValue = "refreshToken=" + refreshToken +
                     "; Max-Age=" + refreshExpiresIn +
                     "; Path=/" +
-                    "; HttpOnly; Secure; SameSite=Strict";
+                    "; Domain=lumosip.com.br" + // ISSO permite que app.lumosip e lumosip compartilhem o cookie
+                    "; HttpOnly; Secure; SameSite=Lax"; // SameSite=Lax é melhor para redirecionamentos cross-site
             response.setHeader(HttpHeaders.SET_COOKIE, cookieValue);
 
             // Não enviar refresh token no body para web
@@ -172,10 +174,11 @@ public class TokenService {
         // Configura o refreshToken como um cookie HTTP-Only
         if (!isMobile) {
             // Spring não suporta SameSite diretamente via Cookie API — definimos manualmente o header:
-            String cookieValue = "refreshToken=" + this.refreshToken +
-                    "; Max-Age=" + this.refreshExpiresIn +
+            String cookieValue = "refreshToken=" + refreshToken +
+                    "; Max-Age=" + refreshExpiresIn +
                     "; Path=/" +
-                    "; HttpOnly; Secure; SameSite=Strict";
+                    "; Domain=lumosip.com.br" + // ISSO permite que app.lumosip e lumosip compartilhem o cookie
+                    "; HttpOnly; Secure; SameSite=Lax"; // SameSite=Lax é melhor para redirecionamentos cross-site
             response.setHeader(HttpHeaders.SET_COOKIE, cookieValue);
 
             // Não enviar refresh token no body para web
@@ -186,7 +189,7 @@ public class TokenService {
     }
 
     public ResponseEntity<?> newLogin(LoginRequest loginRequest, HttpServletResponse response, boolean isMobile) {
-        var user = userRepository.findByUsernameOrCpfIgnoreCase(loginRequest.username(), loginRequest.username());
+        var user = userRepository.findByUsernameOrCpfCnpjIgnoreCase(loginRequest.username(), loginRequest.username());
         if (user.isEmpty() || !user.get().isLoginCorrect(loginRequest, passwordEncoder)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("Usuário/CPF ou senha incorretos"));
         }
@@ -228,7 +231,8 @@ public class TokenService {
             String cookieValue = "refreshToken=" + refreshToken +
                     "; Max-Age=" + refreshExpiresIn +
                     "; Path=/" +
-                    "; HttpOnly; Secure; SameSite=Strict";
+                    "; Domain=lumosip.com.br" + // ISSO permite que app.lumosip e lumosip compartilhem o cookie
+                    "; HttpOnly; Secure; SameSite=Lax"; // SameSite=Lax é melhor para redirecionamentos cross-site
             response.setHeader(HttpHeaders.SET_COOKIE, cookieValue);
 
             return ResponseEntity.ok(new LoginResponse(accessToken));
@@ -262,12 +266,16 @@ public class TokenService {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("Usuário sem acesso ao aplicativo"));
             }
         }
+
         this.generateToken(user.getUserId());
+        AsyncTenantContext.INSTANCE.clear();
+
         if (!isMobile) {
             String cookieValue = "refreshToken=" + refreshToken +
                     "; Max-Age=" + refreshExpiresIn +
                     "; Path=/" +
-                    "; HttpOnly; Secure; SameSite=Strict";
+                    "; Domain=lumosip.com.br" + // ISSO permite que app.lumosip e lumosip compartilhem o cookie
+                    "; HttpOnly; Secure; SameSite=Lax"; // SameSite=Lax é melhor para redirecionamentos cross-site
             response.setHeader(HttpHeaders.SET_COOKIE, cookieValue);
             return ResponseEntity.ok(new LoginResponse(accessToken));
         } else {
@@ -366,7 +374,8 @@ public class TokenService {
             String cookieValue = "refreshToken=" + refreshToken +
                     "; Max-Age=" + refreshExpiresIn +
                     "; Path=/" +
-                    "; HttpOnly; Secure; SameSite=Strict";
+                    "; Domain=lumosip.com.br" + // ISSO permite que app.lumosip e lumosip compartilhem o cookie
+                    "; HttpOnly; Secure; SameSite=Lax"; // SameSite=Lax é melhor para redirecionamentos cross-site
             response.setHeader(HttpHeaders.SET_COOKIE, cookieValue);
 
             return ResponseEntity.ok(new LoginResponse(accessToken));

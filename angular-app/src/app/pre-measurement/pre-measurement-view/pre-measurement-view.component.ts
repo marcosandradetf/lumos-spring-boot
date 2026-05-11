@@ -56,7 +56,7 @@ export class PreMeasurementViewComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.titleService.setTitle('Visualizar Pré-Medição');
+    this.titleService.setTitle('Lumos IP - Visualizar Pré-Medição');
     this.loading = true;
 
     this.route.queryParams.subscribe(params => {

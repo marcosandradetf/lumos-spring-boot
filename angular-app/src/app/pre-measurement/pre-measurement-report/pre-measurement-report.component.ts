@@ -88,7 +88,7 @@ export class PreMeasurementReportComponent implements OnInit {
 
     const measurementId = this.route.snapshot.paramMap.get('id');
     const step = this.route.snapshot.paramMap.get('step');
-    this.titleService.setTitle("Relatório de Pré-medição");
+    this.titleService.setTitle("Lumos IP - Relatório de Pré-medição");
 
     const uuid = authService.getUser().uuid;
 

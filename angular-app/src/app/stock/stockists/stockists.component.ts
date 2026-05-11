@@ -92,7 +92,7 @@ export class StockistsComponent {
         protected router: Router,
         private sanitizer: DomSanitizer
     ) {
-        this.title.setTitle('Configurações - Estoquistas');
+        this.title.setTitle('Lumos IP - Estoquistas');
         SharedState.setCurrentPath(['Configurações', 'Estoquistas']);
         this.loadPageData();
     }

@@ -53,7 +53,7 @@ export class TypesComponent {
 
   constructor(private stockService: StockService,
               private title: Title, protected router: Router) {
-    this.title.setTitle('Gerenciar - Tipos');
+    this.title.setTitle('Lumos IP - Gerenciar tipos');
     this.stockService.getTypes().subscribe(
       t => this.types = t
     );

@@ -1,14 +1,62 @@
-<div class="card flex justify-center">
-  <p-drawer   [visible]="(SharedState.showMenuDrawer$ | async) ?? false"
-              (visibleChange)="onDrawerChange($event)" [closable]="false">
+<div class="flex justify-center">
+  <p-drawer
+    [visible]="(SharedState.showMenuDrawer$ | async) ?? false"
+    (visibleChange)="onDrawerChange($event)"
+    [closable]="true"
+    [style]="{ width: '300px' }">
     <ng-template #header>
       <div
-        class="flex items-center gap-2 px-3 py-2 border border-neutral-200 dark:border-neutral-800 m-2 rounded cursor-pointer w-full">
-        <img
-          ngSrc="/public/icon-192.png"
-          alt="Lumos"
-          height="32" width="32"/>
-        <span class="font-semibold text-lg ml-1 text-gray-800 dark:text-neutral-200 select-none">Lumos™</span>
+        class="flex items-center gap-2.5 cursor-pointer group select-none"
+        (click)="router.navigate(['']); SharedState.showMenuDrawer$.next(false)"
+      >
+        <!-- Ícone -->
+        <div class="
+    flex items-center justify-center
+    w-8 h-8
+    rounded-lg
+    bg-gradient-to-br from-blue-200 to-indigo-200
+    shadow-sm
+    group-hover:shadow-md
+    transition-all duration-200
+  ">
+          <img
+            ngSrc="/public/icon-192.png"
+            alt="Lumos"
+            height="20"
+            width="20"
+            class="opacity-90"
+          />
+        </div>
+
+        <!-- Nome -->
+        <span class="flex items-center tracking-tight">
+    <span class="
+      font-semibold text-[15px]
+      text-gray-900 dark:text-white
+      group-hover:text-indigo-600 dark:group-hover:text-indigo-400
+      transition-colors
+    ">
+      Lumos
+    </span>
+
+    <span class="
+      ml-1
+      text-[15px] font-medium
+      text-gray-500 dark:text-zinc-400
+    ">
+      IP
+    </span>
+
+    <span class="
+      text-[10px]
+      ml-0.5
+      text-gray-400
+      dark:text-zinc-500
+      align-top
+    ">
+      ™
+    </span>
+  </span>
       </div>
     </ng-template>
 

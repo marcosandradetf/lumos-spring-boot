@@ -21,8 +21,9 @@
 
   ></app-guide-state>
 
-  <div class="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6">
-    <div class="flex flex-col gap-4">
+  <div class="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-2">
+    <div class="flex flex-col gap-2">
+
       <div>
         <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">
           {{ pageTitle }}
@@ -32,32 +33,19 @@
         </p>
       </div>
 
-      <div class="flex flex-wrap items-center gap-2">
-        <div class="flex overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
-          <button class="btn btn-sm rounded-none border-0 border-l border-slate-200 dark:border-slate-700"
-                  [ngClass]="isItemMode ? 'btn-primary' : 'btn-ghost'"
-                  type="button"
-                  (click)="switchOperation('item')">
-            Itens
+      <div class="flex items-center w-full py-2 px-1">
+        <div class="flex items-center">
+          <!-- Botão Salvar (Estilo Prominente iOS) -->
+          <button
+            class="flex items-center justify-center h-8 px-5 rounded-full bg-[#007AFF] text-white text-[15px] font-semibold shadow-sm active:scale-95 active:brightness-90 transition-all disabled:grayscale disabled:opacity-50"
+            type="submit"
+            form="contract-reference-links-form"
+            [disabled]="saving">
+            <i class="pi pi-save mr-1.5 text-xs" *ngIf="!saving"></i>
+            <span>{{ saving ? 'Salvando...' : saveButtonLabel }}</span>
           </button>
-          <button class="btn btn-sm rounded-none border-0"
-                  [ngClass]="isMaterialMode ? 'btn-primary' : 'btn-ghost'"
-                  type="button"
-                  (click)="switchOperation('material')">
-            Materiais
-          </button>
+
         </div>
-
-        <button class="btn btn-primary btn-sm md:btn-md" type="submit" form="contract-reference-links-form"
-                [disabled]="saving">
-          <i class="pi pi-save"></i>
-          <span>{{ saving ? 'Salvando...' : saveButtonLabel }}</span>
-        </button>
-
-        <button class="btn btn-outline btn-sm md:btn-md" type="button" (click)="goToBaseRegistration()">
-          <i class="pi pi-arrow-left"></i>
-          <span>Voltar ao cadastro base</span>
-        </button>
       </div>
 
       <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-100">
@@ -270,7 +258,7 @@
             [materials]="allMaterials"
             [loading]="loading"
             [saving]="saving"
-            (materialItemsChange)="onMaterialItemsChange($event.materialId, $event.selectedItemIds)"
+            (itemMaterialsChange)="onItemMaterialsChange($event.itemId, $event.selectedMaterialIds)"
             (saveRequested)="saveMaterialLinks()"
             (createMaterialRequested)="openMaterialScreen()"></app-contract-reference-material-links>
         }

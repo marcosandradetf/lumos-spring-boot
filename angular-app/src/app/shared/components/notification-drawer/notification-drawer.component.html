@@ -27,57 +27,127 @@
     <!-- CONTENT -->
     <div class="flex flex-col h-full overflow-y-auto custom-scrollbar">
 
-      <div *ngFor="let group of groupKeys" class="flex flex-col">
-        <div class="px-4 py-3 bg-neutral-50/50 dark:bg-neutral-900/50 sticky top-0 z-10 backdrop-blur-sm border-y border-neutral-200 dark:border-neutral-800">
-      <span class="text-xs font-bold text-neutral-400 uppercase tracking-wider">
-        {{ group }}
-      </span>
-        </div>
-
-        <div
-          *ngFor="let notification of notificationsGrouped[group]"
-          class="relative flex gap-4 px-4 py-4 cursor-pointer transition-all duration-200 border-b border-neutral-100 dark:border-neutral-800 last:border-0 hover:bg-neutral-50 dark:hover:bg-neutral-900"
-          [ngClass]="{'bg-blue-50/40 dark:bg-blue-900/10': notification.read === 0}"
-          (click)="openNotification(notification)">
+      @if (notificationStatus === 'granted') {
+        <div *ngFor="let group of groupKeys" class="flex flex-col">
+          <div
+            class="px-4 py-3 bg-neutral-50/50 dark:bg-neutral-900/50 sticky top-0 z-10 backdrop-blur-sm border-y border-neutral-200 dark:border-neutral-800">
+          <span class="text-xs font-bold text-neutral-400 uppercase tracking-wider">
+            {{ group }}
+          </span>
+          </div>
 
           <div
-            *ngIf="notification.read === 0"
-            class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 rounded-r shadow-[0_0_8px_rgba(59,130,246,0.5)]">
-          </div>
+            *ngFor="let notification of notificationsGrouped[group]"
+            class="relative flex gap-4 px-4 py-4 cursor-pointer transition-all duration-200 border-b border-neutral-100 dark:border-neutral-800 last:border-0 hover:bg-neutral-50 dark:hover:bg-neutral-900"
+            [ngClass]="{'bg-blue-50/40 dark:bg-blue-900/10': notification.read === 0}"
+            (click)="openNotification(notification)">
 
-          <div class="flex-shrink-0">
-            <div class="w-10 h-10 rounded-full flex items-center justify-center"
-                 [ngClass]="getIconBg(notification.type)">
-              <i [class]="getIconClass(notification.type)" class="text-lg"></i>
+            <div
+              *ngIf="notification.read === 0"
+              class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 rounded-r shadow-[0_0_8px_rgba(59,130,246,0.5)]">
             </div>
-          </div>
 
-          <div class="flex flex-col gap-1 min-w-0 flex-1">
-            <div class="flex justify-between items-start gap-2">
+            <div class="flex-shrink-0">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center"
+                   [ngClass]="getIconBg(notification.type)">
+                <i [class]="getIconClass(notification.type)" class="text-lg"></i>
+              </div>
+            </div>
+
+            <div class="flex flex-col gap-1 min-w-0 flex-1">
+              <div class="flex justify-between items-start gap-2">
           <span class="text-sm font-semibold truncate text-neutral-900 dark:text-neutral-100">
             {{ notification.title }}
           </span>
-              <span class="text-[10px] font-medium text-neutral-400 whitespace-nowrap mt-1">
+                <span class="text-[10px] font-medium text-neutral-400 whitespace-nowrap mt-1">
             {{ notification.timeIso | date:'HH:mm' }}
           </span>
-            </div>
-            <span class="text-xs leading-relaxed text-neutral-500 dark:text-neutral-400 line-clamp-2">
+              </div>
+              <span class="text-xs leading-relaxed text-neutral-500 dark:text-neutral-400 line-clamp-2">
           {{ notification.body }}
         </span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div *ngIf="groupKeys.length === 0" class="flex flex-col items-center justify-center py-20 px-6 text-center">
-        <div class="w-16 h-16 bg-neutral-100 dark:bg-neutral-800 rounded-full flex items-center justify-center mb-4">
-          <i class="pi pi-bell-slash text-2xl text-neutral-400"></i>
+        <div *ngIf="groupKeys.length === 0" class="flex flex-col items-center justify-center py-20 px-6 text-center">
+          <div class="w-16 h-16 bg-neutral-100 dark:bg-neutral-800 rounded-full flex items-center justify-center mb-4">
+            <i class="pi pi-bell-slash text-2xl text-neutral-400"></i>
+          </div>
+          <h3 class="text-neutral-900 dark:text-neutral-100 font-medium">Tudo limpo por aqui!</h3>
+          <p class="text-sm text-neutral-500 max-w-[200px] mt-2">Você não tem notificações pendentes no momento.</p>
         </div>
-        <h3 class="text-neutral-900 dark:text-neutral-100 font-medium">Tudo limpo por aqui!</h3>
-        <p class="text-sm text-neutral-500 max-w-[200px] mt-2">Você não tem notificações pendentes no momento.</p>
-      </div>
+      } @else {
+        <div class="flex flex-col items-center justify-center my-20 py-4 px-6 text-center border rounded-xl shadow">
+          <div class="w-full flex justify-center mb-4">
+            <div class="w-9 h-9 flex items-center justify-center rounded-lg
+                     bg-slate-100 dark:bg-neutral-800
+                     text-slate-600 dark:text-neutral-300">
+
+              <i [class]="getIcon(notificationStatus)" class="text-xl"></i>
+            </div>
+          </div>
+          <!-- Header -->
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-start gap-3">
+              <div class="flex-1 min-w-0">
+                <h4 class="text-sm font-semibold text-slate-800 dark:text-white leading-snug">
+                  {{ message[notificationStatus].summary }}
+                </h4>
+
+                <p class="mt-1 text-xs text-slate-500 dark:text-neutral-400 leading-relaxed">
+                  {{ message[notificationStatus].detail }}
+                </p>
+
+                <div class="flex justify-around pt-2 space-x-2">
+                  <button class="text-xs border rounded-xl p-2" (click)="onDrawerChange(false)">Ignorar</button>
+                  <button class="text-xs border rounded-xl p-2 bg-blue-500 text-white " (click)="onButtonClick()">{{message[notificationStatus].acceptDescription}}</button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      }
+
+
     </div>
 
   </p-drawer>
 
 </div>
 
+
+<div *ngIf="embeddedDocOpen" class="fixed inset-0 z-40 bg-slate-950/35 backdrop-blur-[2px]"
+     (click)="closeEmbeddedDoc()"></div>
+
+<section *ngIf="embeddedDocOpen"
+         class="fixed inset-y-0 right-0 z-50 flex h-full w-full max-w-[96vw] flex-col bg-white shadow-2xl dark:bg-slate-900 lg:w-[min(1200px,92vw)]">
+  <div
+    class="flex flex-col gap-3 border-b border-slate-200 px-4 py-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+        Documentação incorporada
+      </p>
+
+      <h3 class="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+        {{ embeddedDocTitle }}
+      </h3>
+
+      <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        {{ embeddedDocDescription }}
+      </p>
+    </div>
+
+    <button class="btn btn-outline w-full sm:w-auto" type="button" (click)="closeEmbeddedDoc()">
+      Fechar
+    </button>
+  </div>
+
+  <div class="flex-1 overflow-y-none p-4 sm:p-5" (click)="$event.stopPropagation()">
+    <iframe *ngIf="embeddedDocUrl" [src]="embeddedDocUrl"
+            class="min-h-[85vh] w-full rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950"
+            referrerpolicy="strict-origin-when-cross-origin" title="Documentação incorporada do Lumos">
+    </iframe>
+  </div>
+</section>

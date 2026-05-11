@@ -1,24 +1,24 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { NgIf, NgOptimizedImage } from '@angular/common';
-import { FormsModule, NgForm } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
-import { Meta, Title } from '@angular/platform-browser';
-import { forkJoin, map } from 'rxjs';
-import { AuthService } from '../../auth.service';
-import { UtilsService } from '../../../service/utils.service';
-import { MarkdownModule } from 'ngx-markdown';
-import { Toast } from 'primeng/toast';
-import { Button } from 'primeng/button';
-import { Card } from 'primeng/card';
-import { Password } from 'primeng/password';
-import { InputText } from 'primeng/inputtext';
-import { Message } from 'primeng/message';
-import { Utils } from '../../../service/utils';
-import { ContractService } from '../../../../contract/services/contract.service';
-import { UserService } from '../../../../manage/user/user-service.service';
-import { TeamService } from '../../../../manage/team/team-service.service';
-import { StockService } from '../../../../stock/services/stock.service';
-import { MaterialService } from '../../../../stock/services/material.service';
+import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
+import {NgIf, NgOptimizedImage} from '@angular/common';
+import {FormsModule, NgForm} from '@angular/forms';
+import {ActivatedRoute, Router} from '@angular/router';
+import {Meta, Title} from '@angular/platform-browser';
+import {forkJoin, map} from 'rxjs';
+import {AuthService} from '../../auth.service';
+import {UtilsService} from '../../../service/utils.service';
+import {MarkdownModule} from 'ngx-markdown';
+import {Toast} from 'primeng/toast';
+import {Button} from 'primeng/button';
+import {Card} from 'primeng/card';
+import {Password} from 'primeng/password';
+import {InputText} from 'primeng/inputtext';
+import {Message} from 'primeng/message';
+import {Utils} from '../../../service/utils';
+import {ContractService} from '../../../../contract/services/contract.service';
+import {UserService} from '../../../../manage/user/user-service.service';
+import {TeamService} from '../../../../manage/team/team-service.service';
+import {StockService} from '../../../../stock/services/stock.service';
+import {MaterialService} from '../../../../stock/services/material.service';
 
 
 export type DocItem = {
@@ -51,6 +51,7 @@ export class LoginComponent implements OnInit {
     focusIn(element: any) {
         element.focus();
     }
+
     // ================= AUTH =================
     username: string = '';
     password: string = '';
@@ -73,14 +74,20 @@ export class LoginComponent implements OnInit {
 
     // ================= DOCS =================
     docs: DocItem[] = [
-        { id: 'overview', key: 'overview', title: 'Visão Geral', group: 'Comece aqui', file: 'overview.md' },
-        { id: 'first-access', key: 'first-access', title: 'Primeiro Acesso', group: 'Comece aqui', file: 'first-access.md' },
+        {id: 'overview', key: 'overview', title: 'Visão Geral', group: 'Comece aqui', file: 'overview.md'},
+        {
+            id: 'first-access',
+            key: 'first-access',
+            title: 'Primeiro Acesso',
+            group: 'Comece aqui',
+            file: 'first-access.md'
+        },
 
-        { id: 'access', key: 'access', title: 'Gestão de Acesso', group: 'Módulos', file: 'access.md' },
-        { id: 'stock', key: 'stock', title: 'Estoque', group: 'Módulos', file: 'stock.md' },
-        { id: 'contracts', key: 'contracts', title: 'Contratos', group: 'Módulos', file: 'contracts.md' },
-        { id: 'execution', key: 'execution', title: 'Execução de Serviços', group: 'Módulos', file: 'execution.md' },
-        { id: 'reports', key: 'reports', title: 'Relatórios', group: 'Módulos', file: 'reports.md' },
+        {id: 'access', key: 'access', title: 'Gestão de Acesso', group: 'Módulos', file: 'access.md'},
+        {id: 'stock', key: 'stock', title: 'Estoque', group: 'Módulos', file: 'stock.md'},
+        {id: 'contracts', key: 'contracts', title: 'Contratos', group: 'Módulos', file: 'contracts.md'},
+        {id: 'execution', key: 'execution', title: 'Execução de Serviços', group: 'Módulos', file: 'execution.md'},
+        {id: 'reports', key: 'reports', title: 'Relatórios', group: 'Módulos', file: 'reports.md'},
     ];
 
     activeDoc = 'overview';
@@ -106,8 +113,6 @@ export class LoginComponent implements OnInit {
         protected utils: UtilsService,
         private route: ActivatedRoute,
         private meta: Meta,
-
-
         private contractService: ContractService,
         private userService: UserService,
         private teamService: TeamService,
@@ -125,7 +130,7 @@ export class LoginComponent implements OnInit {
 
     async ngOnInit(): Promise<void> {
         this.title.setTitle(
-            'Lumos – Sistema de Gestão de Iluminação Pública | Acesso'
+            'Lumos IP - Sistema de Gestão de Iluminação Pública | Acesso'
         );
 
         this.meta.addTags([
@@ -192,6 +197,12 @@ export class LoginComponent implements OnInit {
                 const hasPermission = roles.includes('ADMIN') || roles.includes('ANALISTA') || roles.includes('RESPONSAVEL_TECNICO');
                 localStorage.setItem('isSupport', this.authService.getUser().support ? 'true' : 'false');
                 if (localStorage.getItem('onboarding') || !hasPermission) {
+
+                    if (window.matchMedia('(min-width: 1280px)').matches) {
+                        localStorage.setItem('menuOpen', 'true');
+                        this.utils.toggleMenu(true);
+                    }
+
                     this.authLoading = false;
                     void this.router.navigate([this.redirectPath ?? '/']);
                 } else {
@@ -274,7 +285,7 @@ export class LoginComponent implements OnInit {
 
             if (updateUrl) {
                 void this.router.navigate([], {
-                    queryParams: { doc: doc.key },
+                    queryParams: {doc: doc.key},
                     queryParamsHandling: 'merge',
                     replaceUrl: true,
                 });
@@ -295,6 +306,7 @@ export class LoginComponent implements OnInit {
     }
 
     @ViewChild('doc') docSection!: ElementRef<HTMLElement>;
+
     scrollToDocs() {
         this.docSection?.nativeElement.scrollIntoView({
             behavior: 'smooth',
@@ -321,7 +333,7 @@ export class LoginComponent implements OnInit {
             deposits: this.stockService.getDeposits(),
             materials: this.materialService.getCatalogue(),
         }).subscribe({
-            next: ({ referenceContractItems, contracts, users, teams, stockists, deposits, materials }) => {
+            next: ({referenceContractItems, contracts, users, teams, stockists, deposits, materials}) => {
                 const a = referenceContractItems.length;
                 const b = contracts.length;
                 const c = users.length;
@@ -349,7 +361,12 @@ export class LoginComponent implements OnInit {
                     void this.router.navigate(['/configuracoes/onboarding']);
                 } else {
                     localStorage.setItem('onboarding', 'finished');
+                    this.utils.setOnboarding(false);
                     void this.router.navigate([redirectPath]);
+                }
+                if (window.matchMedia('(min-width: 1280px)').matches) {
+                    localStorage.setItem('menuOpen', 'true');
+                    this.utils.toggleMenu(true);
                 }
                 this.authLoading = false;
             },

@@ -118,10 +118,10 @@ export class ReservationPendingComponent implements OnInit {
             const user = this.authService.getUser();
 
             if (this.status === "PENDING") {
-                this.titleService.setTitle("Materiais Pendentes de Aprovação");
+                this.titleService.setTitle("Lumos IP - Materiais Pendentes de Aprovação");
                 SharedState.setCurrentPath(["Requisições", "Materiais Pendentes de Aprovação"]);
             } else {
-                this.titleService.setTitle("Materiais Disponíveis para Coleta");
+                this.titleService.setTitle("Lumos IP - Materiais Disponíveis para Coleta");
                 SharedState.setCurrentPath(["Requisições", "Materiais Disponíveis para Coleta"]);
             }
 

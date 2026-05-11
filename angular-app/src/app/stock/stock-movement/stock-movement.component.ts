@@ -131,7 +131,7 @@ export class StockMovementComponent implements OnInit {
 
     ngOnInit() {
         this.isMobile = window.innerWidth <= 1024;
-        this.titleService.setTitle("Movimentar Estoque");
+        this.titleService.setTitle("Lumos IP - Movimentar Estoque");
         SharedState.setCurrentPath(['Estoque', 'Movimentar Estoque']);
         this.items = [
             {

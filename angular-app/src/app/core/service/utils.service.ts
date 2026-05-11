@@ -10,14 +10,20 @@ import {NgModel} from '@angular/forms';
 })
 export class UtilsService {
     private menuState = new BehaviorSubject<boolean>(false);
+    menuState$ = this.menuState.asObservable();
+
+    private onboarding = new BehaviorSubject<boolean>(localStorage.getItem('onboarding') === null);
+    onboarding$ = this.onboarding.asObservable();
 
     constructor(private messageService: MessageService, private http: HttpClient) {
     }
 
-    menuState$ = this.menuState.asObservable();
-
     toggleMenu(isOpen: boolean) {
         this.menuState.next(isOpen);
+    }
+
+    setOnboarding(value: boolean) {
+        this.onboarding.next(value);
     }
 
     formatValue(value: string): string {

@@ -27,7 +27,7 @@ type ManagedUser = {
     name: string;
     lastname: string;
     email: string;
-    cpf: string;
+    cpfCnpj: string;
     year: string;
     month: string;
     day: string;
@@ -63,7 +63,6 @@ type EmbeddedDoc = {
         NgIf,
         NgClass,
         NgxMaskDirective,
-        NgxMaskPipe,
         Toast,
         MultiSelect,
         LoadingComponent,
@@ -140,7 +139,7 @@ export class UserComponent {
         private readonly titleService: Title,
         private readonly sanitizer: DomSanitizer
     ) {
-        this.titleService.setTitle('Configurações - Usuários');
+        this.titleService.setTitle('Lumos IP - Configurar usuários');
         SharedState.setCurrentPath(['Configurações', 'Usuários']);
 
         this.userService.getUsers().subscribe({
@@ -201,7 +200,7 @@ export class UserComponent {
     }
 
     trackByUser(_: number, user: ManagedUser): string {
-        return user.userId || `${user.username}-${user.email}-${user.cpf}`;
+        return user.userId || `${user.username}-${user.email}-${user.cpfCnpj}`;
     }
 
     newUser() {
@@ -458,7 +457,7 @@ export class UserComponent {
             name: '',
             lastname: '',
             email: '',
-            cpf: '',
+            cpfCnpj: '',
             year: '',
             month: '',
             day: '',
@@ -488,7 +487,7 @@ export class UserComponent {
                 user.lastname,
                 `${user.name} ${user.lastname}`,
                 user.email,
-                user.cpf,
+                user.cpfCnpj,
                 roleNames,
                 this.getStatusLabel(user.status)
             ];
@@ -527,7 +526,7 @@ export class UserComponent {
             name: user.name,
             lastname: user.lastname,
             email: user.email,
-            cpf: user.cpf,
+            cpfCnpj: user.cpfCnpj,
             year: `${user.year ?? ''}`,
             month: `${user.month ?? ''}`,
             day: `${user.day ?? ''}`,

@@ -136,7 +136,7 @@ export class TeamComponent {
                 private teamService: TeamService,
                 private sanitizer: DomSanitizer) {
         SharedState.setCurrentPath(["Configurações", "Equipes"]);
-        this.titleService.setTitle("Configurações - Equipes");
+        this.titleService.setTitle("Lumos IP - Configurar equipes");
         this.ibgeService.getUfs().subscribe(
             response => {
                 this.ufs = response;

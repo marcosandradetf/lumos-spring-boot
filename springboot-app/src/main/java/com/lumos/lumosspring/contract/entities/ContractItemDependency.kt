@@ -16,6 +16,6 @@ class ContractItemDependency : Persistable<Long> {
     @Transient
     var isNewEntry: Boolean = true
 
-    override fun getId(): Long = contractItemReferenceIdDependency
+    override fun getId(): Long = contractItemReferenceId
     override fun isNew(): Boolean = isNewEntry
 }

@@ -57,7 +57,7 @@ export class PreMeasurementComponent implements OnInit {
                 return;
             }
 
-            this.titleService.setTitle("Pré-Medições - " + status.charAt(0).toUpperCase() + status.slice(1));
+            this.titleService.setTitle("Lumos IP - Pré-Medições - " + status.charAt(0).toUpperCase() + status.slice(1));
             this.status = status;
             this.loadPreMeasurements();
         });

@@ -17,6 +17,8 @@ export const navigation: Navigation = {
    * - main: Primary navigation links
    * - cta: Call-to-action buttons on the right
    */
+
+  
   header: {
     main: [
       { label: 'Recursos', href: '/recursos' },
@@ -27,8 +29,8 @@ export const navigation: Navigation = {
       { label: 'Sobre', href: '/sobre' },
     ],
     cta: [
-      { label: 'Entrar', href: 'https://app.lumosip.com.br', variant: 'ghost' },
-      { label: 'Teste Grátis', href: '/teste-gratis', variant: 'primary' },
+      { label: 'Entrar', href: 'https://app.lumosip.com.br', variant: 'ghost', id: 'sign-in' },
+      { label: 'Teste Grátis', href: '/teste-gratis', variant: 'primary', id: 'free-test' },
     ],
   },
 

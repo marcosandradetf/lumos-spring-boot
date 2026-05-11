@@ -1,14 +1,16 @@
 package com.lumos.lumosspring.billing.model
 
 import org.springframework.data.annotation.Id
+import org.springframework.data.annotation.Transient
+import org.springframework.data.domain.Persistable
 import org.springframework.data.relational.core.mapping.Table
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.OffsetDateTime
-import java.util.UUID
+import java.util.*
 
 @Table("subscription")
-class Subscription {
+class Subscription : Persistable<UUID> {
     @Id
     var subscriptionId: UUID? = null
     var tenantId: UUID? = null
@@ -27,4 +29,10 @@ class Subscription {
     var canceledAt: OffsetDateTime? = null
     var createdAt: OffsetDateTime? = null
     var updatedAt: OffsetDateTime? = null
+
+    @Transient
+    var isNewEntry = true
+
+    override fun getId(): UUID? = subscriptionId
+    override fun isNew(): Boolean = isNewEntry
 }

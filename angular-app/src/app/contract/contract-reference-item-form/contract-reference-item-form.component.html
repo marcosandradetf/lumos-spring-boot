@@ -2,25 +2,75 @@
 
 <div class="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6">
   <div class="flex flex-col gap-4">
-    <div>
-      <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">
-        Cadastro Base de Item Referencial
-      </h1>
-      <p class="mt-1 max-w-3xl text-sm text-slate-600 dark:text-slate-400">
-        Nesta etapa você cadastra apenas a <strong>descrição</strong> e o <strong>tipo</strong>. Alguns itens salvo aqui
-        permanece com o status diferente de <strong>Ativo</strong> até passar pela tela de vínculos.
-      </p>
+    <div class="relative pb-6 border-b border-slate-200 dark:border-slate-800">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div class="flex items-start gap-3">
+          <!-- Ícone que remete a "Master Data" ou Cadastro Base -->
+          <div
+            class="mt-1 p-2.5 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-100 dark:border-indigo-800">
+            <i class="pi pi-database text-indigo-600 dark:text-indigo-400 text-xl"></i>
+          </div>
+
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
+                Catálogo de Itens Referenciais
+              </h1>
+              <span
+                class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-500">
+                Configuração Base
+              </span>
+            </div>
+
+            <p class="mt-1.5 max-w-2xl text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+              Cadastre os modelos de materiais e serviços que compõem o seu banco de dados.
+              <span class="text-indigo-600 dark:text-indigo-400 font-medium">
+                Estes itens servirão de base para a montagem de orçamentos e contratos futuros, onde serão definidos os preços e quantidades.
+              </span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Indicador visual de progresso ou status (opcional) -->
+        <div class="hidden lg:block max-w-xs">
+          <div
+            class="bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-900/30 p-4 rounded-xl">
+            <div
+              class="flex items-center gap-2 text-indigo-700 dark:text-indigo-400 text-xs font-bold uppercase tracking-wider">
+              <i class="pi pi-pencil"></i>
+              Guia de Padronização
+            </div>
+
+            <ul class="mt-3 space-y-2.5">
+              <li class="flex gap-2">
+                <i class="pi pi-align-left text-indigo-500 text-[10px] mt-1"></i>
+                <p class="text-[11px] text-slate-600 dark:text-slate-400">
+                  <strong>Descrição Objetiva:</strong> Ao escrever, siga um padrão técnico:
+                  <span class="block mt-1 italic text-indigo-600/80 dark:text-indigo-400/80">
+                    "TIPO DO ITEM + DETALHE + POTÊNCIA/MEDIDA/ETC."
+                  </span>
+                </p>
+              </li>
+              <li class="flex gap-2 border-t border-indigo-100 dark:border-indigo-900/50 pt-2">
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                  <strong>Dica:</strong> Manter nomes padronizados pois eles serão utilizados nos relatórios.
+                </p>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="flex flex-wrap items-center gap-2">
       <div class="relative">
         <div class="flex overflow-hidden rounded-xl border border-cyan-600 shadow-sm">
-          <button class="btn btn-primary btn-sm rounded-none border-0 md:btn-md" type="button" (click)="newItem()">
+          <button class="btn btn-primary btn-sm rounded-none border-0" type="button" (click)="newItem()">
             <i class="pi pi-plus"></i>
             <span class="hidden sm:inline">Novo item</span>
           </button>
 
-          <button class="btn btn-primary btn-sm rounded-none border-0 border-l border-cyan-500 px-3 md:btn-md"
+          <button class="btn btn-primary btn-sm rounded-none border-0 border-l border-cyan-500 px-3"
                   type="button" (click)="toggleQuickAddMenu()">
             <i class="pi" [ngClass]="quickAddMenuOpen ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
           </button>
@@ -42,45 +92,22 @@
       </div>
 
       <button *ngIf="hasDraftItems"
-              class="btn btn-outline btn-sm border-amber-300 text-amber-800 hover:bg-amber-50 md:btn-md dark:border-amber-800 dark:text-amber-200 dark:hover:bg-amber-950/30"
+              class="btn btn-outline btn-sm border-amber-300 text-amber-800 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-200 dark:hover:bg-amber-950/30"
               type="button" (click)="removeDraftItems()">
         <i class="pi pi-trash"></i>
         <span class="hidden sm:inline">Remover rascunhos</span>
       </button>
 
-      <button class="btn btn-primary btn-sm md:btn-md" type="submit" form="contract-reference-items-form"
+      <button class="btn btn-primary btn-sm" type="submit" form="contract-reference-items-form"
               [disabled]="saving">
-        <i class="pi pi-save"></i>
+        <i class="pi" [ngClass]="saving ? 'pi-spinner pi-spin' : 'pi-save'"></i>
         <span>{{ saving ? 'Salvando...' : 'Salvar selecionados' }}</span>
       </button>
 
-      <button class="btn btn-outline btn-sm md:btn-md" type="button" (click)="goToLinkManagement()">
+      <button class="btn btn-outline btn-sm" type="button" (click)="goToLinkManagement()">
         <i class="pi pi-link"></i>
         <span>Ir para vínculos</span>
       </button>
-    </div>
-  </div>
-
-  <div class="grid gap-4 md:grid-cols-3">
-    <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-      <div class="text-sm font-semibold text-slate-900 dark:text-slate-100">Etapa 1</div>
-      <div class="mt-1 text-sm text-slate-600 dark:text-slate-300">
-        Cadastre descrição e tipo do item referencial.
-      </div>
-    </div>
-
-    <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30">
-      <div class="text-sm font-semibold text-amber-900 dark:text-amber-100">Status inicial</div>
-      <div class="mt-1 text-sm text-amber-800 dark:text-amber-200">
-        Alguns itens salvo nesta tela fica com o status diferente de Ativo.
-      </div>
-    </div>
-
-    <div class="rounded-2xl border border-cyan-200 bg-cyan-50 p-4 dark:border-cyan-900 dark:bg-cyan-950/30">
-      <div class="text-sm font-semibold text-cyan-900 dark:text-cyan-100">Etapa 2</div>
-      <div class="mt-1 text-sm text-cyan-800 dark:text-cyan-200">
-        Use a tela de vínculos para conectar materiais e dependências e ativar o item quando aplicável.
-      </div>
     </div>
   </div>
 
@@ -89,9 +116,9 @@
       <div class="border-b border-slate-200 px-4 py-4 dark:border-slate-800 md:px-6">
         <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Itens referenciais</h2>
+            <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Itens contratuais referenciais</h2>
             <p class="text-sm text-slate-500 dark:text-slate-400">
-              Cadastro inline somente dos dados base do item.
+              Cadastre os itens contratuais que serão a base dos contratos.
             </p>
           </div>
 
@@ -109,53 +136,64 @@
       </div>
 
       <div *ngIf="!loading && items.length > 0" class="hidden overflow-x-auto md:block">
-        <table class="w-full min-w-[900px] table-fixed border-collapse">
+        <table class="w-full table-fixed border-collapse">
           <thead class="bg-slate-50 dark:bg-slate-800/60">
           <tr class="text-left text-xs uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
-            <th class="w-24 px-3 py-3">Salvar</th>
-            <th class="w-[42%] px-3 py-3">Descrição</th>
-            <th class="w-[24%] px-3 py-3">Tipo</th>
-            <th class="w-[20%] px-3 py-3">Status</th>
-            <th class="w-[10%] px-3 py-3">Ação</th>
+            <th class="w-[25%] px-3 py-3">Tipo</th>
+            <th class="w-[60%] px-3 py-3">Descrição</th>
+            <th class="w-[15%] px-3 py-3 text-center">Ações</th>
           </tr>
           </thead>
 
           <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
           <tr *ngFor="let item of items; let i = index;" class="align-top bg-white dark:bg-neutral-900">
             <td class="px-3 py-4">
-              <div class="flex item-center justify-center">
-                <button class="btn btn-primary btn-sm" type="button" (click)="saveItem(item)" [disabled]="saving">
-                  <i class="pi pi-save"></i>
-                </button>
-              </div>
-            </td>
+              <p-dropdown
+                appendTo="body"
+                [filter]="true" filterPlaceholder="Buscar..."
+                [(ngModel)]="item.type" name="type{{i}}" [options]="typeOptions" optionLabel="label"
+                optionValue="value" placeholder="Tipo" styleClass="w-full"
+                [ngClass]="{'ng-invalid ng-dirty': itemHasError(item, 'type')}"></p-dropdown>
 
-            <td class="px-3 py-4">
-              <input pInputText [(ngModel)]="item.description" name="description{{i}}" class="w-full"
-                     placeholder="Descrição do item"/>
-              <small *ngIf="itemHasError(item, 'description')" class="mt-1 block text-red-500">
-                Descrição obrigatória.
-              </small>
-            </td>
-
-            <td class="px-3 py-4">
-              <p-dropdown [(ngModel)]="item.type" name="type{{i}}" [options]="typeOptions" optionLabel="label"
-                          optionValue="value" placeholder="Tipo" styleClass="w-full"></p-dropdown>
-              <small *ngIf="itemHasError(item, 'type')" class="mt-1 block text-red-500">
+              <small *ngIf="itemHasError(item, 'type')"
+                     class="mt-1.5 flex items-center gap-1 text-xs font-medium text-red-500 dark:text-red-400">
+                <i class="pi pi-exclamation-circle text-xs"></i>
                 Tipo obrigatório.
               </small>
             </td>
 
             <td class="px-3 py-4">
-              <div class="space-y-2 text-center cursor-default">
-                <p-tag [value]="getStatusLabel(item)" [severity]="getStatusSeverity(item)"></p-tag>
-              </div>
+              <input
+                [pTooltip]="item.description.length === 0 ? 'Exemplos:\n - CIMENTO CP-II-E32 50KG\n - CINTA DE AÇO 250MM' : ''"
+                tooltipPosition="top"
+                pInputText
+                     [(ngModel)]="item.description"
+                     (ngModelChange)="item.description = $event.toUpperCase()"
+                     name="description{{i}}"
+                     class="w-full"
+                     placeholder="Ex.: LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 100W"
+                     [ngClass]="{'ng-invalid ng-dirty': itemHasError(item, 'description')}"/>
+
+              <small *ngIf="itemHasError(item, 'description')"
+                     class="mt-1.5 flex items-center gap-1 text-xs font-medium text-red-500 dark:text-red-400">
+                <i class="pi pi-exclamation-circle text-xs"></i>
+                Descrição obrigatória.
+              </small>
             </td>
 
             <td class="px-3 py-4">
-              <button class="btn btn-ghost btn-sm text-red-600" type="button" (click)="removeItem(item)">
-                <i class="pi pi-trash"></i>
-              </button>
+              <div class="flex items-center justify-center gap-2">
+                <button class="btn btn-primary btn-sm" type="button" (click)="saveItem(item)" [disabled]="saving">
+                  @if (saving) {
+                    <i class="pi pi-spinner pi-spin"></i>
+                  } @else {
+                    <i class="pi pi-save"></i>
+                  }
+                </button>
+                <button class="btn btn-ghost btn-sm text-red-600" type="button" (click)="removeItem(item)">
+                  <i class="pi pi-trash"></i>
+                </button>
+              </div>
             </td>
           </tr>
           </tbody>
@@ -164,52 +202,61 @@
 
       <div *ngIf="!loading && items.length > 0" class="space-y-4 p-4 md:hidden">
         <article *ngFor="let item of items; let i = index"
-                 class="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
-          <div class="mb-4 flex items-start justify-between gap-3">
+                 class="rounded-xl border border-slate-200 p-4 dark:border-slate-800 bg-white dark:bg-neutral-900 shadow-sm">
+          <div
+            class="mb-4 flex items-start justify-between gap-3 border-b border-slate-100 dark:border-slate-800/60 pb-3">
             <div class="min-w-0">
               <p class="truncate font-semibold text-slate-900 dark:text-slate-100">
                 {{ item.description || 'Novo item' }}
               </p>
-              <p class="text-sm text-slate-500 dark:text-slate-400">
+              <p class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
                 {{ item.type || 'Tipo não definido' }}
               </p>
             </div>
 
-            <button class="btn btn-ghost btn-sm text-red-600" type="button" (click)="removeItem(item)">
+            <button class="btn btn-ghost btn-sm text-red-600 shrink-0" type="button" (click)="removeItem(item)">
               <i class="pi pi-trash"></i>
             </button>
           </div>
 
-          <div class="mb-4">
-            <p-tag [value]="getStatusLabel(item)" [severity]="getStatusSeverity(item)"></p-tag>
-            <p class="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
-              A vinculação será feita na próxima tela.
-            </p>
-          </div>
-
           <div class="space-y-4">
-
             <div>
-              <label class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Descrição</label>
-              <input pInputText [(ngModel)]="item.description" name="mobileDescription{{i}}" class="w-full"
-                     placeholder="Descrição do item"/>
-              <small *ngIf="itemHasError(item, 'description')" class="mt-1 block text-red-500">
-                Descrição obrigatória.
-              </small>
-            </div>
-
-            <div>
-              <label class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Tipo</label>
-              <p-dropdown [(ngModel)]="item.type" name="mobileType{{i}}" [options]="typeOptions" optionLabel="label"
-                          optionValue="value" placeholder="Tipo" styleClass="w-full"></p-dropdown>
-              <small *ngIf="itemHasError(item, 'type')" class="mt-1 block text-red-500">
+              <label class="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Tipo</label>
+              <p-dropdown appendTo="body" [(ngModel)]="item.type" name="mobileType{{i}}" [options]="typeOptions"
+                          optionLabel="label"
+                          optionValue="value" placeholder="Selecione um tipo" styleClass="w-full"
+                          [filter]="true" filterPlaceholder="Buscar..."
+                          [ngClass]="{'ng-invalid ng-dirty': itemHasError(item, 'type')}"></p-dropdown>
+              <small *ngIf="itemHasError(item, 'type')"
+                     class="mt-1.5 flex items-center gap-1 text-xs font-medium text-red-500 dark:text-red-400">
+                <i class="pi pi-exclamation-circle text-xs"></i>
                 Tipo obrigatório.
               </small>
             </div>
 
-            <button class="btn btn-primary btn-sm w-full" type="button" (click)="saveItem(item)" [disabled]="saving">
-              <i class="pi pi-save"></i>
-              <span>{{ saving ? 'Salvando...' : 'Salvar linha' }}</span>
+            <div>
+              <label class="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Descrição</label>
+              <input pInputText [(ngModel)]="item.description" name="mobileDescription{{i}}"
+                     (ngModelChange)="item.description = $event.toUpperCase()"
+                     class="w-full"
+                     placeholder="Ex.: LUMINÁRIA PARA ILUMINAÇÃO PÚBLICA LED 100W"
+                     [ngClass]="{'ng-invalid ng-dirty': itemHasError(item, 'description')}"/>
+              <small *ngIf="itemHasError(item, 'description')"
+                     class="mt-1.5 flex items-center gap-1 text-xs font-medium text-red-500 dark:text-red-400">
+                <i class="pi pi-exclamation-circle text-xs"></i>
+                Descrição obrigatória.
+              </small>
+            </div>
+
+            <button class="btn btn-primary btn-sm w-full flex items-center justify-center gap-2 mt-2" type="button"
+                    (click)="saveItem(item)" [disabled]="saving">
+              @if (saving) {
+                <i class="pi pi-spinner pi-spin"></i>
+                <span>Salvando...</span>
+              } @else {
+                <i class="pi pi-save"></i>
+                <span>Salvar item</span>
+              }
             </button>
           </div>
         </article>

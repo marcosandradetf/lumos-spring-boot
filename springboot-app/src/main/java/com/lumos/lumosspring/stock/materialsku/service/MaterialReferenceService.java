@@ -107,16 +107,20 @@ public class MaterialReferenceService {
         Long baseMaterialId = materialReferenceRepository.findBaseMaterialId(material.materialBaseName(), Utils.getCurrentTenantId());
         if (baseMaterialId == null) {
             var baseMaterial = materialReferenceRepository.save(
-                new Material(
-                    material.materialBaseName(),
-                    material.materialType(),
-                    material.materialSubtype(),
-                    material.truckStockControl(),
-                    true
-                )
+                    new Material(
+                            material.materialBaseName(),
+                            material.materialType(),
+                            material.materialSubtype(),
+                            material.truckStockControl(),
+                            true,
+                            material.buyUnit(),
+                            material.requestUnit()
+                    )
             );
             baseMaterialId = baseMaterial.getIdMaterial();
         }
+
+        materialContractReferenceItemRepository.deleteByMaterialId(baseMaterialId);
 
         var log = new Log();
         String logMessage;
@@ -170,7 +174,7 @@ public class MaterialReferenceService {
             );
             log.setType("create");
 
-        // UPDATE ->
+            // UPDATE ->
         } else {
             Long materialId = material.materialId();
             var materialSku = materialReferenceRepository.findById(materialId).orElseThrow();

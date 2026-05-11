@@ -1,6 +1,6 @@
 <div>
   <div class="w-full">
-    <div class="pt-2 w-full pl-2 flex items-center justify-center">
+    <div class="w-full pl-2 flex items-center justify-center">
     </div>
 
     <app-loading *ngIf="loading"></app-loading>
@@ -64,8 +64,8 @@
     </div>
 
 
-    <div *ngIf="!loading && reservations.length > 0" class="flex flex-col items-center w-full px-4">
-      <div class="w-full max-w-5xl mx-auto px-4 mt-6">
+    <div *ngIf="!loading && reservations.length > 0" class="flex flex-col items-start w-full px-4">
+      <div class="w-full mx-auto px-4 mt-6">
 
         <div class="flex items-center justify-between flex-wrap gap-3
               bg-white dark:bg-neutral-900
@@ -107,13 +107,13 @@
       <p-menu #menu [model]="contextItems" [popup]="true"></p-menu>
       <ol class="flex flex-wrap justify-center gap-4" aria-haspopup="true">
         <li *ngFor="let r of reservations; index as i"
-            class="relative w-full max-w-sm cursor-pointer transition-transform duration-300 hover:scale-105 hover:-translate-y-1 m-2"
+            class="relative w-full max-w-sm cursor-pointer transition-transform duration-150 hover:scale-105  m-4"
             (click)="router.navigate(['/requisicoes/gerenciamento/execucao'], { state: { reserve: r } })"
 
         >
 
           <button
-            class="absolute top-4 right-4 z-10 text-gray-500 hover:text-gray-800 dark:text-neutral-500 dark:hover:text-neutral-50"
+            class="absolute top-4 right-4  text-gray-500 hover:text-gray-800 dark:text-neutral-200 dark:hover:text-neutral-50"
             (click)="openContextMenu($event, r); $event.stopPropagation()"
             aria-haspopup="true"
             aria-controls="menu"

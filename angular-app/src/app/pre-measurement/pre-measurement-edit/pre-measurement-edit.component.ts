@@ -112,7 +112,7 @@ export class PreMeasurementEditComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.titleService.setTitle("Editar Pré-medição");
+    this.titleService.setTitle("Lumos IP - Editar Pré-medição");
 
     const uuid = this.authService.getUser().uuid;
 

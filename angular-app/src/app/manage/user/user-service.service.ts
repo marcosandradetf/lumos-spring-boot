@@ -16,7 +16,7 @@ export interface UserManagementResponse {
     name: string;
     lastname: string;
     email: string;
-    cpf: string;
+    cpfCnpj: string;
     dateOfBirth?: string;
     year: string;
     month: string;
@@ -75,7 +75,7 @@ export class UserService {
         name: string,
         lastname: string,
         email: string,
-        cpf: string,
+        cpfCnpj: string,
         year: string | number;
         month: string | number;
         day: string | number;

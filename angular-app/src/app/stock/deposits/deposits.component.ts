@@ -60,7 +60,7 @@ export class DepositsComponent {
     constructor(private stockService: StockService,
         private title: Title, protected router: Router,
         private ibgeService: IbgeService) {
-        this.title.setTitle('Gerenciar - Almoxarifados');
+        this.title.setTitle('Lumos IP - Gerenciar almoxarifados');
         SharedState.setCurrentPath(['Estoque', 'Almoxarifados']);
 
         this.stockService.getDeposits().subscribe({
@@ -68,7 +68,7 @@ export class DepositsComponent {
                 this.deposits = deposits;
             },
             error: (err) => {
-                Utils.handleHttpError(err, this.router);    
+                Utils.handleHttpError(err, this.router);
             }
         });
 

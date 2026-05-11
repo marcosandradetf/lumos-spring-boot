@@ -15,9 +15,9 @@ import java.util.UUID;
 public interface UserRepository extends CrudRepository<AppUser, UUID> {
     Optional<AppUser> findByUserId(UUID uuid);
     Optional<AppUser> findByUsernameIgnoreCase(String username);
-    Optional<AppUser> findByCpfIgnoreCase(String cpf);
-    Optional<AppUser> findByUsernameOrCpfIgnoreCase(String username, String cpf);
-    Optional<AppUser> findByCpf(String cpf);
+    Optional<AppUser> findByCpfCnpjIgnoreCase(String cpfCnpj);
+    Optional<AppUser> findByUsernameOrCpfCnpjIgnoreCase(String username, String cpfCnpj);
+    Optional<AppUser> findByCpfCnpj(String cpfCnpj);
 
     @Query("""
         select distinct au.user_id, au."name" || ' ' || au.last_name as complete_name

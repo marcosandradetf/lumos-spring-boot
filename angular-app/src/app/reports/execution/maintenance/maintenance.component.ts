@@ -120,7 +120,7 @@ export class MaintenanceComponent implements OnInit {
     }
 
     ngOnInit() {
-        this.title.setTitle('Relatórios de manutenções');
+        this.title.setTitle('Lumos IP - Relatórios de manutenções');
         SharedState.setCurrentPath(['Execuções Realizadas', 'Relatórios de Manutenções (30 dias)']);
 
         const ua = navigator.userAgent;

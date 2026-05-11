@@ -188,7 +188,7 @@ public interface MaterialStockViewRepository extends CrudRepository<MaterialStoc
                 mcri.contract_reference_item_id
             FROM material_stock ms
             JOIN material m ON ms.material_id = m.id_material
-            JOIN material_contract_reference_item mcri on mcri.material_id = m.id_material
+            JOIN material_contract_reference_item mcri on mcri.material_id = m.parent_material_id
             JOIN deposit d ON ms.deposit_id = d.id_deposit
             LEFT JOIN team t on t.deposit_id_deposit = d.id_deposit
             WHERE m.inactive = false

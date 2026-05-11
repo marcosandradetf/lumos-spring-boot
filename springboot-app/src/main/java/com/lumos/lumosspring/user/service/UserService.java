@@ -92,11 +92,25 @@ public class UserService {
         return ResponseEntity.status(HttpStatus.OK).body(userResponses);
     }
 
-    private String maskCpf(String cpf) {
-        if (cpf == null || cpf.length() < 11) {
-            return cpf;
+    private String maskCpfCnpj(String cpfCnpj) {
+        if (cpfCnpj == null) {
+            return null;
         }
-        return "***." + cpf.substring(3, 6) + "." + cpf.substring(6, 9) + "-**";
+
+        // Remove tudo que não for número
+        String digits = cpfCnpj.replaceAll("\\D", "");
+
+        // Monta a máscara
+        return digits.length() == 14 ? "**."
+                                       + digits.substring(2, 5)
+                                       + ".***/"
+                                       + digits.substring(8, 12)
+                                       + "-**" : "**."
+                                                 + cpfCnpj.substring(2, 5)
+                                                 + "."
+                                                 + cpfCnpj.substring(6, 8)
+                                                 + "/" + cpfCnpj.substring(6, 10)
+                                                 + "-**";
     }
 
     @Cacheable(
@@ -113,7 +127,7 @@ public class UserService {
     }
 
     public Optional<AppUser> findUserByUsernameOrCpf(String username) {
-        return userRepository.findByUsernameOrCpfIgnoreCase(username, username);
+        return userRepository.findByUsernameOrCpfCnpjIgnoreCase(username, username);
     }
 
     public ResponseEntity<?> generateActivationCode(String userId) {
@@ -214,7 +228,7 @@ public class UserService {
             throw new Utils.BusinessException("Username " + userDto.username() + " já existente no sistema, utilize outro username.");
         }
 
-        if (userRepository.findByCpfIgnoreCase(userDto.cpf()).isPresent()) {
+        if (userRepository.findByCpfCnpjIgnoreCase(userDto.cpf()).isPresent()) {
             throw new Utils.BusinessException("CPF " + userDto.cpf() + " já existente no sistema, utilize outro CPF.");
         }
 
@@ -229,7 +243,7 @@ public class UserService {
         user.setName(userDto.name());
         user.setLastName(userDto.lastname());
         user.setEmail(userDto.email());
-        user.setCpf(userDto.cpf().replaceAll("\\D", ""));
+        user.setCpfCnpj(userDto.cpf().replaceAll("\\D", ""));
         user.setDateOfBirth(date);
         user.setStatus(UserStatus.PENDING_ACTIVATION);
         user.setMustChangePassword(false);
@@ -283,7 +297,7 @@ public class UserService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse("A nova senha deve ter pelo menos 8 caracteres."));
         }
 
-        var userOptional = userRepository.findByCpf(normalizedCpf);
+        var userOptional = userRepository.findByCpfCnpj(normalizedCpf);
         if (userOptional.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("Usuário não encontrado para o CPF informado."));
         }
@@ -387,8 +401,8 @@ public class UserService {
             throw new Utils.BusinessException(String.format("Username %s já existente no sistema.", userDto.username()));
         }
 
-        var normalizedCpf = userDto.cpf().startsWith("***") ? user.getCpf() : userDto.cpf().replaceAll("\\D", "");
-        userOptional = userRepository.findByCpfIgnoreCase(normalizedCpf);
+        var normalizedCpf = userDto.cpf().startsWith("***") ? user.getCpfCnpj() : userDto.cpf().replaceAll("\\D", "");
+        userOptional = userRepository.findByCpfCnpjIgnoreCase(normalizedCpf);
         if (userOptional.isPresent() && !userOptional.get().getUserId().equals(UUID.fromString(userDto.userId()))) {
             throw new Utils.BusinessException(String.format("CPF %s já existente no sistema.", userDto.cpf()));
         }
@@ -406,7 +420,7 @@ public class UserService {
         user.setLastName(userDto.lastname());
         user.setEmail(userDto.email());
         if (!userDto.cpf().startsWith("***") && !userDto.cpf().endsWith("**")) {
-            user.setCpf(normalizedCpf);
+            user.setCpfCnpj(normalizedCpf);
         }
         user.setDateOfBirth(date);
         user.setStatus(userDto.status());
@@ -454,7 +468,7 @@ public class UserService {
         return toUserResponse(appUser, true);
     }
 
-    private UserResponse toUserResponse(AppUser appUser, boolean maskCpf) {
+    private UserResponse toUserResponse(AppUser appUser, boolean maskCpfCnpj) {
         LocalDate dateOfBirth = appUser.getDateOfBirth();
         var roles = roleRepository.findRolesByUserId(appUser.getUserId());
         return new UserResponse(
@@ -463,7 +477,7 @@ public class UserService {
                 appUser.getName(),
                 appUser.getLastName(),
                 appUser.getEmail(),
-                maskCpf ? maskCpf(appUser.getCpf()) : appUser.getCpf(),
+                maskCpfCnpj ? maskCpfCnpj(appUser.getCpfCnpj()) : appUser.getCpfCnpj(),
                 roles,
                 dateOfBirth != null ? dateOfBirth.getYear() : 0,
                 dateOfBirth != null ? dateOfBirth.getMonth().getValue() : 0,

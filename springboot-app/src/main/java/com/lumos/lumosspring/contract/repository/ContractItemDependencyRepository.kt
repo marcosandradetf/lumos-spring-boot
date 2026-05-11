@@ -4,12 +4,20 @@ import com.lumos.lumosspring.contract.entities.ContractItemDependency
 import org.springframework.data.jdbc.repository.query.Modifying
 import org.springframework.data.jdbc.repository.query.Query
 import org.springframework.data.repository.CrudRepository
+import org.springframework.stereotype.Repository
 
+@Repository
 interface ContractItemDependencyRepository : CrudRepository<ContractItemDependency, Long> {
     data class ContractItemDependencyRow(val contractItemId: Long)
 
     @Modifying
-    fun deleteByContractItemReferenceId(contractItemReferenceId: Long)
+    @Query("""
+        DELETE FROM contract_item_dependency
+        WHERE contract_item_reference_id = :contractItemReferenceId
+    """)
+    fun deleteByContractItemReferenceId(
+        contractItemReferenceId: Long
+    )
 
     fun findByContractItemReferenceIdIn(contractItemReferenceIds: Collection<Long>): List<ContractItemDependency>
 

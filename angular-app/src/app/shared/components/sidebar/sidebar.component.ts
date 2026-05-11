@@ -33,8 +33,8 @@ export class SidebarComponent implements OnInit {
     bToggleReports: boolean = true;
     items: MenuItem[] | undefined;
     showDrawer = false;
-    configurationFinished = false;
     isSupport = false;
+    onOnboarding = false;
 
     constructor(
         private utils: UtilsService,
@@ -47,6 +47,7 @@ export class SidebarComponent implements OnInit {
         const isMobile = window.innerWidth <= 1024;
         const isSupport = localStorage.getItem('isSupport');
         this.isSupport = isSupport !== null && isSupport === 'true';
+        this.utils.onboarding$.subscribe(v => this.onOnboarding = v);
 
         SharedState.showMenuDrawer$.subscribe((open) => {
             this.showDrawer = open;
@@ -55,8 +56,6 @@ export class SidebarComponent implements OnInit {
         this.utils.menuState$.subscribe((isOpen: boolean) => {
             this.menuOpen = isOpen;
         });
-
-        this.configurationFinished = localStorage.getItem('configurationFinished') !== null;
 
         // Verifica se existe algum valor salvo no localStorage
         let savedMenuState = localStorage.getItem('menuOpen');
@@ -91,22 +90,19 @@ export class SidebarComponent implements OnInit {
         savedMenuState = localStorage.getItem('toggleport');
         if (savedMenuState !== null) this.bToggleReports = JSON.parse(savedMenuState);
 
-        if (!this.configurationFinished) {
-            this.bToggleContracts = true;
-            this.bToggleStock = true;
-            this.bToggleSettings = true;
-        }
-
-
         this.items = [
             {
                 label: 'Primeiros passos', // título mais curto e direto
+
                 title: 'Visualize a localização das execuções em campo',
                 icon: 'pi pi-play', // azul = informação/visualização
                 routerLink: ['/configuracoes/onboarding'],
-                visible: !this.configurationFinished,
+                visible: this.onOnboarding,
                 command: () => {
                     SharedState.showMenuDrawer$.next(false);
+                },
+                style: {
+                    border: 'none'
                 },
             },
 
@@ -115,6 +111,9 @@ export class SidebarComponent implements OnInit {
                 visible: this.isSupport,
                 icon: 'pi pi-sliders-v dark:text-neutral-200 text-gray-800',
                 expanded: this.bToggleSettings,
+                style: {
+                    border: 'none'
+                },
                 items: [
                     {
                         disabled: true,
@@ -148,7 +147,10 @@ export class SidebarComponent implements OnInit {
             {
                 label: 'Dashboards',
                 icon: 'pi pi-chart-bar dark:text-neutral-200 text-gray-800', // ícone mais relacionado a dashboards
-                expanded: this.configurationFinished,
+                expanded: true,
+                style: {
+                    border: 'none'
+                },
                 items: [
                     {
                         label: 'Mapa de Execuções', // título mais curto e direto
@@ -188,6 +190,9 @@ export class SidebarComponent implements OnInit {
                 icon: 'pi pi-briefcase dark:text-neutral-200 text-gray-800',
                 expanded: this.bToggleExecution,
                 command: () => this.toggleExecution(),
+                style: {
+                    border: 'none'
+                },
                 items: [
 
                     {
@@ -268,6 +273,9 @@ export class SidebarComponent implements OnInit {
                 command: () => {
                     this.toggleRequest();
                 },
+                style: {
+                    border: 'none'
+                },
                 items: [
                     {
                         label: 'Pendentes de Aprovação',
@@ -304,6 +312,9 @@ export class SidebarComponent implements OnInit {
                 expanded: this.bToggleReports,
                 command: () => {
                     this.toggleReports(!this.bToggleReports);
+                },
+                style: {
+                    border: 'none'
                 },
                 items: [
                     {
@@ -383,6 +394,9 @@ export class SidebarComponent implements OnInit {
                 command: () => {
                     this.toggleContracts(!this.bToggleContracts);
                 },
+                style: {
+                    border: 'none'
+                },
                 items: [
                     {
                         label: 'Novo Contrato',
@@ -412,15 +426,7 @@ export class SidebarComponent implements OnInit {
                     },
                     {
                         label: 'Catálogo de Itens Contratuais',
-                        icon: 'pi pi-table text-neutral-500',
-                        routerLink: ['/contratos/itens-contratuais/catalogo'],
-                        command: () => {
-                            SharedState.showMenuDrawer$.next(false);
-                        },
-                    },
-                    {
-                        label: 'Itens Contratuais',
-                        icon: 'pi pi-list text-green-500',
+                        icon: 'pi pi-database text-neutral-500',
                         routerLink: ['/contratos/itens-contratuais/cadastro'],
                         command: () => {
                             SharedState.showMenuDrawer$.next(false);
@@ -446,6 +452,9 @@ export class SidebarComponent implements OnInit {
                 expanded: this.bToggleStock,
                 command: () => {
                     this.toggleStock(!this.bToggleStock);
+                },
+                style: {
+                    border: 'none'
                 },
                 items: [
                     {
@@ -503,6 +512,9 @@ export class SidebarComponent implements OnInit {
                 label: 'Configurações',
                 icon: 'pi pi-cog dark:text-neutral-200 text-gray-800',
                 expanded: this.bToggleSettings,
+                style: {
+                    border: 'none'
+                },
                 items: [
                     {
                         label: 'Usuários',

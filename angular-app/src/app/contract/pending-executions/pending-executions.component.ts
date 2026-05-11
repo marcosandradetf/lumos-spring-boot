@@ -34,7 +34,7 @@ export class PendingExecutionsComponent implements OnInit {
     ngOnInit(): void {
         this.loading = true;
         SharedState.setCurrentPath(["Contratos", "Instalações Pendentes de Vínculo Contratual"]);
-        this.title.setTitle("Listando Instalações Pendentes de Vínculo contratual");
+        this.title.setTitle("Lumos IP - Listando Instalações Pendentes de Vínculo contratual");
 
         this.api.getInstallationsWaitingValidation().subscribe({
             next: data => {

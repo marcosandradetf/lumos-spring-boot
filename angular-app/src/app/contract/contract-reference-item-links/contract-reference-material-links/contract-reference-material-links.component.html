@@ -6,85 +6,89 @@
   <table class="w-full table-fixed border-collapse">
     <thead class="bg-slate-50 dark:bg-slate-800/60">
     <tr class="text-left text-xs uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
-      <th class="w-[26%] px-3 py-3">Material</th>
-      <th class="w-[42%] px-3 py-3">Itens Referenciais</th>
-      <th class="w-[16%] px-3 py-3">Status</th>
+      <th class="w-[46%] px-3 py-3">
+        <span class="inline-flex items-center rounded-full border border-cyan-200 bg-cyan-50 px-2 py-1 text-[11px] font-semibold text-cyan-800 dark:border-cyan-900 dark:bg-cyan-950/40 dark:text-cyan-200">Item Referencial</span>
+      </th>
+      <th class="w-[38%] px-3 py-3">
+        <span class="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">Materiais</span>
+      </th>
       <th class="w-[16%] px-3 py-3">Salvar</th>
     </tr>
     </thead>
 
     <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-    <tr *ngFor="let material of materials; let i = index; trackBy: trackByMaterialId" class="align-top bg-white dark:bg-neutral-900">
+    <tr *ngFor="let item of items; let i = index; trackBy: trackByItemId" class="align-top bg-white dark:bg-neutral-900">
       <td class="px-3 py-4">
-        <div class="space-y-3">
+        <div class="space-y-3 rounded-xl border border-cyan-200 bg-cyan-50/40 p-3 dark:border-cyan-900 dark:bg-cyan-950/20">
           <div
             tooltipPosition="bottom"
-            [pTooltip]="material.materialName"
+            [pTooltip]="item.description"
             [showDelay]="200"
-            class="cursor-default truncate rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium dark:border-slate-700 dark:bg-slate-800/60">
-            {{ material.materialName }}
+            class="cursor-default truncate rounded-xl border border-cyan-200 bg-white px-3 py-2 text-sm font-medium text-cyan-900 dark:border-cyan-800 dark:bg-slate-900 dark:text-cyan-100">
+            {{ item.description }}
           </div>
 
           <div class="flex flex-wrap items-center gap-2">
-            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-              {{ material.unitBase || 'Unidade não definida' }}
+            <span class="rounded-full bg-cyan-100 px-2.5 py-1 text-xs font-medium text-cyan-800 dark:bg-cyan-900/60 dark:text-cyan-100">
+              {{ item.type || 'Tipo não definido' }}
             </span>
-            <span class="text-xs text-slate-500 dark:text-slate-400">
-              {{ getLinkedItemsLabel(material.materialId) }}
+            <span class="text-xs text-cyan-800/80 dark:text-cyan-200/80">
+              {{ getLinkedMaterialsLabel(item.contractReferenceItemId) }}
             </span>
           </div>
         </div>
       </td>
 
       <td class="px-3 py-4">
-        <div class="space-y-2">
+        <div class="space-y-2 rounded-xl border border-amber-200 bg-amber-50/40 p-3 dark:border-amber-900 dark:bg-amber-950/20">
           <button class="btn btn-outline btn-sm w-full justify-center"
                   type="button"
-                  (click)="toggleEditor(material.materialId)">
-            <i class="pi" [ngClass]="isEditing(material.materialId) ? 'pi-chevron-up' : 'pi-pencil'"></i>
-            <span>{{ isEditing(material.materialId) ? 'Fechar edição' : 'Editar vínculos' }}</span>
+                  (click)="toggleEditor(item)">
+            <i class="pi" [ngClass]="isEditing(item.contractReferenceItemId) ? 'pi-chevron-up' : 'pi-pencil'"></i>
+            <span>{{ isEditing(item.contractReferenceItemId) ? 'Fechar edição' : 'Editar vínculos' }}</span>
           </button>
 
-          <div *ngIf="isEditing(material.materialId)" class="space-y-2">
-            <p-listbox [(ngModel)]="materialSelections[material.materialId]"
-                       name="materialLink{{i}}"
-                       [options]="linkedItemOptions"
-                       optionLabel="description"
-                       optionValue="contractReferenceItemId"
+          <div *ngIf="isEditing(item.contractReferenceItemId)" class="space-y-2">
+            <p-listbox [(ngModel)]="itemSelections[item.contractReferenceItemId]"
+                       name="itemMaterials{{i}}"
+                       [options]="materials"
+                       optionLabel="materialName"
+                       optionValue="materialId"
                        [multiple]="true"
                        [checkbox]="false"
                        [filter]="true"
-                       filterBy="description,type"
+                       filterBy="materialName"
+                       [filterMatchMode]="$any(customFilterMatchMode)"
+                       [filterLocale]="'pt-BR'"
+                       [filterValue]="itemFilters[item.contractReferenceItemId] || ''"
+                       [(filterValue)]="itemFilters[item.contractReferenceItemId]"
                        [metaKeySelection]="false"
                        listStyleClass="max-h-80"
-                       styleClass="w-full"
-                       (ngModelChange)="onSelectionChange(material.materialId, $event)">
-              <ng-template let-item pTemplate="item">
+                       styleClass="w-full border border-amber-200 rounded-xl dark:border-amber-800"
+                       (ngModelChange)="onSelectionChange(item.contractReferenceItemId, $event)">
+              <ng-template let-material pTemplate="item">
                 <div class="flex flex-col">
-                  <span class="font-medium">{{ item.description }}</span>
-                  <small class="text-slate-500">Tipo: {{ item.type || '-' }}</small>
+                  <span class="font-medium text-amber-900 dark:text-amber-100">{{ material.materialName }}</span>
+                  <small class="text-amber-700 dark:text-amber-300">Unidade: {{ material.unitBase || '-' }}</small>
                 </div>
               </ng-template>
             </p-listbox>
           </div>
 
-          <div class="flex items-center justify-between gap-2">
-            <small class="text-slate-500 dark:text-slate-400">
-              O vínculo do material é gerenciado diretamente por esta lista.
-            </small>
-
-            <button pButton type="button" icon="pi pi-plus" label="Criar material" class="p-button-text p-button-sm"
-                    (click)="createMaterialRequested.emit()"></button>
+          <div class="flex items-center justify-between">
+            <button
+              routerLink="/estoque/cadastrar-material"
+              [state]="{
+                origin: {
+                  label: 'Vínculo de materiais',
+                  route: '/contratos/itens-contratuais/vinculos',
+                  data: {},
+                  query: {},
+                  attribute: 'origin'
+                }
+              }"
+              pButton type="button" icon="pi pi-plus" label="Criar material" class="p-button-text p-button-sm w-full"></button>
           </div>
-        </div>
-      </td>
-
-      <td class="px-3 py-4">
-        <div class="space-y-2">
-          <p-tag [value]="getStatusLabel(material.materialId)" [severity]="getStatusSeverity(material.materialId)"></p-tag>
-          <p class="text-xs leading-5 text-slate-500 dark:text-slate-400">
-            {{ getLinkedItemsLabel(material.materialId) }}.
-          </p>
         </div>
       </td>
 
@@ -103,67 +107,76 @@
 </div>
 
 <div *ngIf="!loading && materials.length > 0 && items.length > 0" class="space-y-4 p-4 md:hidden">
-  <article *ngFor="let material of materials; let i = index; trackBy: trackByMaterialId"
+  <article *ngFor="let item of items; let i = index; trackBy: trackByItemId"
            class="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
     <div class="mb-4 flex items-start justify-between gap-3">
       <div class="min-w-0">
         <p class="truncate font-semibold text-slate-900 dark:text-slate-100">
-          {{ material.materialName }}
+          {{ item.description }}
         </p>
         <p class="text-sm text-slate-500 dark:text-slate-400">
-          {{ material.unitBase || 'Unidade não definida' }}
+          {{ item.type || 'Tipo não definido' }}
         </p>
       </div>
 
-      <p-tag [value]="getStatusLabel(material.materialId)" [severity]="getStatusSeverity(material.materialId)"></p-tag>
     </div>
 
     <div class="space-y-4">
       <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
-        {{ getLinkedItemsLabel(material.materialId) }}. Edite abaixo e salve quando concluir.
+        {{ getLinkedMaterialsLabel(item.contractReferenceItemId) }}. Edite abaixo e salve quando concluir.
       </div>
 
       <div>
         <button class="btn btn-outline btn-sm w-full justify-center"
                 type="button"
-                (click)="toggleEditor(material.materialId)">
-          <i class="pi" [ngClass]="isEditing(material.materialId) ? 'pi-chevron-up' : 'pi-pencil'"></i>
-          <span>{{ isEditing(material.materialId) ? 'Fechar edição' : 'Editar vínculos' }}</span>
+                (click)="toggleEditor(item)">
+          <i class="pi" [ngClass]="isEditing(item.contractReferenceItemId) ? 'pi-chevron-up' : 'pi-pencil'"></i>
+          <span>{{ isEditing(item.contractReferenceItemId) ? 'Fechar edição' : 'Editar vínculos' }}</span>
         </button>
       </div>
 
-      <div *ngIf="isEditing(material.materialId)">
+      <div *ngIf="isEditing(item.contractReferenceItemId)">
         <label class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-          Itens Referenciais
+          Materiais
         </label>
-        <p-listbox [(ngModel)]="materialSelections[material.materialId]"
-                   name="mobileMaterialLink{{i}}"
-                   [options]="linkedItemOptions"
-                   optionLabel="description"
-                   optionValue="contractReferenceItemId"
+        <p-listbox [(ngModel)]="itemSelections[item.contractReferenceItemId]"
+                   name="mobileItemMaterials{{i}}"
+                   [options]="materials"
+                   optionLabel="materialName"
+                   optionValue="materialId"
                    [multiple]="true"
                    [checkbox]="false"
                    [filter]="true"
-                   filterBy="description,type"
+                   filterBy="materialName"
+                   [filterMatchMode]="$any(customFilterMatchMode)"
+                   [filterLocale]="'pt-BR'"
+                   [filterValue]="itemFilters[item.contractReferenceItemId] || ''"
+                   [(filterValue)]="itemFilters[item.contractReferenceItemId]"
                    [metaKeySelection]="false"
                    listStyleClass="max-h-80"
-                   styleClass="w-full"
-                   (ngModelChange)="onSelectionChange(material.materialId, $event)">
-          <ng-template let-item pTemplate="item">
+                   styleClass="w-full border border-amber-200 rounded-xl dark:border-amber-800"
+                   (ngModelChange)="onSelectionChange(item.contractReferenceItemId, $event)">
+          <ng-template let-material pTemplate="item">
             <div class="flex flex-col">
-              <span class="font-medium">{{ item.description }}</span>
-              <small class="text-slate-500">Tipo: {{ item.type || '-' }}</small>
+              <span class="font-medium text-amber-900 dark:text-amber-100">{{ material.materialName }}</span>
+              <small class="text-amber-700 dark:text-amber-300">Unidade: {{ material.unitBase || '-' }}</small>
             </div>
           </ng-template>
         </p-listbox>
       </div>
 
       <p class="text-xs leading-5 text-slate-500 dark:text-slate-400">
-        O vínculo do material é gerenciado diretamente por esta lista.
+        O vínculo de materiais é gerenciado diretamente por esta lista.
       </p>
 
       <div class="flex gap-2">
-        <button class="btn btn-outline btn-sm flex-1" type="button" (click)="createMaterialRequested.emit()">
+        <button
+          routerLink="/estoque/cadastrar-material"
+          [state]="{
+            label: 'Vínculo de materiais',
+            route: '/contratos/itens-contratuais/vinculos'
+          }"
+          class="btn btn-outline btn-sm flex-1" type="button">
           <i class="pi pi-plus"></i>
           <span>Criar material</span>
         </button>

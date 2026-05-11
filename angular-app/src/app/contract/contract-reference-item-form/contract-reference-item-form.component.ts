@@ -17,6 +17,7 @@ import {
 import {ContractService} from '../services/contract.service';
 import {SharedState} from '../../core/service/shared-state';
 import {isEqual, cloneDeep} from 'lodash';
+import {Tooltip} from 'primeng/tooltip';
 
 interface ContractReferenceItemTypeOption {
     label: string;
@@ -43,6 +44,7 @@ interface EditableBaseReferenceItem {
         ButtonModule,
         TagModule,
         ToastModule,
+        Tooltip,
     ],
     providers: [MessageService],
     templateUrl: './contract-reference-item-form.component.html',
@@ -184,7 +186,7 @@ export class ContractReferenceItemFormComponent implements OnInit {
                 this.messageService.add({
                     severity: 'success',
                     summary: 'Cadastro salvo',
-                    detail: 'O item foi salvo como pendente de validacao. Complete os vinculos na tela dedicada.',
+                    detail: 'Item salvo com sucesso.',
                 });
             },
             error: (error) => {
@@ -192,7 +194,7 @@ export class ContractReferenceItemFormComponent implements OnInit {
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Falha ao salvar',
-                    detail: error?.error?.message ?? 'Nao foi possivel salvar o item.',
+                    detail: error?.error?.error ?? 'Nao foi possivel salvar o item.',
                 });
             },
         });

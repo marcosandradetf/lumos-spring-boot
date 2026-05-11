@@ -4,7 +4,7 @@ import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/ro
 import { forkJoin } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { DomSanitizer, SafeResourceUrl, Title } from '@angular/platform-browser';
-import { ButtonDirective } from 'primeng/button';
+import {Button, ButtonDirective} from 'primeng/button';
 import { ProgressBar } from 'primeng/progressbar';
 import { Tag } from 'primeng/tag';
 import { Skeleton } from 'primeng/skeleton';
@@ -17,6 +17,7 @@ import { MaterialService } from '../../stock/services/material.service';
 import { SharedState } from '../../core/service/shared-state';
 import { Utils } from '../../core/service/utils';
 import { ContractService } from '../../contract/services/contract.service';
+import {FcmService} from '../../core/service/fcm.service';
 
 @Component({
     selector: 'app-settings',
@@ -29,7 +30,8 @@ import { ContractService } from '../../contract/services/contract.service';
         ProgressBar,
         Tag,
         Skeleton,
-        RouterOutlet
+        RouterOutlet,
+        Button
     ],
     templateUrl: './settings.component.html',
     styleUrl: './settings.component.scss'
@@ -55,6 +57,7 @@ export class SettingsComponent implements OnInit {
     embeddedViewActive = false;
     embeddedExternalUrl: SafeResourceUrl | null = null;
     embeddedExternalUrlRaw: string | null = null;
+    notificationStatus = 'default';
 
     private readonly embeddedRouteMap: Record<string, string> = {
         '/configuracoes/usuarios': 'usuarios',
@@ -79,10 +82,13 @@ export class SettingsComponent implements OnInit {
         private teamService: TeamService,
         private stockService: StockService,
         private materialService: MaterialService,
-        private contractService: ContractService
+        private contractService: ContractService,
+        private fcmService: FcmService,
     ) {
-        this.titleService.setTitle('Configurações - Onboarding');
-        SharedState.setCurrentPath(['Configurações', 'Onboarding']);
+        this.titleService.setTitle('Lumos IP - Primeiros passos');
+        SharedState.setCurrentPath(['Primeiros passos']);
+
+        this.fcmService.notificationStatus$.subscribe(v => this.notificationStatus = v);
     }
 
     ngOnInit() {
@@ -156,7 +162,7 @@ export class SettingsComponent implements OnInit {
                 helper: 'Sua operação precisa de estoquistas, eletricistas e motoristas previamente cadastrados.',
                 icon: 'pi pi-users',
                 route: '/configuracoes/usuarios',
-                ctaLabel: this.totalUsers === 0 ? 'Cadastrar usuários' : 'Revisar usuários',
+                ctaLabel: this.totalUsers === 0 ? 'Cadastrar usuários...' : 'Revisar usuários...',
                 ctaIcon: 'pi pi-user-plus',
                 done: this.totalUsers > 0 && this.operationalUsers > 0 && this.stockistUsers > 0,
                 metric: `Usuários: ${this.totalUsers}`,
@@ -174,15 +180,15 @@ export class SettingsComponent implements OnInit {
                 helper: 'Essa etapa destrava ordens de serviço e também reflete nos caminhões do estoque.',
                 icon: 'pi pi-user-edit',
                 route: '/configuracoes/equipes',
-                ctaLabel: this.teamsCount === 0 ? 'Cadastrar equipes' : 'Gerenciar equipes',
+                ctaLabel: this.teamsCount === 0 ? 'Cadastrar equipes...' : 'Gerenciar equipes...',
                 ctaIcon: 'pi pi-users',
                 done: this.teamsCount > 0,
                 metric: `Equipes: ${this.teamsCount}`,
                 blockers: [
-                    this.operationalUsers === 0 ? 'Cadastre usuários operacionais antes de montar a equipe.' : '',
-                    this.teamsCount === 0 ? 'Nenhuma equipe operacional cadastrada.' : ''
+                    this.operationalUsers === 0 ? 'Voltar ao passo anterior e cadastrar usuários operacionais.' : '',
+                    this.teamsCount === 0 ? 'Cadastrar as equipes operacionais.' : ''
                 ].filter(Boolean),
-                disabled: this.totalUsers === 0 || this.operationalUsers === 0
+                disabled: this.operationalUsers === 0
             },
 
             {
@@ -195,39 +201,20 @@ export class SettingsComponent implements OnInit {
                 icon: 'pi pi-mobile',
                 route: 'https://lumosip.com.br/como-usar/07-operation/01-android-app-admin/', // ou onde fizer sentido
                 externalUrl: true,
-                ctaLabel: 'Ver instruções',
+                ctaLabel: 'Ver instruções...',
                 ctaIcon: 'pi pi-external-link',
                 done: this.fieldActivationDone,
                 metric: this.fieldActivationDone
                     ? 'Equipe pronta para operação'
                     : 'Ativação pendente',
                 blockers: [
-                    this.teamsCount === 0
-                        ? 'Você precisa criar uma equipe operacional primeiro.'
-                        : '',
+                    this.operationalUsers === 0 ? 'Voltar ao passo 1 e cadastrar usuários operacionais.' : '',
+                    this.teamsCount === 0 ? 'Voltar ao passo anterior e cadastrar as equipes operacionais.' : '',
                     !this.fieldActivationDone
-                        ? 'Oriente a equipe a baixar o aplicativo e acessar o sistema.'
+                        ? 'Orientar a equipe a baixar o aplicativo e acessar o sistema.'
                         : ''
                 ].filter(Boolean),
-                disabled: false
-            },
-
-
-            {
-                id: 'stockists',
-                title: 'Defina os estoquistas',
-                description: 'Associe responsáveis pelo estoque para liberar o gerenciamento de reservas e expedições.',
-                helper: 'Essa etapa é obrigatória para criação e acompanhamento de ordens com movimentação de material.',
-                icon: 'pi pi-briefcase',
-                route: '/configuracoes/estoquistas',
-                ctaLabel: this.stockistsCount === 0 ? 'Cadastrar estoquistas' : 'Gerenciar estoquistas',
-                ctaIcon: 'pi pi-briefcase',
-                done: this.stockistsCount > 0,
-                metric: `Estoquistas: ${this.stockistsCount}`,
-                blockers: [
-                    this.stockistsCount === 0 ? 'Nenhum estoquista configurado.' : ''
-                ].filter(Boolean),
-                disabled: false
+                disabled: this.operationalUsers === 0 || this.teamsCount === 0
             },
             {
                 id: 'deposits',
@@ -236,29 +223,46 @@ export class SettingsComponent implements OnInit {
                 helper: 'Movimentação de estoque depende de pelo menos um almoxarifado e um caminhão.',
                 icon: 'pi pi-truck',
                 route: this.depositsCount === 0 ? '/estoque/almoxarifados' : '/estoque/caminhoes',
-                ctaLabel: this.depositsCount === 0 ? 'Cadastrar almoxarifados' : this.trucksCount === 0 ? 'Cadastrar caminhões' : 'Revisar logística',
+                ctaLabel: this.depositsCount === 0 ? 'Cadastrar almoxarifados...' : this.trucksCount === 0 ? 'Cadastrar caminhões...' : 'Revisar logística...',
                 ctaIcon: this.depositsCount === 0 ? 'pi pi-home' : 'pi pi-truck',
                 done: this.depositsCount > 0 && this.trucksCount > 0,
                 metric: `Almoxarifados: ${this.depositsCount} • Caminhões: ${this.trucksCount}`,
                 blockers: [
-                    this.depositsCount === 0 ? 'Ainda não existe almoxarifado cadastrado.' : '',
-                    this.trucksCount === 0 ? 'Ainda não existe caminhão operacional vinculado.' : ''
+                    this.depositsCount === 0 ? 'Cadastrar almoxarifados fixos.' : '',
+                    this.trucksCount === 0 ? 'Cadastrar almoxarifados móveis/caminhões.' : ''
                 ].filter(Boolean),
                 disabled: false
             },
             {
+                id: 'stockists',
+                title: 'Defina os estoquistas',
+                description: 'Associe responsáveis pelo estoque para liberar o gerenciamento de reservas e expedições.',
+                helper: 'Essa etapa é obrigatória para criação e acompanhamento de ordens com movimentação de material.',
+                icon: 'pi pi-briefcase',
+                route: '/configuracoes/estoquistas',
+                ctaLabel: this.stockistsCount === 0 ? 'Cadastrar estoquistas...' : 'Gerenciar estoquistas...',
+                ctaIcon: 'pi pi-briefcase',
+                done: this.stockistsCount > 0,
+                metric: `Estoquistas: ${this.stockistsCount}`,
+                blockers: [
+                    this.depositsCount === 0 ? 'Voltar ao passo anterior e cadastrar os almoxarifados.' : '',
+                    this.stockistsCount === 0 ? 'Cadastrar os estoquistas.' : ''
+                ].filter(Boolean),
+                disabled: this.depositsCount === 0
+            },
+            {
                 id: 'materials',
-                title: 'Abasteça o catálogo',
+                title: 'Abasteça o catálogo de materiais',
                 description: 'Cadastre materiais para que estoque, contratos e execuções consigam operar sem bloqueios.',
                 helper: 'Sem catálogo não há movimentação, separação e apontamento de itens.',
                 icon: 'pi pi-box',
                 route: '/estoque/cadastrar-material',
-                ctaLabel: this.materialsCount === 0 ? 'Cadastrar materiais' : 'Ver catálogo',
+                ctaLabel: this.materialsCount === 0 ? 'Cadastrar materiais...' : 'Ver catálogo...',
                 ctaIcon: 'pi pi-box',
                 done: this.materialsCount > 0,
                 metric: `Materiais: ${this.materialsCount}`,
                 blockers: [
-                    this.materialsCount === 0 ? 'Catálogo de materiais ainda vazio.' : ''
+                    this.materialsCount === 0 ? 'Cadastrar o catálogo de materiais.' : ''
                 ].filter(Boolean),
                 disabled: false
             },
@@ -270,8 +274,8 @@ export class SettingsComponent implements OnInit {
                 icon: 'pi pi-file-edit',
                 route: '/contratos/itens-contratuais/cadastro',
                 ctaLabel: this.referenceContractItems === 0
-                    ? 'Cadastrar itens contratuais'
-                    : 'Gerenciar itens',
+                    ? 'Cadastrar itens contratuais...'
+                    : 'Gerenciar itens...',
                 ctaIcon: this.referenceContractItems === 0
                     ? 'pi pi-plus'
                     : 'pi pi-pencil',
@@ -279,7 +283,7 @@ export class SettingsComponent implements OnInit {
                 metric: `Itens contratuais: ${this.referenceContractItems}`,
                 blockers: [
                     this.referenceContractItems === 0
-                        ? 'Você ainda não cadastrou nenhum item contratual.'
+                        ? 'Cadastrar o catálogo de itens contratuais.'
                         : ''
                 ].filter(Boolean),
                 disabled: false
@@ -296,8 +300,8 @@ export class SettingsComponent implements OnInit {
                 icon: 'pi pi-briefcase',
                 route: '/contratos/criar',
                 ctaLabel: this.totalContracts === 0
-                    ? 'Cadastrar contratos'
-                    : 'Gerenciar contratos',
+                    ? 'Cadastrar contratos...'
+                    : 'Gerenciar contratos...',
                 ctaIcon: this.totalContracts === 0
                     ? 'pi pi-plus'
                     : 'pi pi-pencil',
@@ -305,7 +309,35 @@ export class SettingsComponent implements OnInit {
                 metric: `Contratos: ${this.totalContracts}`,
                 blockers: [
                     this.referenceContractItems === 0
-                        ? 'Cadastre pelo menos um item contratual antes de criar contratos.'
+                        ? 'Voltar ao passo anterior e cadastrar o catálogo de itens contratuais.'
+                        : '',
+                    this.totalContracts === 0
+                        ? 'Cadastrar os contratos.'
+                        : ''
+                ].filter(Boolean),
+                disabled: this.referenceContractItems === 0
+            },
+            {
+                id: 'notifications',
+                title: 'Ative as notificações',
+                description: 'Para não perder nenhum alerta importante na sua operação',
+                helper: ['default', 'denied'].includes(this.notificationStatus)
+                    ? 'Notificações desativadas.'
+                    : 'Notificações ativadas.',
+
+                icon: 'pi pi-bell',
+                route: '/contratos/criar',
+                ctaLabel: ['default', 'denied'].includes(this.notificationStatus)
+                    ? 'Ativar notificações...'
+                    : 'Gerar primeira ordem de serviço...',
+                ctaIcon: ['default', 'denied'].includes(this.notificationStatus)
+                    ? 'pi pi-bell'
+                    : 'pi pi-home',
+                done: this.notificationStatus === 'granted',
+                metric: '',
+                blockers: [
+                    ['default', 'denied'].includes(this.notificationStatus)
+                        ? 'Ativar as notificações do sistema.'
                         : ''
                 ].filter(Boolean),
                 disabled: false

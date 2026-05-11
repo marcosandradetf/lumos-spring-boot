@@ -50,7 +50,7 @@ export class GroupsComponent {
 
   constructor(protected router: Router, private stockService: StockService,
               private title: Title,) {
-    this.title.setTitle('Gerenciar - Grupos');
+    this.title.setTitle('Lumos IP - Gerenciar grupos');
     this.stockService.getGroups().subscribe(
       g => this.gps = g
     );

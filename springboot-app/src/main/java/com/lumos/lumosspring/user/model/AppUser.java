@@ -11,6 +11,7 @@ import com.lumos.lumosspring.authentication.model.TenantEntity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.domain.Persistable;
+import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -36,18 +37,31 @@ public class AppUser extends TenantEntity implements Persistable<UUID> {
 
     private String codeResetPassword;
 
-    private String cpf;
+    @Column("cpf")
+    private String cpfCnpj;
 
     private LocalDate dateOfBirth;
 
     private UserStatus status;
 
+    // Indica se o usuário é obrigado a alterar a senha no próximo login.
+    // Muito usado quando a conta é criada automaticamente (ex: após pagamento ou convite).
+    // Ajuda a garantir segurança inicial, evitando uso prolongado de senha provisória.
     private Boolean mustChangePassword;
 
+    // Hash de um código de ativação enviado ao usuário (ex: por e-mail).
+    // Esse código é usado para validar a criação da conta antes de liberar acesso.
+    // Armazenar o HASH (e não o código em texto) evita vazamento em caso de ataque ao banco.
     private String activationCodeHash;
 
+    // Data/hora de expiração do código de ativação.
+    // Impede que códigos antigos sejam reutilizados, reduzindo risco de fraude.
+    // Importante em cenários de billing SaaS onde o acesso depende de validação recente.
     private Instant activationCodeExpiresAt;
 
+    // Contador de tentativas de ativação (uso do código).
+    // Serve para limitar tentativas inválidas e prevenir ataques de força bruta.
+    // Pode ser usado para bloquear temporariamente o usuário ou invalidar o código.
     private Integer activationAttemptCount;
 
     private Long teamId;
@@ -171,12 +185,12 @@ public class AppUser extends TenantEntity implements Persistable<UUID> {
         this.activationAttemptCount = activationAttemptCount;
     }
 
-    public String getCpf() {
-        return cpf;
+    public String getCpfCnpj() {
+        return cpfCnpj;
     }
 
-    public void setCpf(String cpf) {
-        this.cpf = cpf;
+    public void setCpfCnpj(String cpfCnpj) {
+        this.cpfCnpj = cpfCnpj;
     }
 
     public String getPhoneNumber() {

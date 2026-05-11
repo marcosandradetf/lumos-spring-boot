@@ -88,7 +88,7 @@ export class OperationComponent implements OnInit {
     }
 
     ngOnInit() {
-        this.title.setTitle("Relatório Analítico de Operações");
+        this.title.setTitle("Lumos IP - Relatório Analítico de Operações");
         SharedState.setCurrentPath(['Relatórios', 'Execuções', 'Analítico de Operações']);
 
         forkJoin({

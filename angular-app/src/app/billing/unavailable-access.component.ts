@@ -31,7 +31,7 @@ export class UnavailableAccessComponent implements OnInit {
 
   ngOnInit(): void {
     SharedState.setCurrentPath(["Acesso Indisponível"]);
-    this.title.setTitle('Acesso Indisponível - Lumos');
+    this.title.setTitle('Lumos IP - Acesso Indisponível');
 
     const isLocked = localStorage.getItem('isLocked') !== null;
     if (!isLocked) {

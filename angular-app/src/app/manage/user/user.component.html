@@ -13,20 +13,20 @@
       </div>
 
       <div class="flex flex-wrap items-center gap-2">
-        <button class="btn btn-outline btn-sm md:btn-md" type="button" (click)="openDocumentation('invite-users')">
+        <button class="btn btn-outline btn-sm" type="button" (click)="openDocumentation('invite-users')">
           <i class="pi pi-book"></i>
           <span class="hidden sm:inline">Como convidar</span>
         </button>
 
         <div class="relative">
           <div class="flex overflow-hidden rounded-xl border border-cyan-600 shadow-sm">
-            <button class="btn btn-primary btn-sm rounded-none border-0 md:btn-md" type="button" (click)="newUser()">
+            <button class="btn btn-primary btn-sm rounded-none border-0" type="button" (click)="newUser()">
               <i class="pi pi-user-plus"></i>
               <span class="hidden sm:inline">Novo usuário</span>
             </button>
 
             <button
-              class="btn btn-primary btn-sm rounded-none border-0 border-l border-cyan-500 px-3 md:btn-md"
+              class="btn btn-primary btn-sm rounded-none border-0 border-l border-cyan-500 px-3"
               type="button"
               (click)="toggleQuickAddMenu()">
               <i class="pi" [ngClass]="quickAddMenuOpen ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
@@ -97,7 +97,7 @@
             <input
               type="text"
               class="input input-bordered w-full lg:w-96"
-              placeholder="Pesquisar por usuário, nome, e-mail, CPF, função ou status"
+              placeholder="Pesquisar por usuário, nome, e-mail, CPF, CNPJ, função ou status"
               (input)="filterUsers($event)">
           </div>
         </div>
@@ -148,7 +148,7 @@
                           {{ user.username || 'Usuário não definido' }}
                         </p>
                         <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                          CPF: {{ user.cpf || 'Pendente' }}
+                          {{ user.cpfCnpj.length === 18 ? 'CNPJ' : 'CPF'}}: {{ user.cpfCnpj || 'Pendente' }}
                         </p>
                         <p class="mt-1 truncate text-sm text-slate-500 dark:text-slate-400">
                           {{ user.email || 'E-mail não informado' }}
@@ -235,7 +235,7 @@
                                    placeholder="Sobrenome"/>
                             <input [(ngModel)]="user.email" name="email{{i}}" class="input input-bordered w-full"
                                    placeholder="E-mail"/>
-                            <input [(ngModel)]="user.cpf" name="cpf{{i}}" mask="000.000.000-00"
+                            <input [(ngModel)]="user.cpfCnpj" name="cpf{{i}}" mask="000.000.000-00"
                                    class="input input-bordered w-full" placeholder="CPF"/>
                           </div>
 
@@ -324,7 +324,7 @@
                         </p>
                         <p>
                           <span class="font-medium text-slate-700 dark:text-slate-200">CPF:</span>
-                          {{ user.cpf || 'Pendente' }}
+                          {{ user.cpfCnpj || 'Pendente' }}
                         </p>
                         <p>
                           <span class="font-medium text-slate-700 dark:text-slate-200">Canal:</span>
@@ -403,7 +403,7 @@
                                class="input input-bordered w-full" placeholder="Sobrenome"/>
                         <input [(ngModel)]="user.email" name="mobileEmail{{i}}" class="input input-bordered w-full"
                                placeholder="E-mail"/>
-                        <input [(ngModel)]="user.cpf" name="mobileCpf{{i}}" mask="000.000.000-00"
+                        <input [(ngModel)]="user.cpfCnpj" name="mobileCpf{{i}}" mask="000.000.000-00"
                                class="input input-bordered w-full" placeholder="CPF"/>
                       </div>
 

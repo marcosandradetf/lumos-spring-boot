@@ -52,7 +52,7 @@ export class MaterialReservationComponent implements OnInit {
 
     ngOnInit(): void {
         SharedState.setCurrentPath(["Relatórios", "Estoque", "Saída/Saldo por instalação"]);
-        this.title.setTitle("Relatório de Saída/Saldo por instalação");
+        this.title.setTitle("Lumos IP - Relatório de Saída/Saldo por instalação");
         this.loading = true
 
         const ua = navigator.userAgent;

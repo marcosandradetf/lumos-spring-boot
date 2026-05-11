@@ -2,7 +2,9 @@ package com.lumos.lumosspring.lead.controller
 
 import com.lumos.lumosspring.lead.service.LeadService
 import jakarta.servlet.http.HttpServletResponse
+import org.springframework.http.HttpStatusCode
 import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -38,29 +40,41 @@ class LeadController(
      */
     @PostMapping(value = ["/free-test"], consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun freeTest(
-        @RequestParam("firstName") firstName: String,
-        @RequestParam("lastName") lastName: String,
-        @RequestParam("email") email: String,
-        @RequestParam("password") password: String,
-        @RequestParam("company", defaultValue = "") company: String,
-        @RequestParam("teamSize", defaultValue = "") teamSize: String,
-        @RequestParam("message", required = false) message: String?,
-        @RequestParam("phone", defaultValue = "") phone: String,
+        @RequestParam("_gotcha") gotcha: String,
         @RequestParam("planName", defaultValue = "Profissional") planName: String,
         @RequestParam("useTrial", defaultValue = "true") useTrial: Boolean,
+        @RequestParam("firstName") firstName: String,
+        @RequestParam("lastName") lastName: String,
+        @RequestParam("phone", defaultValue = "") phone: String,
+        @RequestParam("email") email: String,
+        @RequestParam("company", defaultValue = "") company: String,
+        @RequestParam("cnpj", defaultValue = "") cnpj: String,
+        @RequestParam("teamSize", defaultValue = "") teamSize: String,
+        @RequestParam("operationFocus", defaultValue = "") operationFocus: String,
+        @RequestParam("currentMoment", defaultValue = "") currentMoment: String,
+        @RequestParam("message", required = false) message: String?,
+        @RequestParam("password") password: String,
         response: HttpServletResponse,
-    ) = leadService.startFreeTest(
-        firstName = firstName,
-        lastName = lastName,
-        email = email,
-        password = password,
-        response = response,
-        phone = phone,
-        company = company,
-        teamSize = teamSize,
-        message = message,
-        planName = planName,
-        useTrial = useTrial,
-        isMobile = false,
-    )
+    ): ResponseEntity<*> {
+        if (gotcha.isNotEmpty()) {
+            return ResponseEntity.status(403).body("")
+        }
+
+        return leadService.startFreeTest(
+            useTrial = useTrial,
+            firstName = firstName,
+            lastName = lastName,
+            phone = phone,
+            email = email,
+            company = company,
+            cnpj = cnpj,
+            teamSize = teamSize,
+            operationFocus = operationFocus,
+            currentMoment = currentMoment,
+            message = message,
+            password = password,
+            response = response,
+            isMobile = false,
+        )
+    }
 }

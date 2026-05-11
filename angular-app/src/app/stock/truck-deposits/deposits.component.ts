@@ -56,7 +56,7 @@ export class TruckDepositComponent {
   constructor(private stockService: StockService,
               private title: Title, protected router: Router,
               private ibgeService: IbgeService) {
-    this.title.setTitle('Gerenciar - Caminhões');
+    this.title.setTitle('Lumos IP - Gerenciar caminhões');
 
     this.stockService.getDeposits().subscribe(
       d => this.deposits = d.filter(d => d.isTruck)

@@ -49,6 +49,10 @@ export class ContractService {
         return this.http.post<ContractReferenceItemManagementDTO[]>(this.endpoint + "/reference-items-management/links", items);
     }
 
+    checkIfHasPendingLink() {
+        return this.http.get<any>(this.endpoint + "/reference-items-management/check-if-pending-link");
+    }
+
     getAllContracts(filters: {
         contractor: string | null
         startDate: Date | null

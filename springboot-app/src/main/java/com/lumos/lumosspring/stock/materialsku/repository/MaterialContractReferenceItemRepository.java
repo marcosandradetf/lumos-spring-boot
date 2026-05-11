@@ -16,6 +16,10 @@ public interface MaterialContractReferenceItemRepository extends CrudRepository<
     void deleteByMaterialId(Long materialId);
 
     @Modifying
+    @Query("""
+        delete from material_contract_reference_item
+        where contract_reference_item_id = :contractReferenceItemId
+    """)
     void deleteByContractReferenceItemId(Long contractReferenceItemId);
 
     @Query(

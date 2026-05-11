@@ -83,7 +83,7 @@ export class AccountComponent {
                 protected authService: AuthService, private titleService: Title) {
 
         SharedState.setCurrentPath(['Configurações','Minha Conta']);
-        this.titleService.setTitle("Configurações de Acesso");
+        this.titleService.setTitle("Lumos IP - Seu acesso");
         const uuid = authService.getUser().uuid;
 
         this.userService.getUser(uuid).subscribe(

@@ -1,0 +1,26 @@
+:host ::ng-deep {
+  .custom-breadcrumb .p-breadcrumb {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .custom-breadcrumb .p-menuitem-text {
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    color: #64748b !important; /* slate-500 */
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  .dark .custom-breadcrumb .p-menuitem-text {
+    color: #94a3b8 !important; /* slate-400 */
+  }
+
+  .custom-breadcrumb .p-breadcrumb-chevron {
+    font-size: 8px !important;
+    color: #cbd5e1 !important; /* slate-300 */
+    margin: 0 4px !important;
+  }
+}

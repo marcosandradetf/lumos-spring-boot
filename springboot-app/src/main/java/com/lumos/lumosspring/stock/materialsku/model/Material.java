@@ -32,9 +32,9 @@ public class Material extends TenantEntity {
 
     private Boolean inactive;
 
-    private String BuyUnit;
+    private String buyUnit;
 
-    private String RequestUnit;
+    private String requestUnit;
     private Long parentMaterialId;
     private Long subtypeId;
     private String materialFunction;
@@ -88,8 +88,8 @@ public class Material extends TenantEntity {
         this.materialGauge = materialGauge;
         this.materialWeight = materialWeight;
         this.barcode = barcode;
-        this.BuyUnit = buyUnit;
-        this.RequestUnit = requestUnit;
+        this.buyUnit = buyUnit;
+        this.requestUnit = requestUnit;
         this.truckStockControl = truckStockControl;
         this.relationshipStatus = relationshipStatus;
         this.isGeneric = isGeneric;
@@ -100,13 +100,17 @@ public class Material extends TenantEntity {
             Long materialType,
             Long materialSubtype,
             Boolean truckStockControl,
-            Boolean isGeneric
+            Boolean isGeneric,
+            String buyUnit,
+            String requestUnit
     ) {
         this.materialName = materialName;
         this.idMaterialType = materialType;
         this.subtypeId = materialSubtype;
         this.truckStockControl = truckStockControl;
         this.isGeneric = isGeneric;
+        this.buyUnit = buyUnit;
+        this.requestUnit = requestUnit;
     }
 
     public Long getIdMaterial() {
@@ -191,19 +195,19 @@ public class Material extends TenantEntity {
 
 
     public String getBuyUnit() {
-        return BuyUnit;
+        return buyUnit;
     }
 
     public void setBuyUnit(String buyUnit) {
-        BuyUnit = buyUnit;
+        this.buyUnit = buyUnit;
     }
 
     public String getRequestUnit() {
-        return RequestUnit;
+        return requestUnit;
     }
 
     public void setRequestUnit(String requestUnit) {
-        RequestUnit = requestUnit;
+        this.requestUnit = requestUnit;
     }
 
 
@@ -308,8 +312,8 @@ public class Material extends TenantEntity {
         this.materialWeight = materialWeight;
         this.barcode = barcode;
         this.inactive = inactive;
-        this.BuyUnit = buyUnit;
-        this.RequestUnit = requestUnit;
+        this.buyUnit = buyUnit;
+        this.requestUnit = requestUnit;
         this.truckStockControl = truckStockControl;
         this.relationshipStatus = relationshipStatus;
         this.isGeneric = isGeneric;

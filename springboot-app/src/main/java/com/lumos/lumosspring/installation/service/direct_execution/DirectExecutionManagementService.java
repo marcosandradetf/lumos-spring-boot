@@ -63,14 +63,14 @@ public class DirectExecutionManagementService {
         var stockist = userRepository.findByUserId(execution.getStockistId()).orElse(null);
         if (stockist == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new DefaultResponse("Estoquista não encontrado"));
+                    .body(new DefaultResponse("Estoquista não encontrado"));
         }
 
         // 2) Contrato
         var contract = contractRepository.findById(execution.getContractId()).orElse(null);
         if (contract == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new DefaultResponse("Contrato não encontrado"));
+                    .body(new DefaultResponse("Contrato não encontrado"));
         }
 
         // 3) Usuário corrente (quem delega)
@@ -208,40 +208,57 @@ public class DirectExecutionManagementService {
         var type = (String) payLoad.get("type");
 
         try {
-            if (Objects.equals(type, "DIRECT_EXECUTION")) {
+            var sql = "PRE_MEASUREMENT".equals(type)
+                    ? """
+                        delete from pre_measurement_street_item
+                        where pre_measurement_id in (:ids)
+                    """
+                    : """
+                        delete from direct_execution_item
+                        where direct_execution_id in (:ids)
+                    """;
+            namedJdbc.update(
+                    sql,
+                    Map.of("ids", ids)
+            );
+
+            if (type.equals("PRE_MEASUREMENT")) {
                 namedJdbc.update(
                         """
-                                    delete from direct_execution_item
-                                    where direct_execution_id in (:ids)
-                                """,
+                                delete from pre_measurement_street
+                                where pre_measurement_id in (:ids)
+                            """,
                         Map.of("ids", ids)
                 );
-
-                namedJdbc.query(
-                        """
-                                        delete from direct_execution
-                                        where direct_execution_id in (:ids)
-                                        returning reservation_management_id
-                                """,
-                        Map.of("ids", ids),
-                        (rs) -> {
-                            var id = rs.getLong("reservation_management_id");
-                            namedJdbc.update(
-                                    """
-                                                delete from reservation_management
-                                                where reservation_management.reservation_management_id = :id
-                                            """,
-                                    Map.of("id", id)
-                            );
-                        }
-                );
-
-
-            } else {
-                throw new Utils.BusinessException("Exclusão não implementada para instalações com pré-medição - Comunique ao fabricante do sistema.");
             }
 
-        } catch (DataIntegrityViolationException e){
+            sql = "PRE_MEASUREMENT".equals(type)
+                    ? """
+                        delete from pre_measurement
+                        where pre_measurement_id in (:ids)
+                        returning reservation_management_id
+                    """
+                    : """
+                       delete from direct_execution
+                        where direct_execution_id in (:ids)
+                        returning reservation_management_id
+                    """;
+            namedJdbc.query(
+                    sql,
+                    Map.of("ids", ids),
+                    (rs) -> {
+                        var id = rs.getLong("reservation_management_id");
+                        namedJdbc.update(
+                                """
+                                            delete from reservation_management
+                                            where reservation_management.reservation_management_id = :id
+                                        """,
+                                Map.of("id", id)
+                        );
+                    }
+            );
+
+        } catch (DataIntegrityViolationException e) {
             throw new Utils.BusinessException(e.getMessage());
         }
 
@@ -253,7 +270,7 @@ public class DirectExecutionManagementService {
         var directExecutionId = ((Number) payload.get("directExecutionId")).longValue();
         var action = (String) payload.get("action");
 
-        if(action == null) {
+        if (action == null) {
             throw new Utils.BusinessException("Tente novamente - ação não recebida");
         }
 

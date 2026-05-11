@@ -37,7 +37,7 @@
   font-optical-sizing: auto !important;
   font-weight: 400 !important;
   font-style: normal !important;
- }
+}
 
 .nunito-semibold {
   font-family: "Nunito", sans-serif !important;
@@ -106,7 +106,6 @@
 }
 
 
-
 .poppins-extrabold {
   font-family: "Poppins", sans-serif !important;
   font-weight: 800 !important;
@@ -173,38 +172,38 @@
   font-style: italic;
 }
 
+.inter-regular {
+  font-family: "Inter", sans-serif !important;
+  font-optical-sizing: auto;
+  font-weight: 400 !important;
+  font-style: normal;
+}
 
-html, body { height: 100%; }
+html, body {
+  height: 100%;
+}
 
 /* styles.scss */
 
 html {
-  font-size: 16px; // base
-
-  //@media (max-width: 1440px) {
-  //  font-size: 15px;
-  //}
-  //
-  //@media (max-width: 1280px) {
-  //  font-size: 14px;
-  //}
-  //
-  //@media (max-width: 1024px) {
-  //  font-size: 13px;
-  //}
-  //
-  //@media (max-width: 768px) {
-  //  font-size: 12px;
-  //}
+  font-size: 16px;
 }
-
 
 body {
   margin: 0;
-  font-size: 1rem;
-  font-family: "Poppins", sans-serif;
-  font-weight: 400;
-  font-style: normal;
+  font-size: 14.5px;
+  line-height: 1.35;
+  font-family: "Inter", sans-serif;
+}
+
+h1 {
+  font-size: 1.3rem;
+}
+
+input,
+textarea,
+select {
+  font-size: 16px;
 }
 
 $aura-bg: #18181b;
@@ -237,11 +236,6 @@ $lara-bg: #27272a;
   }
 }
 
-
-* {
-  font-family: "Poppins", sans-serif;
-}
-
 .my-icon {
   color: #666;
 
@@ -271,21 +265,21 @@ svg path {
 }
 
 @keyframes scan-line {
-    0% {
-        top: 10%;
-        opacity: 0;
-    }
-    50% {
-        opacity: 1;
-    }
-    100% {
-        top: 90%;
-        opacity: 0;
-    }
+  0% {
+    top: 10%;
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    top: 90%;
+    opacity: 0;
+  }
 }
 
 .animate-scan-line {
-    animation: scan-line 2s linear infinite;
+  animation: scan-line 2s linear infinite;
 }
 
 .prose {

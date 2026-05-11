@@ -134,4 +134,13 @@ interface InstallationViewRepository : CrudRepository<InstallationView, Long> {
         val status: String,
     )
 
+//    @Query("""
+//        select exists(
+//            select 1
+//            from installation_street_item_view isiv
+//            join contract_item ci on ci.contract_item_id = isiv.contract_item_id
+//            where ci.contract_item_reference_id = :contractReferenceItemId
+//        )
+//    """)
+//    fun hasInstallationByContractReferenceId(contractReferenceItemId: Long): Boolean
 }

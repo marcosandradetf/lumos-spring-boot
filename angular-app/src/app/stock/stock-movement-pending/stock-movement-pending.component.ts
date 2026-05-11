@@ -68,7 +68,7 @@ export class StockMovementPendingComponent implements OnInit {
     constructor(private stockService: StockService,
                 private utils: UtilsService,
                 private title: Title) {
-        this.title.setTitle('Estoque - Pendente');
+        this.title.setTitle('Lumos IP - Movimentar estoque pendente');
         this.stockService.getStockMovement().subscribe(
             stockMovement => {
                 this.stockMovement = stockMovement;

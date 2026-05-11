@@ -1,0 +1,27 @@
+<section class="auto-login-shell">
+  <img
+    ngSrc="/public/lumos-login-bg.png"
+    width="1600"
+    height="900"
+    alt="Plano de fundo Lumos"
+    class="bg"
+  />
+
+  <div class="overlay"></div>
+
+  <div class="card">
+    <img ngSrc="/public/icon-192.png" width="72" height="72" alt="Lumos" class="logo" />
+
+    <h1>Lumos<span>™</span></h1>
+
+    <div *ngIf="loading" class="status">
+      <span class="spinner" aria-hidden="true"></span>
+      <p>Autenticando com seguranca...</p>
+      <small>Estamos validando sua sessao para entrar na plataforma.</small>
+    </div>
+
+    <div *ngIf="!loading && errorMessage" class="status error">
+      <p>{{ errorMessage }}</p>
+    </div>
+  </div>
+</section>

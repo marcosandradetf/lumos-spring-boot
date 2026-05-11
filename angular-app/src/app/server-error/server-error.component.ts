@@ -41,7 +41,7 @@ export class ServerErrorComponent implements OnInit {
 
         this.resolveType();
 
-        this.title.setTitle(this.config.title);
+        this.title.setTitle("Lumos IP - " + this.config.title);
         SharedState.setCurrentPath([this.config.title]);
     }
 

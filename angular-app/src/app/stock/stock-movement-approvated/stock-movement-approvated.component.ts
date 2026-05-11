@@ -40,7 +40,7 @@ export class StockMovementApprovatedComponent implements OnInit {
     items: MenuItem[] | undefined;
 
     constructor(private stockService: StockService, private title: Title) {
-        this.title.setTitle('Estoque - Aprovado');
+        this.title.setTitle('Lumos IP - Movimentar estoque aprovado');
         this.stockService.getStockMovementApproved().subscribe(
             stockMovement => {
                 this.stockMovement = stockMovement;
