@@ -23,6 +23,7 @@ import com.lumos.lumosspring.util.ErrorResponse;
 import com.lumos.lumosspring.util.Utils;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -47,6 +48,7 @@ public class TokenService {
     private final TeamQueryRepository teamQueryRepository;
     private final TenantRepository tenantRepository;
     private final QrcodeTokenRepository qrcodeTokenRepository;
+    private final Environment env;
 
     private final Long expiresIn = 1800L; // 30 minutos para access token expirar
     private final Long refreshExpiresIn = 2592000L; // Expiração do refresh token (30 dias)
@@ -62,7 +64,10 @@ public class TokenService {
                         StockistRepository stockistRepository,
                         RoleRepository roleRepository,
                         TeamQueryRepository teamQueryRepository,
-                        TenantRepository tenantRepository, QrcodeTokenRepository qrcodeTokenRepository) {
+                        TenantRepository tenantRepository,
+                        QrcodeTokenRepository qrcodeTokenRepository,
+                        Environment env
+    ) {
         this.userService = userService;
         this.jwtEncoder = jwtEncoder;
         this.userRepository = userRepository;
@@ -73,6 +78,7 @@ public class TokenService {
         this.teamQueryRepository = teamQueryRepository;
         this.tenantRepository = tenantRepository;
         this.qrcodeTokenRepository = qrcodeTokenRepository;
+        this.env = env;
     }
 
 //    @Scheduled(cron = "0 0 3 * * *") // Roda todo dia às 3 da manhã
@@ -141,11 +147,15 @@ public class TokenService {
         // Configura o refreshToken como um cookie HTTP-Only
         if (!isMobile) {
             // Spring não suporta SameSite diretamente via Cookie API — definimos manualmente o header:
+            boolean isProd = Arrays.asList(env.getActiveProfiles()).contains("production");
+
             String cookieValue = "refreshToken=" + refreshToken +
                     "; Max-Age=" + refreshExpiresIn +
                     "; Path=/" +
-                    "; Domain=lumosip.com.br" + // ISSO permite que app.lumosip e lumosip compartilhem o cookie
-                    "; HttpOnly; Secure; SameSite=Lax"; // SameSite=Lax é melhor para redirecionamentos cross-site
+                    (isProd ? "; Domain=lumosip.com.br" : "") +
+                    "; HttpOnly" +
+                    (isProd ? "; Secure" : "") +
+                    "; SameSite=Lax";
             response.setHeader(HttpHeaders.SET_COOKIE, cookieValue);
 
             // Não enviar refresh token no body para web
@@ -174,11 +184,15 @@ public class TokenService {
         // Configura o refreshToken como um cookie HTTP-Only
         if (!isMobile) {
             // Spring não suporta SameSite diretamente via Cookie API — definimos manualmente o header:
+            boolean isProd = Arrays.asList(env.getActiveProfiles()).contains("production");
+
             String cookieValue = "refreshToken=" + refreshToken +
                     "; Max-Age=" + refreshExpiresIn +
                     "; Path=/" +
-                    "; Domain=lumosip.com.br" + // ISSO permite que app.lumosip e lumosip compartilhem o cookie
-                    "; HttpOnly; Secure; SameSite=Lax"; // SameSite=Lax é melhor para redirecionamentos cross-site
+                    (isProd ? "; Domain=lumosip.com.br" : "") +
+                    "; HttpOnly" +
+                    (isProd ? "; Secure" : "") +
+                    "; SameSite=Lax";
             response.setHeader(HttpHeaders.SET_COOKIE, cookieValue);
 
             // Não enviar refresh token no body para web
@@ -228,11 +242,15 @@ public class TokenService {
 
         // Configura o refreshToken como um cookie HTTP-Only
         if (!isMobile) {
+            boolean isProd = Arrays.asList(env.getActiveProfiles()).contains("production");
+
             String cookieValue = "refreshToken=" + refreshToken +
                     "; Max-Age=" + refreshExpiresIn +
                     "; Path=/" +
-                    "; Domain=lumosip.com.br" + // ISSO permite que app.lumosip e lumosip compartilhem o cookie
-                    "; HttpOnly; Secure; SameSite=Lax"; // SameSite=Lax é melhor para redirecionamentos cross-site
+                    (isProd ? "; Domain=lumosip.com.br" : "") +
+                    "; HttpOnly" +
+                    (isProd ? "; Secure" : "") +
+                    "; SameSite=Lax";
             response.setHeader(HttpHeaders.SET_COOKIE, cookieValue);
 
             return ResponseEntity.ok(new LoginResponse(accessToken));

@@ -12,4 +12,5 @@ data class MaterialInStockDTO(
     val isTruck: Boolean,
     val plateVehicle: String?,
     val contractReferenceItemId: Long,
+    val materialBrand: String?,
 )

@@ -4,11 +4,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { AuthService } from '../../auth.service';
 import { Utils } from '../../../service/utils';
-import { ContractService } from '../../../../contract/services/contract.service';
-import { UserService } from '../../../../manage/user/user-service.service';
-import { TeamService } from '../../../../manage/team/team-service.service';
-import { StockService } from '../../../../stock/services/stock.service';
-import { MaterialService } from '../../../../stock/services/material.service';
+import { ContractService } from '../../../../features/contract/services/contract.service';
+import { UserService } from '../../../../features/manage/user/user-service.service';
+import { TeamService } from '../../../../features/manage/team/team-service.service';
+import { StockService } from '../../../../features/stock/services/stock.service';
+import { MaterialService } from '../../../../features/stock/services/material.service';
 import { UtilsService } from '../../../service/utils.service';
 
 @Component({

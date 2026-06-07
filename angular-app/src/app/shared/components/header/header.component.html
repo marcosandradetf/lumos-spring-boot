@@ -70,7 +70,7 @@
               </div>
 
               <div class="absolute right-3 hidden lg:flex items-center gap-1 pointer-events-none opacity-40">
-                <span class="text-[10px] font-bold border rounded px-1.5 py-0.5 bg-white dark:bg-zinc-800">⌘/ctrl</span>
+                <span class="text-[10px] font-bold border rounded px-1.5 py-0.5 bg-white dark:bg-zinc-800">{{isApple ? '⌘' : 'CTRL'}}</span>
                 <span class="text-[10px] font-bold border rounded px-1.5 py-0.5 bg-white dark:bg-zinc-800">K</span>
               </div>
 
@@ -84,12 +84,12 @@
               <i class="pi pi-bell text-lg text-slate-600 dark:text-gray-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400"></i>
               @if (notificationStatus !== 'denied') {
                 <span class="absolute top-1 right-1 flex h-3 w-3">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" [class.bg-red-400]="notificationCount > 0"></span>
-            <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-            <span class="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[20px] h-5 px-1 bg-red-600 text-white text-[10px] font-extrabold rounded-full border-2 border-white dark:border-gray-900 shadow-lg">
-              {{ notificationCount > 99 ? '99+' : notificationCount }}
-            </span>
-          </span>
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" [class.bg-red-400]="notificationCount > 0"></span>
+                  <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                  <span class="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[20px] h-5 px-1 bg-red-600 text-white text-[10px] font-extrabold rounded-full border-2 border-white dark:border-gray-900 shadow-lg">
+                    {{ notificationCount > 99 ? '99+' : notificationCount }}
+                  </span>
+                </span>
               } @else {
                 <span class="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center bg-amber-100 dark:bg-amber-900/30 rounded-full text-amber-500 shadow-sm border border-amber-200 dark:border-amber-800">
             <i class="pi pi-exclamation-triangle text-[10px]"></i>
@@ -125,7 +125,7 @@
 
 
 <div *ngIf="isSpotlightOpen"
-     class="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] px-4 backdrop-blur-sm bg-slate-900/20 dark:bg-black/40 h-screen"
+     class="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] px-4  bg-slate-900/20 dark:bg-black/40 h-screen"
      (click)="closeSpotlight()">
 
   <div class="w-full max-w-2xl bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-zinc-800 overflow-hidden animate-in fade-in zoom-in duration-200"

@@ -11,10 +11,12 @@ import com.lumos.lumosspring.contract.entities.ContractItemDependency
 import com.lumos.lumosspring.contract.entities.ContractReferenceItem
 import com.lumos.lumosspring.contract.entities.MaterialContractReferenceItem
 import com.lumos.lumosspring.contract.repository.ContractItemDependencyRepository
+import com.lumos.lumosspring.contract.repository.ContractItemsQuantitativeRepository
 import com.lumos.lumosspring.contract.repository.ContractReferenceItemRepository
 import com.lumos.lumosspring.installation.repository.view.InstallationViewRepository
 import com.lumos.lumosspring.stock.materialsku.repository.MaterialContractReferenceItemRepository
 import com.lumos.lumosspring.stock.materialsku.repository.MaterialReferenceRepository
+import com.lumos.lumosspring.util.ContractStatus
 import com.lumos.lumosspring.util.Utils
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
@@ -31,8 +33,8 @@ class ContractReferenceItemManagementService(
     private val contractItemDependencyRepository: ContractItemDependencyRepository,
     private val materialContractReferenceItemRepository: MaterialContractReferenceItemRepository,
     private val materialReferenceRepository: MaterialReferenceRepository,
-    private val tenantRepository: TenantRepository,
     private val installationViewRepository: InstallationViewRepository,
+    private val contractItemsQuantitativeRepository: ContractItemsQuantitativeRepository,
 ) {
     val dependencyDrivenTypes = setOf("SERVIÇO", "SERVICO", "PROJETO")
     private val materialOptionalTypes = setOf("EXTENSÃO DE REDE", "EXTENSAO DE REDE", "MANUTENÇÃO", "MANUTENCAO")
@@ -73,6 +75,7 @@ class ContractReferenceItemManagementService(
         requests: List<SaveContractReferenceItemBaseDTO>,
         tenantId: UUID
     ): ResponseEntity<List<ContractReferenceItemBaseManagementDTO>> {
+
         if (requests.isEmpty()) {
             return ResponseEntity.ok(emptyList())
         }
@@ -106,6 +109,22 @@ class ContractReferenceItemManagementService(
 
             val newDescription = description.trim()
 
+            if (
+                request.contractReferenceItemId != null
+                && entity.description != newDescription
+                && (
+                    installationViewRepository.hasInstallationByContractReferenceId(request.contractReferenceItemId)
+                    || contractItemsQuantitativeRepository.hasItemByContractReferenceId(
+                        request.contractReferenceItemId,
+                        ContractStatus.INACTIVE
+                    )
+                )
+            ) {
+                throw Utils.BusinessException(
+                    "O Item ${entity.description} não pode ter campos estruturais alterados pois já possui vínculos ativos no sistema. Para manter o histórico, considere criar um novo item referencial.",
+                )
+            }
+
             entity.description = newDescription
             entity.nameForImport = newDescription
             entity.type = type
@@ -123,7 +142,6 @@ class ContractReferenceItemManagementService(
             )
             materialContractReferenceItemRepository.deleteByContractReferenceItemId(saved.contractReferenceItemId)
             savedItems.add(saved)
-
         }
 
         val refreshed =

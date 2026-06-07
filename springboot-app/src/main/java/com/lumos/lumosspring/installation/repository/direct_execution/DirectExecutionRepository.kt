@@ -61,7 +61,7 @@ interface DirectExecutionRepository : CrudRepository<DirectExecution, Long> {
     @Query("""
         UPDATE direct_execution
         SET team_id = :teamId
-        WHERE reservation_management_id = :id
+        WHERE reservation_management_id = :reservationManagementId
     """)
     fun updateTeamId(reservationManagementId: Long, teamId: Long)
     fun existsDirectExecutionByExternalIdAndTenantId(externalId: Long, tenantId: UUID): Boolean

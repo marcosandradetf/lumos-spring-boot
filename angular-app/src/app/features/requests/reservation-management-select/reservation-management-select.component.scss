@@ -1,0 +1,65 @@
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.card-execution:hover {
+  border-bottom: 2px solid #5b5fc7;
+  border-radius: 4px;
+}
+
+.selected {
+  border-bottom: 2px solid #ff7400;
+  background-color: #f3f3f3;
+}
+
+.selected:hover {
+  border-bottom: 2px solid #ff7400;
+  border-radius: 4px;
+}
+
+
+@media (prefers-color-scheme: dark) {
+  .selected {
+    border-bottom: 2px solid #ff7400;
+    background-color: #2b2d30;
+  }
+
+  .selected:hover {
+    border-bottom: 2px solid #ff7400;
+    border-radius: 4px;
+  }
+}
+
+.fade {
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.fade.in {
+  opacity: 1;
+}
+
+
+/* 1. Faz a linha que foi clicada (a linha pai) ficar com fundo azul claro e borda */
+:host ::ng-deep .p-datatable-tbody > tr.p-datatable-row-expanded {
+  background-color: rgba(59, 130, 246, 0.05) !important;
+}
+
+:host ::ng-deep .p-datatable-tbody > tr.p-datatable-row-expanded > td:first-child {
+  border-left: 4px solid #3b82f6 !important;
+}
+
+/* 2. Remove a borda inferior para conectar com a expansão */
+:host ::ng-deep .p-datatable-tbody > tr.p-datatable-row-expanded > td {
+  border-bottom: none !important;
+}
+
+/* 3. Escurece as OUTRAS linhas quando alguma estiver expandida (Efeito Dimming) */
+:host ::ng-deep .p-datatable-tbody:has(tr.p-datatable-row-expanded) > tr:not(.p-datatable-row-expanded):not(.p-datatable-row-expansion) {
+  opacity: 0.3;
+  transition: opacity 0.3s ease-in-out;
+}

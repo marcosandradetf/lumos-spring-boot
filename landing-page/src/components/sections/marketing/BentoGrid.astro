@@ -78,14 +78,16 @@ const getGridClass = (size: string = 'small') => {
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     {
       hasHeading && (
-        <div class="text-center mb-12">
-          {title && <h2 class="text-3xl sm:text-4xl font-bold text-text">{title}</h2>}
-          {subtitle && <p class="mt-4 text-lg text-text-muted max-w-2xl mx-auto">{subtitle}</p>}
+        <div class="text-center mb-12 max-w-3xl mx-auto">
+          {title && <h2 class="text-3xl sm:text-4xl font-bold text-text leading-tight">{title}</h2>}
+          {subtitle && (
+            <p class="mt-4 text-lg text-text-muted max-w-3xl mx-auto leading-relaxed">{subtitle}</p>
+          )}
         </div>
       )
     }
 
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 auto-rows-[minmax(180px,auto)]">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-5 auto-rows-[minmax(190px,auto)]">
       {
         items.map((item) => {
           const accent = item.accent || 'primary';
@@ -95,15 +97,15 @@ const getGridClass = (size: string = 'small') => {
             <Tag
               href={item.href}
               class:list={[
-                'group relative flex flex-col p-6 rounded-2xl border border-border bg-background overflow-hidden transition-all duration-300',
-                item.href && 'hover:border-primary/50 hover:shadow-lg cursor-pointer',
+                'group relative flex flex-col p-6 rounded-lg border border-border bg-background overflow-hidden shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl',
+                item.href && 'hover:border-primary/50 cursor-pointer',
                 getGridClass(item.size),
               ]}
             >
               {/* Background gradient */}
               <div
                 class:list={[
-                  'absolute inset-0 bg-linear-to-br opacity-50 transition-opacity group-hover:opacity-70',
+                  'absolute inset-0 bg-linear-to-br opacity-45 transition-opacity group-hover:opacity-65',
                   accentColors[accent],
                 ]}
               />
@@ -124,7 +126,7 @@ const getGridClass = (size: string = 'small') => {
                   item.icon && (
                     <div
                       class:list={[
-                        'w-12 h-12 rounded-xl flex items-center justify-center mb-4',
+                        'w-12 h-12 rounded-lg flex items-center justify-center mb-5',
                         `bg-linear-to-br ${accentColors[accent]}`,
                       ]}
                     >
@@ -135,7 +137,7 @@ const getGridClass = (size: string = 'small') => {
 
                 <h3
                   class:list={[
-                    'font-semibold text-text mb-2',
+                    'font-semibold text-text mb-3',
                     item.size === 'large' ? 'text-2xl' : 'text-lg',
                   ]}
                 >

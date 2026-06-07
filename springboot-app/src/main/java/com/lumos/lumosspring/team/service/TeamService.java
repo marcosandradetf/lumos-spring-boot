@@ -156,19 +156,19 @@ public class TeamService {
             @CacheEvict(cacheNames = "getAllDeposits", allEntries = true),
     })
     public ResponseEntity<?> updateTeams(List<TeamCreate> teams) {
-        boolean hasInvalidUser = teams.stream().noneMatch(TeamCreate::sel);
-
-        if (hasInvalidUser) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ErrorResponse("Erro: Nenhuma equipe selecionado foi enviado."));
-        }
+//        boolean hasInvalidUser = teams.stream().noneMatch(TeamCreate::sel);
+//
+//        if (hasInvalidUser) {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+//                    .body(new ErrorResponse("Erro: Nenhuma equipe selecionado foi enviado."));
+//        }
 
         for (TeamCreate t : teams) {
-            if (!t.sel()) {
-                continue;
-            }
+//            if (!t.sel()) {
+//                continue;
+//            }
 
-            if (t.idTeam() == 0) {
+            if (t.idTeam() == null) {
                 this.insertTeam(t);
                 continue;
             }

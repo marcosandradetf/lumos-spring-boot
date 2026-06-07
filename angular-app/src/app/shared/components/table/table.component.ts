@@ -1,6 +1,6 @@
 import {Component, EventEmitter, Input, Output} from '@angular/core';
 import {NgClass} from '@angular/common';
-import {MaterialService} from '../../../stock/services/material.service';
+import {MaterialService} from '../../../features/stock/services/material.service';
 
 @Component({
   selector: 'app-table',

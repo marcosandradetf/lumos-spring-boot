@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="pt-BR" class="">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/icon-192.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lumos IP</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/primeicons@7.0.0/primeicons.css" />
+
+    <!--    fonts-->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+    <!-- PWA / Icons -->
+    <link rel="icon" href="favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="public/icon-192.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="public/icon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="public/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="public/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="public/icon-512.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="public/icon-192-maskable.png" purpose="maskable">
+    <link rel="icon" type="image/png" sizes="512x512" href="public/icon-512-maskable.png" purpose="maskable">
+
+    <script>
+      const _t = localStorage.getItem('theme');
+      const _d = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (_t === 'dark' || (!_t && _d)) document.documentElement.classList.add('dark');
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

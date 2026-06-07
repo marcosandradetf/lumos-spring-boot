@@ -1,52 +1,48 @@
 services:
-  # nginx:
-  #   image: nginx:1.25
-  #   container_name: nginx
-  #   network_mode: host
-  #   volumes:
-  #     - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-  #     - /home/marcos/nginx/ssl:/etc/nginx/ssl:ro
-  #   restart: always
+  springboot-app:
+    build: ./springboot-app
+    image: marcosdev1/lumos-backend:latest
+    container_name: springboot-app
+    network_mode: host
 
+    environment:
+      SPRING_PROFILES_ACTIVE: production
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: 5432
+      DB_USER: ${DB_USER}
+      DB_NAME: ${DB_NAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID}
+      R2_ACCESS_KEY: ${R2_ACCESS_KEY}
+      R2_SECRET_KEY: ${R2_SECRET_KEY}
+      R2_BUCKET_NAME: ${R2_BUCKET_NAME}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      RESEND_WEBHOOK_SECRET: ${RESEND_WEBHOOK_SECRET}
+      RESEND_SEND_EMAIL_ENABLED: ${RESEND_SEND_EMAIL_ENABLED}
+      JAVA_TOOL_OPTIONS: >
+        -XX:+UseG1GC
+        -XX:InitialRAMPercentage=30.0
+        -XX:MaxRAMPercentage=60.0
+        -XX:MaxMetaspaceSize=256m
+        -XX:+ExitOnOutOfMemoryError
+        --enable-preview
 
-  # springboot-app:
-  #   build: ./springboot-app
-  #   container_name: springboot-app
-  #   network_mode: host
-
-  #   environment:
-  #     SPRING_PROFILES_ACTIVE: production
-  #     SMTP_PASSWORD: ${SMTP_PASSWORD}
-  #     DB_HOST: ${DB_HOST}
-  #     DB_PORT: 5432
-  #     DB_USER: ${DB_USER}
-  #     DB_NAME: ${DB_NAME}
-  #     DB_PASSWORD: ${DB_PASSWORD}
-  #     R2_ACCOUNT_ID: ${R2_ACCOUNT_ID}
-  #     R2_ACCESS_KEY: ${R2_ACCESS_KEY}
-  #     R2_SECRET_KEY: ${R2_SECRET_KEY}
-  #     JAVA_TOOL_OPTIONS: >
-  #       -XX:+UseG1GC
-  #       -XX:InitialRAMPercentage=30.0
-  #       -XX:MaxRAMPercentage=70.0
-  #       -XX:MaxMetaspaceSize=256m
-  #       -XX:+ExitOnOutOfMemoryError
-  #       --enable-preview
-
-  #   restart: always
-  #   depends_on:
-  #     puppeteer-service:
-  #       condition: service_started
+    restart: always
+    depends_on:
+      puppeteer-service:
+        condition: service_started
 
   puppeteer-service:
     build:
       context: ./puppeteer-service
+    image: marcosdev1/puppeteer-service:latest
     container_name: puppeteer-service
     ports:
       - "127.0.0.1:3000:3000"
     environment:
       NODE_ENV: production
-    mem_limit: 400m
+    mem_limit: 800m
     restart: always
 
 networks:

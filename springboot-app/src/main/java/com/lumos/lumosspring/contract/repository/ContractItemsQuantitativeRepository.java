@@ -134,4 +134,18 @@ public interface ContractItemsQuantitativeRepository extends CrudRepository<Cont
     ) {
     }
 
+    @Query("""
+        select exists(
+            select 1
+            from contract c
+            join contract_item ci on ci.contract_contract_id = c.contract_id
+            where ci.contract_item_reference_id = :contractReferenceItemId
+                and c.status <> :status
+        )
+    """)
+    Boolean hasItemByContractReferenceId(
+            Long contractReferenceItemId,
+            String status
+    );
+
 }

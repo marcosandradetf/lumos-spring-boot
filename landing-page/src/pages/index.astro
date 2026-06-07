@@ -1,5 +1,6 @@
 ---
 import { getCollection, type CollectionEntry } from 'astro:content';
+import { Icon } from 'astro-icon/components';
 import MarketingLayout from '@/layouts/MarketingLayout.astro';
 import Hero from '@sections/marketing/Hero.astro';
 import LogoCloud from '@sections/marketing/LogoCloud.astro';
@@ -197,7 +198,7 @@ const pricingPlans = [
 >
 
   <Hero
-    title="Lumos, Gestão de Iluminação Pública"
+    title="Lumos IP, Iluminação Pública"
     subtitle="O Lumos otimiza todo o seu fluxo de trabalho, do Cadastro de Novos Contratos à Visualização de Relatórios. Gerencie o fluxo operacional e administrativo em um único lugar. Sem necessidade de uso de planilhas ou relatórios manuais."
     primaryCTA={{ label: 'Testar Grátis', href: '/teste-gratis' }}
     secondaryCTA={{ label: 'Acessar Demonstração', href: '/demonstracao' }}
@@ -205,7 +206,9 @@ const pricingPlans = [
     backgroundType="image"
     backgroundImage="/images/lumos-login-bg.png"
     overlay={true}
-    overlayOpacity={60}
+    overlayOpacity={68}
+    minHeight="screen"
+    align="left"
   />
 
   <!--<LogoCloud-->
@@ -217,14 +220,14 @@ const pricingPlans = [
   <!--  logoSize="lg"-->
   <!--/>-->
 
-  <section class="py-16">
-    <div class="max-w-6xl mx-auto px-6 text-center">
+  <section class="py-20 md:py-24 bg-background overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
 
-      <h2 class="text-2xl md:text-3xl font-semibold mb-4">
+      <h2 class="text-3xl md:text-4xl font-bold text-text mb-4">
         Da rua ao contrato: sua operação 100% conectada
       </h2>
 
-      <p class="text-muted-foreground max-w-2xl mx-auto mb-10">
+      <p class="text-text-muted text-lg leading-relaxed max-w-3xl mx-auto mb-12">
         Cada ponto registrado, cada manutenção executada e cada material aplicado são automaticamente
         organizados dentro do sistema. O Lumos elimina planilhas, reduz erros e transforma sua operação
         em um fluxo contínuo, rápido e totalmente controlado.
@@ -232,9 +235,17 @@ const pricingPlans = [
 
       <!-- CARROSSEL -->
       <div class="relative">
+        <button
+          type="button"
+          data-gallery-strip-prev
+          aria-label="Rolar miniaturas para a esquerda"
+          class="absolute left-0 top-1/2 z-20 hidden -translate-y-1/2 md:inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background/90 text-text shadow-lg backdrop-blur transition hover:border-primary/50 hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <Icon name="lucide:chevron-left" class="h-5 w-5" aria-hidden="true" />
+        </button>
         <div
           id="carousel"
-          class="flex gap-8 overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar items-center px-10"
+          class="flex gap-3 overflow-x-auto no-scrollbar px-2 md:px-12 py-2"
         >
           {[
             "/images/round-1.png",
@@ -273,18 +284,102 @@ const pricingPlans = [
             "/images/stock-movement-bar-code-read.png",
 
 
-          ].map((src, i) => (
-            <div
-              class="snap-center flex-shrink-0 transition-all duration-500 scale-90 opacity-60"
-              data-index={i}
-            >
-              <img src={src} class="h-[420px] object-contain" />
-            </div>
-          ))}
-        </div>
+          ].map((src, i) => {
+            const isDesktopShot = !/\/(round-|app-|marketing-app-sign|stock-movement-bar-code-read)/.test(src);
 
-        <!-- DOTS -->
-        <div id="dots" class="flex justify-center gap-2 mt-6"></div>
+            return (
+              <button
+                type="button"
+                class:list={[
+                  "group relative flex-shrink-0 text-left",
+                  isDesktopShot
+                    ? "w-[250px]"
+                    : "w-[140px]",
+                ]}
+                data-index={i}
+                data-gallery-item
+                data-src={src}
+                aria-label={`Abrir imagem ${i + 1}`}
+              >
+                <div class="relative rounded-2xl border border-border bg-surface shadow-sm overflow-hidden transition-all duration-300 group-hover:border-primary/50 group-hover:shadow-xl">
+                  <div
+                    class:list={[
+                      "h-[250px] overflow-hidden flex items-center justify-center",
+                      isDesktopShot ? "bg-neutral-950" : "bg-transparent",
+                    ]}
+                  >
+                    <img
+                      src={src}
+                      class:list={[
+                        "h-full w-full transition-transform duration-300",
+                        isDesktopShot
+                          ? "object-contain group-hover:scale-[1.02]"
+                          : "object-cover",
+                      ]}
+                      loading={i === 0 ? 'eager' : 'lazy'}
+                    />
+                  </div>
+                  <div class="absolute inset-0 bg-linear-to-t from-black/25 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        <button
+          type="button"
+          data-gallery-strip-next
+          aria-label="Rolar miniaturas para a direita"
+          class="absolute right-0 top-1/2 z-20 hidden -translate-y-1/2 md:inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background/90 text-text shadow-lg backdrop-blur transition hover:border-primary/50 hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <Icon name="lucide:chevron-right" class="h-5 w-5" aria-hidden="true" />
+        </button>
+        <div class="pointer-events-none absolute inset-y-0 left-0 w-10 bg-linear-to-r from-background to-transparent md:w-14"></div>
+        <div class="pointer-events-none absolute inset-y-0 right-0 w-10 bg-linear-to-l from-background to-transparent md:w-14"></div>
+      </div>
+
+      <div
+        id="gallery-modal"
+        class="fixed inset-0 z-[90] hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Visualização de imagens"
+      >
+        <div data-gallery-backdrop class="absolute inset-0 bg-black/90 backdrop-blur-sm"></div>
+        <div class="relative z-10 h-full w-full flex items-center justify-center px-4 py-8">
+          <button
+            type="button"
+            data-gallery-close
+            aria-label="Fechar visualização"
+            class="absolute top-4 right-4 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-black/50 text-white transition hover:bg-black/70"
+          >
+            <Icon name="lucide:x" class="h-5 w-5" aria-hidden="true" />
+          </button>
+
+          <button
+            type="button"
+            data-gallery-prev
+            aria-label="Imagem anterior"
+            class="absolute left-4 top-1/2 -translate-y-1/2 inline-flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full border border-white/20 bg-black/50 text-white transition hover:bg-black/70"
+          >
+            <Icon name="lucide:chevron-left" class="h-5 w-5" aria-hidden="true" />
+          </button>
+
+          <img
+            id="gallery-modal-image"
+            src=""
+            alt="Captura de tela do Lumos"
+            class="max-h-[88vh] w-auto max-w-[94vw] rounded-xl object-contain shadow-2xl"
+          />
+
+          <button
+            type="button"
+            data-gallery-next
+            aria-label="Próxima imagem"
+            class="absolute right-4 top-1/2 -translate-y-1/2 inline-flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full border border-white/20 bg-black/50 text-white transition hover:bg-black/70"
+          >
+            <Icon name="lucide:chevron-right" class="h-5 w-5" aria-hidden="true" />
+          </button>
+        </div>
       </div>
 
     </div>
@@ -308,7 +403,7 @@ const pricingPlans = [
   <!--/>-->
 
 
-  <HowItWorks
+  <!-- <HowItWorks
     title="Implantação em três etapas"
     subtitle="Seu fluxo operacional pronto em MINUTOS."
     steps={[
@@ -332,7 +427,7 @@ const pricingPlans = [
     ]}
     variant="horizontal"
     background="muted"
-  />
+  /> -->
 
   <!--<IntegrationsGrid-->
   <!--  title="Integrations"-->
@@ -398,79 +493,98 @@ const pricingPlans = [
 
 
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
+  function initGallery() {
     const carousel = document.getElementById("carousel");
-    const dotsContainer = document.getElementById("dots");
+    const stripPrevButton = document.querySelector("[data-gallery-strip-prev]") as HTMLButtonElement | null;
+    const stripNextButton = document.querySelector("[data-gallery-strip-next]") as HTMLButtonElement | null;
+    const modal = document.getElementById("gallery-modal");
+    const modalImage = document.getElementById("gallery-modal-image") as HTMLImageElement | null;
+    const closeButton = document.querySelector("[data-gallery-close]");
+    const prevButton = document.querySelector("[data-gallery-prev]");
+    const nextButton = document.querySelector("[data-gallery-next]");
 
-    if (!carousel || !dotsContainer) return;
+    if (!carousel || !modal || !modalImage || carousel.dataset.galleryReady === "true") return;
+    carousel.dataset.galleryReady = "true";
 
-    const items = Array.from(carousel.children);
-    let index = 0;
+    const items = Array.from(carousel.querySelectorAll("[data-gallery-item]")) as HTMLElement[];
+    const imageSources = items
+      .map((item) => item.getAttribute("data-src"))
+      .filter((value): value is string => Boolean(value));
 
-    // DOTS
-    items.forEach(() => {
-      const dot = document.createElement("div");
-      dot.className = "w-2 h-2 rounded-full bg-gray-300 transition";
-      dotsContainer.appendChild(dot);
-    });
+    if (!imageSources.length) return;
 
-    const dots = dotsContainer.children;
+    let currentIndex = 0;
 
-    function updateDots() {
-      Array.from(dots).forEach((dot, i) => {
-        dot.classList.toggle("bg-blue-500", i === index);
-        dot.classList.toggle("bg-gray-300", i !== index);
-      });
+    function renderImage() {
+      modalImage.src = imageSources[currentIndex];
     }
 
-    function updateActiveItem() {
-      const center = carousel.scrollLeft + carousel.offsetWidth / 2;
-
-      items.forEach((item, i) => {
-        const itemCenter = item.offsetLeft + item.offsetWidth / 2;
-
-        if (Math.abs(center - itemCenter) < item.offsetWidth / 2) {
-          item.style.transform = "scale(1)";
-          item.style.opacity = "1";
-          index = i;
-        } else {
-          item.style.transform = "scale(0.85)";
-          item.style.opacity = "0.5";
-        }
-      });
-
-      updateDots();
+    function openModal(index: number) {
+      currentIndex = index;
+      renderImage();
+      modal.classList.remove("hidden");
+      document.body.style.overflow = "hidden";
     }
 
-    carousel.addEventListener("scroll", () => {
-      requestAnimationFrame(updateActiveItem);
-    });
+    function closeModal() {
+      modal.classList.add("hidden");
+      document.body.style.overflow = "";
+    }
 
-    // 👉 SCROLL PRECISO (melhor que cálculo fixo)
-    function scrollToIndex(i) {
-      const item = items[i];
-      if (!item) return;
+    function goToNext() {
+      currentIndex = (currentIndex + 1) % imageSources.length;
+      renderImage();
+    }
 
-      const left =
-        item.offsetLeft -
-        carousel.offsetWidth / 2 +
-        item.offsetWidth / 2;
+    function goToPrev() {
+      currentIndex = (currentIndex - 1 + imageSources.length) % imageSources.length;
+      renderImage();
+    }
 
-      carousel.scrollTo({
-        left,
+    function updateStripNavState() {
+      if (!stripPrevButton || !stripNextButton) return;
+      const maxScrollLeft = Math.max(carousel.scrollWidth - carousel.clientWidth, 0);
+      stripPrevButton.disabled = carousel.scrollLeft <= 2;
+      stripNextButton.disabled = carousel.scrollLeft >= maxScrollLeft - 2;
+    }
+
+    function scrollStrip(direction: 1 | -1) {
+      const amount = Math.max(carousel.clientWidth * 0.78, 220);
+      carousel.scrollBy({
+        left: amount * direction,
         behavior: "smooth",
       });
     }
 
-    // AUTOPLAY
-    setInterval(() => {
-      index = (index + 1) % items.length;
-      scrollToIndex(index);
-    }, 4000);
+    items.forEach((item, i) => {
+      item.addEventListener("click", () => openModal(i));
+    });
 
-    // INIT
-    updateActiveItem();
-  });
+    stripPrevButton?.addEventListener("click", () => scrollStrip(-1));
+    stripNextButton?.addEventListener("click", () => scrollStrip(1));
+    closeButton?.addEventListener("click", closeModal);
+    prevButton?.addEventListener("click", goToPrev);
+    nextButton?.addEventListener("click", goToNext);
+
+    modal.addEventListener("click", (event) => {
+      const target = event.target as HTMLElement;
+      if (target.closest("[data-gallery-backdrop]")) closeModal();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (modal.classList.contains("hidden")) return;
+      if (event.key === "Escape") closeModal();
+      if (event.key === "ArrowRight") goToNext();
+      if (event.key === "ArrowLeft") goToPrev();
+    });
+
+    carousel.addEventListener("scroll", updateStripNavState);
+    window.addEventListener("resize", updateStripNavState);
+    updateStripNavState();
+  }
+
+  initGallery();
+  document.addEventListener("astro:page-load", initGallery);
 </script>
 
 <style>

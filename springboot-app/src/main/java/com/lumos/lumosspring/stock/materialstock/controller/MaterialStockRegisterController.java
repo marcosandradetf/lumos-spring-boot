@@ -50,14 +50,14 @@ public class MaterialStockRegisterController {
 
     @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('ESTOQUISTA_CHEFE')")
     @PostMapping("/stock/stock-movement/approve/{movementId}")
-    public ResponseEntity<?> stockMovementApprove(@PathVariable Long movementId, @CookieValue("refreshToken") String refreshToken) {
-        return stockMovementService.approveStockMovement(movementId, refreshToken);
+    public ResponseEntity<?> stockMovementApprove(@PathVariable Long movementId) {
+        return stockMovementService.approveStockMovement(movementId);
     }
 
     @PreAuthorize("hasAuthority('SCOPE_ADMIN') or hasAuthority('ESTOQUISTA_CHEFE')")
     @PostMapping("/stock/stock-movement/reject/{movementId}")
-    public ResponseEntity<?> stockMovementReject(@PathVariable Long movementId, @CookieValue("refreshToken") String refreshToken) {
-        return stockMovementService.rejectStockMovement(movementId, refreshToken);
+    public ResponseEntity<?> stockMovementReject(@PathVariable Long movementId) {
+        return stockMovementService.rejectStockMovement(movementId);
     }
 
 //    @PreAuthorize("hasAnyAuthority('SCOPE_ADMIN', 'ESTOQUISTA_CHEFE', 'ESTOQUISTA')")

@@ -86,7 +86,13 @@ public class ManagementRegisterService {
         var management = reservationManagementRepository.findById(executionReserve.getReservationManagementId())
                 .orElseThrow();
 
-        if (!management.getStockistId().equals(userUUID)) {
+        var isAdmin = false;
+        var currentScope = Utils.getCurrentScope();
+        if (currentScope != null) {
+            isAdmin = Arrays.asList(currentScope.split(" ")).contains("ADMIN");
+        }
+
+        if (!management.getStockistId().equals(userUUID) && !isAdmin) {
             throw new Utils.BusinessException("Essa ordem de serviço não está mais atribuída para você");
         } else if (!management.getStatus().equals("PENDING")) {
             throw new Utils.BusinessException("Essa ordem de serviço não está mais pendente ou está finalizada.");
@@ -606,12 +612,12 @@ public class ManagementRegisterService {
 
         reservationManagementRepository.updateStockistId(reservationManagementId, userId);
 
-        if (i.getInstallationType().equals("DIRECT_EXECUTION")) {
+        if (i.getInstallationType().equals("DIRECT_EXECUTION") && i.getTeamId() != teamId) {
             directExecutionRepository.updateTeamId(
                     i.getReservationManagementId(),
                     teamId
             );
-        } else {
+        } else if (i.getTeamId() != teamId) {
             preMeasurementInstallationRepository.updateTeamId(
                     i.getReservationManagementId(),
                     teamId

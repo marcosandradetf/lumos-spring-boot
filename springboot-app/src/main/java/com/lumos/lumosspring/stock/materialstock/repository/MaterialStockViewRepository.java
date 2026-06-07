@@ -107,72 +107,6 @@ public interface MaterialStockViewRepository extends CrudRepository<MaterialStoc
         join deposit d on d.id_deposit = ms.deposit_id
     """)
     Optional<MaterialResponse> findByBarcodeAndDepositId(@NotNull String barcode, long depositId);
-// find by linking - deprecated
-//    @Query(
-//            """
-//                 SELECT
-//                   ms.material_id_stock AS materialIdStock,
-//                   m.id_material AS materialId,
-//                   m.material_name AS materialName,
-//                   m.material_power AS materialPower,
-//                   m.material_length AS materialLength,
-//                   mt.type_name AS typeName,
-//                   d.deposit_name AS depositName,
-//                   ms.stock_available AS stockAvailable,
-//                   ms.request_unit AS requestUnit,
-//                   d.is_truck AS isTruck,
-//                   t.plate_vehicle as plateVehicle
-//                 FROM material_stock ms
-//                   JOIN material m ON ms.material_id = m.id_material
-//                   JOIN material_type mt ON m.id_material_type = mt.id_type
-//                   JOIN deposit d ON ms.deposit_id = d.id_deposit
-//                   LEFT JOIN team t on t.deposit_id_deposit = d.id_deposit
-//                 WHERE LOWER(mt.type_name) = :type
-//                   AND ms.inactive = false
-//                   AND (
-//                     t.id_team = :teamId
-//                     OR d.is_truck = false
-//                   )
-//                   AND ms.tenant_id = :tenantId
-//                 ORDER BY  (d.is_truck::int) DESC, d.deposit_name;
-//             """
-//    )
-//    List<MaterialInStockDTO> findAllByType(String type, Long teamId);
-
-//    @Query(
-//            """
-//                SELECT
-//                  ms.material_id_stock AS materialIdStock,
-//                  m.id_material AS materialId,
-//                  m.material_name AS materialName,
-//                  m.material_power AS materialPower,
-//                  m.material_length AS materialLength,
-//                  mt.type_name AS typeName,
-//                  d.deposit_name AS depositName,
-//                  ms.stock_available AS stockAvailable,
-//                  ms.request_unit AS requestUnit,
-//                  d.is_truck AS isTruck,
-//                  t.plate_vehicle as plateVehicle
-//                FROM material_stock ms
-//                  JOIN material m ON ms.material_id = m.id_material
-//                  JOIN material_type mt ON m.id_material_type = mt.id_type
-//                  JOIN deposit d ON ms.deposit_id = d.id_deposit
-//                  LEFT JOIN team t on t.deposit_id_deposit = d.id_deposit
-//                WHERE LOWER(mt.type_name) = :type
-//                  AND (
-//                    LOWER(m.material_power) = :linking
-//                    OR LOWER(m.material_length) = :linking
-//                  )
-//                  AND ms.inactive = false
-//                  AND (
-//                    t.id_team = :teamId
-//                    OR d.is_truck = false
-//                  )
-//                  AND ms.tenant_id = :tenantId
-//                ORDER BY  (d.is_truck::int) DESC, d.deposit_name;
-//            """
-//    )
-//    List<MaterialInStockDTO> findAllByLinkingAndType(String linking, String type, Long teamId);
 
     @Query(
         """
@@ -185,7 +119,8 @@ public interface MaterialStockViewRepository extends CrudRepository<MaterialStoc
                 m.request_unit,
                 d.is_truck,
                 t.plate_vehicle,
-                mcri.contract_reference_item_id
+                mcri.contract_reference_item_id,
+                m.material_brand
             FROM material_stock ms
             JOIN material m ON ms.material_id = m.id_material
             JOIN material_contract_reference_item mcri on mcri.material_id = m.parent_material_id
@@ -200,5 +135,31 @@ public interface MaterialStockViewRepository extends CrudRepository<MaterialStoc
     List<MaterialInStockDTO> findMaterialsByContractReference(Long contractReferenceItemId, Long teamId);
 
     List<MaterialStock> findByMaterialIdStockIn(Collection<Long> materialIdStocks);
+
+    @Query("""
+        SELECT EXISTS (
+            SELECT 1
+            FROM maintenance_street_item msi
+            JOIN maintenance m on m.maintenance_id = msi.maintenance_id
+            JOIN material_stock ms on ms.material_id_stock = msi.material_stock_id
+            WHERE ms.material_id = :material_id
+                    AND m.status <> 'CANCELLED'
+
+            UNION ALL
+
+            SELECT 1
+            FROM installation_view iv
+            JOIN installation_street_view isv on isv.installation_id = iv.installation_id
+                AND isv.installation_type = iv.installation_type
+            JOIN installation_street_item_view isiv on isiv.installation_street_id = isv.installation_street_id
+                AND isiv.installation_type = isv.installation_type
+            JOIN material_stock ms on ms.material_id_stock = isiv.material_stock_id
+            WHERE ms.material_id = :material_id
+                    AND iv.status <> 'CANCELLED'
+        )
+        """)
+    boolean materialAlreadyUsed(
+            @Param("materialStockId") Long material_id
+    );
 }
 

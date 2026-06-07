@@ -180,7 +180,10 @@ const buttonAlignClass = align === 'left' ? 'justify-start' : 'justify-center';
   {/* Overlay */}
   {
     overlay && (backgroundType === 'image' || backgroundType === 'video') && (
-      <div class="absolute inset-0 z-1 bg-black" style={`opacity: ${overlayOpacity / 100}`} />
+      <div
+        class="absolute inset-0 z-1 bg-linear-to-r from-black via-black/80 to-black/30"
+        style={`opacity: ${overlayOpacity / 100}`}
+      />
     )
   }
 
@@ -191,22 +194,22 @@ const buttonAlignClass = align === 'left' ? 'justify-start' : 'justify-center';
       minHeight === 'screen' && 'w-full',
     ]}
   >
-    <div class:list={['max-w-3xl', alignClass]}>
+    <div class:list={['max-w-4xl', alignClass]}>
       <h1
         class:list={[
-          'text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight tracking-tight',
+          'text-4xl sm:text-5xl lg:text-7xl font-bold leading-tight tracking-tight',
           textClasses.heading,
         ]}
       >
         {title}
       </h1>
-      <p class:list={['mt-6 text-lg sm:text-xl leading-relaxed', textClasses.body]}>
+      <p class:list={['mt-6 text-lg sm:text-xl max-w-3xl leading-relaxed', textClasses.body]}>
         {subtitle}
       </p>
       <div class:list={['mt-10 flex flex-col sm:flex-row items-center gap-4', buttonAlignClass]}>
         <a
           href={primaryCTA.href}
-          class="inline-flex items-center justify-center px-6 py-3 rounded-md bg-primary text-white font-medium hover:bg-primary-dark transition-colors w-full sm:w-auto"
+          class="inline-flex items-center justify-center px-7 py-3.5 rounded-md bg-primary text-white font-semibold shadow-lg shadow-primary/20 hover:bg-primary-dark transition-colors w-full sm:w-auto"
         >
           {primaryCTA.label}
         </a>
@@ -215,7 +218,7 @@ const buttonAlignClass = align === 'left' ? 'justify-start' : 'justify-center';
             <a
               href={secondaryCTA.href}
               class:list={[
-                'inline-flex items-center justify-center px-6 py-3 rounded-md border font-medium transition-colors w-full sm:w-auto',
+                'inline-flex items-center justify-center px-7 py-3.5 rounded-md border font-semibold backdrop-blur-sm transition-colors w-full sm:w-auto',
                 textClasses.button,
               ]}
             >

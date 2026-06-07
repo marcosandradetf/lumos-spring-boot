@@ -16,11 +16,11 @@ import {NotificationPopupComponent} from './shared/components/notification-popup
 import {DialogService} from 'primeng/dynamicdialog';
 import {MessageService, PrimeTemplate} from 'primeng/api';
 import {forkJoin} from 'rxjs';
-import {ContractService} from './contract/services/contract.service';
-import {UserService} from './manage/user/user-service.service';
-import {TeamService} from './manage/team/team-service.service';
-import {StockService} from './stock/services/stock.service';
-import {MaterialService} from './stock/services/material.service';
+import {ContractService} from './features/contract/services/contract.service';
+import {UserService} from './features/manage/user/user-service.service';
+import {TeamService} from './features/manage/team/team-service.service';
+import {StockService} from './features/stock/services/stock.service';
+import {MaterialService} from './features/stock/services/material.service';
 import {Utils} from './core/service/utils';
 import {DomSanitizer, SafeResourceUrl} from '@angular/platform-browser';
 import {ShareModalComponent} from './shared/components/share-modal/share-modal.component';
@@ -85,9 +85,17 @@ export class AppComponent implements OnInit {
             this.checkState();
         }
 
+        const userAgent = window.navigator.userAgent.toLowerCase();
+
+        const isIosWebView = !('Notification' in window);
+        const isAndroidWebView = userAgent.includes('wv');
+
         if (this.notificationStatus === 'granted' && !localStorage.getItem('fcmToken')) {
             void this.fcmService.getPermission(this.authService.getUser().getRoles());
-        } else if (this.notificationStatus === 'default') {
+        } else if (
+            this.notificationStatus === 'default'
+            && !isIosWebView && !isAndroidWebView
+        ) {
             setTimeout(() => {
                 this.messageService.add({
                     key: 'notifications',
@@ -105,7 +113,10 @@ export class AppComponent implements OnInit {
                     }
                 });
             }, 0);
-        } else if (this.notificationStatus === 'denied') {
+        } else if (
+            this.notificationStatus === 'denied'
+            && !isIosWebView && !isAndroidWebView
+        ) {
             setTimeout(() => {
                 this.messageService.add({
                     key: 'notifications',

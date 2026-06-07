@@ -307,9 +307,8 @@ class ContractService(
 //            type = NotificationType.CONTRACT
 //        )
 
-        return ResponseEntity.ok(
-            DefaultResponse("Contrato registrado com sucesso. Nossa equipe fará a análise e você receberá um retorno em até 2 horas.")
-        )
+        return ResponseEntity.ok()
+            .body(mapOf("contractId" to contract.contractId))
     }
 
     data class ContractScoreResult(

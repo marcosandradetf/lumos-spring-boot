@@ -46,7 +46,7 @@ class MaintenanceController(
             )
         )
 
-    @PostMapping("/maintenance/generate-report/{type}/{maintenanceId}")
+    @GetMapping("/maintenance/generate-report/{type}/{maintenanceId}")
     fun generateReport(
         @PathVariable type: String,
         @PathVariable maintenanceId: UUID,

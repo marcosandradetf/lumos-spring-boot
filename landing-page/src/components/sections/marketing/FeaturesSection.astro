@@ -59,9 +59,11 @@ const bgClass = {
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     {
       hasHeading && (
-        <div class="text-center">
-          {title && <h2 class="text-3xl sm:text-4xl font-bold text-text">{title}</h2>}
-          {subtitle && <p class="mt-4 text-lg text-text-muted max-w-2xl mx-auto">{subtitle}</p>}
+        <div class="text-center max-w-3xl mx-auto">
+          {title && <h2 class="text-3xl sm:text-4xl font-bold text-text leading-tight">{title}</h2>}
+          {subtitle && (
+            <p class="mt-4 text-lg text-text-muted max-w-3xl mx-auto leading-relaxed">{subtitle}</p>
+          )}
         </div>
       )
     }
@@ -70,11 +72,11 @@ const bgClass = {
     >
       {
         features.map((feature) => (
-          <div class="p-6 rounded-lg bg-surface border border-border">
-            <div class="w-12 h-12 flex items-center justify-center rounded-md bg-primary/10 text-primary mb-4">
+          <div class="p-6 rounded-lg bg-background border border-border shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg">
+            <div class="w-12 h-12 flex items-center justify-center rounded-md bg-primary/10 text-primary mb-5">
               <Icon name={feature.icon} class="w-6 h-6" aria-hidden="true" />
             </div>
-            <h3 class="text-lg font-semibold text-text mb-2">{feature.title}</h3>
+            <h3 class="text-lg font-semibold text-text mb-3">{feature.title}</h3>
             <p class="text-text-muted leading-relaxed">{feature.description}</p>
           </div>
         ))

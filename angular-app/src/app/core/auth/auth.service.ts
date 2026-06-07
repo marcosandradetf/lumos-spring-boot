@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, catchError, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { User } from '../../models/user.model';
+import { User } from '../../shared/models/user.model';
 import { environment } from '../../../environments/environment';
 import { jwtDecode } from 'jwt-decode';
 import { FcmService } from '../service/fcm.service';

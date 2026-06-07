@@ -3,24 +3,27 @@ package com.lumos.lumosspring.stock.order.service
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.lumos.lumosspring.notifications.service.FCMService
-import com.lumos.lumosspring.stock.order.dto.ReplyRequest
+import com.lumos.lumosspring.notifications.service.Routes
 import com.lumos.lumosspring.stock.order.dto.OrderRequest
+import com.lumos.lumosspring.stock.order.dto.ReplyRequest
 import com.lumos.lumosspring.stock.order.repository.OrderMaterialRepository
 import com.lumos.lumosspring.util.ExecutionStatus
 import com.lumos.lumosspring.util.JdbcUtil.getRawData
 import com.lumos.lumosspring.util.NotificationType
 import com.lumos.lumosspring.util.ReservationStatus
 import com.lumos.lumosspring.util.Utils
+import com.lumos.lumosspring.util.Utils.getCurrentTenantId
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
 
 @Service
 class OrderServiceRegister(
     private val namedJdbc: NamedParameterJdbcTemplate,
-    private val FCMService: FCMService,
+    private val fcmService: FCMService,
     private val orderMaterialRepository: OrderMaterialRepository,
     private val objectMapper: ObjectMapper = jacksonObjectMapper()
 ) {
@@ -85,7 +88,7 @@ class OrderServiceRegister(
             }
 
             updatedOrders.forEach {
-                FCMService.sendNotificationForTopic(
+                fcmService.sendNotificationForTopic(
                     title = "Atualização na sua solicitação",
                     body = "O status da sua requisição de materiais ${it.second} foi atualizado. Toque para ver os detalhes.",
                     action = "APPROVATED_ORDERS",
@@ -201,7 +204,7 @@ class OrderServiceRegister(
 
                 notificationCodes.forEach {
                     if (it.first == "APPROVED") {
-                        FCMService.sendNotificationForTopic(
+                        fcmService.sendNotificationForTopic(
                             title = "Materiais prontos para instalação",
                             body = "Os materiais para **${it.third}** estão disponíveis no almoxarifado. Toque para ver os detalhes.",
                             action = "APPROVATED_ORDERS",
@@ -210,7 +213,7 @@ class OrderServiceRegister(
                             tenant = Utils.getCurrentTenantId().toString()
                         )
                     } else {
-                        FCMService.sendNotificationForTopic(
+                        fcmService.sendNotificationForTopic(
                             title = "Gerenciamento pendente de materiais",
                             body = "Alguns materiais da instalação **${it.third}** foram recusados pelo estoquista. Refaça o gerenciamento para prosseguir com a instalação.",
                             action = "/requisicoes/instalacoes/gerenciamento-estoque",
@@ -283,8 +286,8 @@ class OrderServiceRegister(
                     """.trimIndent(),
                 mapOf(
                     "requestQuantity" to o.requestQuantity,
-                    "truckMaterialId" to o.truckMaterialStockId,
-                    "centralMaterialId" to o.centralMaterialStockId,
+                    "truckMaterialStockId" to o.truckMaterialStockId,
+                    "centralMaterialStockId" to o.centralMaterialStockId,
                 ), Int::class.java
             )
 
@@ -295,7 +298,7 @@ class OrderServiceRegister(
             val (sql, param) = if (o.materialIdReservation != null || o.directExecutionId != null || o.preMeasurementId != null) {
                 """
                     UPDATE material_reservation 
-                    SET status = :status, collected_at = now, released_by = :userId
+                    SET status = :status, collected_at = now(), released_by = :userId
                     WHERE material_id_reservation = :reservationId
                 """.trimIndent() to mapOf(
                     "reservationId" to o.materialIdReservation,
@@ -342,18 +345,38 @@ class OrderServiceRegister(
 
             if (statusReservationsData.isEmpty()) {
                 val sqlUpdate = """
-                    UPDATE $tableName
+                    UPDATE $tableName t
                     SET $statusName = :status
-                    WHERE $keyName = :keyId
+                    WHERE t.$keyName = :keyId
+                    RETURNING (
+                        SELECT tm.notification_code
+                        FROM team tm
+                        WHERE tm.id_team = t.team_id
+                    ) AS notification_code
                 """.trimIndent()
 
-                namedJdbc.update(
+                namedJdbc.query(
                     sqlUpdate,
                     mapOf(
                         "keyId" to keyId,
                         "status" to ExecutionStatus.AVAILABLE_EXECUTION
                     )
-                )
+                ) { rs, _ ->
+                    fcmService.sendNotificationForTopic(
+                        "Nova Ordem de Serviço",
+                        "Uma nova ordem de serviço está disponível para execução, verifique os detalhes.",
+                        Routes.STOCK,
+                        rs.getString("notification_code"),
+                        Instant.now(),
+                        com.lumos.lumosspring.notifications.service.NotificationType.EXECUTION,
+                        FCMService.TargetPlatform.ANDROID,
+                        false,
+                        null,
+                        null,
+                        null,
+                        getCurrentTenantId().toString()
+                    )
+                }
             }
         }
 

@@ -7,6 +7,7 @@ import com.lumos.lumosspring.stock.materialsku.repository.MaterialContractRefere
 import com.lumos.lumosspring.stock.materialsku.repository.MaterialReferenceRepository;
 import com.lumos.lumosspring.stock.materialstock.model.MaterialStock;
 import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockRegisterRepository;
+import com.lumos.lumosspring.stock.materialstock.repository.MaterialStockViewRepository;
 import com.lumos.lumosspring.user.repository.UserRepository;
 import com.lumos.lumosspring.stock.materialsku.dto.MaterialRequest;
 import com.lumos.lumosspring.system.entities.Log;
@@ -22,7 +23,10 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
+
+import static java.lang.Math.abs;
 
 @Service
 public class MaterialReferenceService {
@@ -32,12 +36,15 @@ public class MaterialReferenceService {
     private final MaterialReferenceRepository materialReferenceRepository;
     private final MaterialContractReferenceItemRepository materialContractReferenceItemRepository;
     private final DepositRepository depositRepository;
+    private final MaterialStockViewRepository materialStockViewRepository;
 
     public MaterialReferenceService(MaterialStockRegisterRepository materialStockRegisterRepository,
                                     UserRepository userRepository,
                                     LogRepository logRepository,
                                     MaterialReferenceRepository materialReferenceRepository,
-                                    MaterialContractReferenceItemRepository materialContractReferenceItemRepository, DepositRepository depositRepository) {
+                                    MaterialContractReferenceItemRepository materialContractReferenceItemRepository,
+                                    DepositRepository depositRepository, MaterialStockViewRepository materialStockViewRepository
+    ) {
 
         this.materialStockRegisterRepository = materialStockRegisterRepository;
         this.userRepository = userRepository;
@@ -45,6 +52,7 @@ public class MaterialReferenceService {
         this.materialReferenceRepository = materialReferenceRepository;
         this.materialContractReferenceItemRepository = materialContractReferenceItemRepository;
         this.depositRepository = depositRepository;
+        this.materialStockViewRepository = materialStockViewRepository;
     }
 
     @Transactional
@@ -179,6 +187,39 @@ public class MaterialReferenceService {
             Long materialId = material.materialId();
             var materialSku = materialReferenceRepository.findById(materialId).orElseThrow();
 
+            var hasTypeChanged = !Objects.equals(materialSku.getIdMaterialType(), material.materialType());
+            var hasSubtypeChanged = !Objects.equals(materialSku.getSubtypeId(), material.materialSubtype());
+            var hasBrandChange = !Objects.equals(materialSku.getMaterialBrand(), material.materialBrand());
+            var buyUnitChanged = !Objects.equals(materialSku.getMaterialBrand(), material.buyUnit());
+            var requestUnitChanged = !Objects.equals(materialSku.getMaterialBrand(), material.requestUnit());
+            var truckStockControlChanged = !Objects.equals(materialSku.getTruckStockControl(), material.truckStockControl());
+            var materialGauge = !Objects.equals(materialSku.getMaterialGauge(), material.materialGauge());
+            var materialPower = !Objects.equals(materialSku.getMaterialPower(), material.materialPower());
+            var materialLength = !Objects.equals(materialSku.getMaterialLength(), material.materialLength());
+            var materialWidth = !Objects.equals(materialSku.getMaterialWidth(), material.materialWidth());
+
+            if (
+                    (hasTypeChanged
+                            || hasSubtypeChanged
+                            || hasBrandChange
+                            || buyUnitChanged
+                            || requestUnitChanged
+                            || truckStockControlChanged
+                            || materialGauge
+                            || materialPower
+                            || materialLength
+                            || materialWidth
+                    )
+                            && materialStockViewRepository.materialAlreadyUsed(materialId)
+            ) {
+                throw new Utils.BusinessException(
+                        String.format(
+                                "O Material %s não pode ter campos estruturais alterados pois já possui movimentação.",
+                                material.materialName()
+                        )
+                );
+            }
+
             materialSku.update(
                     baseMaterialId,
                     material.materialName(),
@@ -295,4 +336,6 @@ public class MaterialReferenceService {
         var brands = materialReferenceRepository.getBrands(Utils.getCurrentTenantId());
         return ResponseEntity.ok(brands);
     }
+
+
 }

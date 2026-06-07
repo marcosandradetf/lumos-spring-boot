@@ -1,0 +1,576 @@
+<div class="h-full w-full relative" [class.overflow-hidden]="message !== null">
+  <div
+    class="flex items-center gap-3 px-4 py-4 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-default">
+    <!-- Ícone com cor de destaque sutil -->
+    <i class="pi pi-list-check text-slate-400 dark:text-slate-500 text-sm"></i>
+
+    <span class="text-xs font-bold tracking-wider text-slate-700 dark:text-slate-300 uppercase">
+      {{ reserve.description }}
+    </span>
+  </div>
+
+  <!-- Overlay de Loading -->
+  <app-loading-overlay [loading]="loading"></app-loading-overlay>
+
+  <div *ngIf="message !== null" class="w-full h-full flex flex-col justify-center items-center gap-4">
+    <i class="pi pi-check-circle" style="font-size: 4rem; color: green;"></i>
+    <h2 class="text-2xl font-semibold text-center max-w-[95%]"> {{ message }} </h2>
+    <p-button label="Voltar para solicitações" rounded
+              routerLink="/requisicoes/instalacoes/gerenciamento-estoque"></p-button>
+
+  </div>
+
+  <div *ngIf="(preMeasurementId !== null || directExecutionId !== null) && message === null">
+    <p-table [tableStyle]="{ 'min-width': '50rem' }" *ngIf="preMeasurementId === null && directExecutionId === null"
+             [value]="tableSk">
+      <ng-template pTemplate="header">
+        <tr>
+          <th></th>
+          <th colspan="" pSortableColumn="description">Descrição
+            <p-sortIcon field="description"/>
+          </th>
+          <th pSortableColumn="category">Equipe Responsável
+            <p-sortIcon field="category"/>
+          </th>
+          <th pSortableColumn="quantity">Quantidade Necessária
+            <p-sortIcon field="quantity"/>
+          </th>
+          <th pSortableColumn="quantity">Quantidade Alocada
+            <p-sortIcon field="quantity"/>
+          </th>
+          <th pSortableColumn="inventoryStatus">Status
+            <p-sortIcon field="inventoryStatus"/>
+          </th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-tbSk>
+        <tr>
+          <td class="p-4">
+            <p-skeleton/>
+          </td>
+          <td>
+            <p-skeleton/>
+          </td>
+          <td>
+            <p-skeleton/>
+          </td>
+          <td>
+            <p-skeleton/>
+          </td>
+          <td>
+            <p-skeleton/>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+
+    <div class="mx-4 mb-4 flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3
+            dark:border-blue-900/60 dark:bg-blue-950/30">
+      <i class="pi pi-info-circle mt-0.5 text-blue-500 dark:text-blue-400"></i>
+      <div class="text-sm leading-relaxed text-blue-800 dark:text-blue-200">
+        <p class="font-semibold mb-1">Guia de gerenciamento de estoque da OS:</p>
+        <ul class="list-disc list-inside space-y-0.5 opacity-90">
+          <li><strong>1. Verifique o estoque da equipe:</strong> Confirme se já possuem o material no caminhão.</li>
+          <li><strong>2. Aloque a diferença:</strong> Libere do almoxarifado apenas o que faltar para atingir a <strong>Quantidade Necessária</strong>.</li>
+          <li><strong>3. Fechamento:</strong> O item ficará <strong>CONCLUÍDO</strong> ao atingir a meta, mas lembre-se de respeitar o <strong>Saldo Contratual</strong>.</li>
+        </ul>
+      </div>
+    </div>
+
+    <p-table *ngIf="(preMeasurementId !== null || directExecutionId !== null)" #table_parent [value]="reserve.items"
+             dataKey="contractItemId" [tableStyle]="{ 'min-width': '60rem' }" [expandedRowKeys]="expandedRows"
+             editMode="row"
+             selectionMode="single"
+             (onRowExpand)="onRowExpand($event.data)">
+      
+      <ng-template pTemplate="header">
+        <tr
+          [class.hidden]="currentItemId > 0">
+          <th style="width: 5rem"></th>
+          <!--          <th pSortableColumn="itemId">Id-->
+          <!--            <p-sortIcon field="itemId"/>-->
+          <!--          </th>-->
+          <th pSortableColumn="description">Descrição
+            <p-sortIcon field="description"/>
+          </th>
+          <th pSortableColumn="category">Equipe Responsável
+            <p-sortIcon field="category"/>
+          </th>
+          <th pSortableColumn="quantity">Quantidade Necessária
+            <p-sortIcon field="quantity"/>
+          </th>
+          <th pSortableColumn="quantity">Quantidade Alocada
+            <p-sortIcon field="quantity"/>
+          </th>
+          <th pSortableColumn="currentBalance">Saldo Contratual
+            <p-sortIcon field="currentBalance"/>
+          </th>
+          <th pSortableColumn="inventoryStatus">Status
+            <p-sortIcon field="inventoryStatus"/>
+          </th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-item let-expanded="expanded">
+        <tr
+          class="cursor-pointer"
+          [pRowToggler]="item"
+          [class.hidden]="currentItemId > 0">
+          <td>
+            <p-button type="button" pRipple [pRowToggler]="item" [text]="true" [rounded]="false"
+                      [plain]="true"
+                      icon="pi pi-external-link" />
+          </td>
+          <!--          <td>{{ item.itemId }}</td>-->
+          <td>{{ item.description }}</td>
+          <td (click)="verifyTeamData()">
+            <p-tag severity="info" styleClass="cursor-pointer"
+                   pTooltip="Clique para detalhes">{{ reserve.teamName }}
+            </p-tag>
+          </td>
+          <td>{{ item.quantity }}</td>
+          <td>{{ getTotalQuantity(item.materials) }}</td>
+          <td>{{ item.currentBalance }}</td>
+          <td>
+            <p-tag [value]="item.materials?.length > 0 ? 'CONCLUÍDO' : 'PENDENTE'"
+                   [severity]="item.materials?.length > 0 ? 'success' : 'danger'"/>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="rowexpansion" let-item>
+        <tr>
+          <!-- Fundo diferenciado e padding para separar visualmente a linha pai do conteúdo expandido -->
+          <td colspan="8" class="bg-slate-100/50 dark:bg-slate-900/50 p-4 transition-all">
+
+            <!-- Card principal que encapsula todo o conteúdo da expansão -->
+            <div
+              class="border border-blue-300 dark:border-blue-500 rounded-xl bg-white dark:bg-slate-800 shadow-md p-5 md:p-6 relative">
+
+              <!-- Header contextual para ancorar o usuário -->
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 pb-4 border-b border-slate-100 dark:border-slate-700">
+
+                <!-- Título Principal (Esquerda) -->
+                <div class="flex items-center gap-3 text-slate-800 dark:text-slate-200">
+                  <div class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/30">
+                    <i class="pi pi-cog text-blue-500"></i>
+                  </div>
+                  <span class="font-bold text-base">{{ getCurrentItem?.description }}</span>
+                </div>
+
+                <!-- Indicadores / Métricas (Direita) -->
+                <div class="flex items-center gap-4 sm:gap-6">
+
+                  <!-- Métrica 1 -->
+                  <div class="flex flex-col sm:items-end">
+                    <span class="text-[11px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">
+                      Qtd Solicitada
+                    </span>
+                                  <span class="font-bold text-sm text-slate-700 dark:text-slate-300">
+                      {{ getCurrentItem?.quantity }}
+                    </span>
+                  </div>
+
+                  <!-- Divisor visual (apenas telas > mobile) -->
+                  <div class="hidden sm:block w-px h-8 bg-slate-200 dark:bg-slate-700"></div>
+
+                  <!-- Métrica 2 -->
+                  <div class="flex flex-col sm:items-end">
+                    <span class="text-[11px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">
+                      Saldo Contratual
+                    </span>
+                    <!-- Usando uma cor levemente diferente (ex: azul) para destacar o saldo -->
+                    <span class="font-bold text-sm text-blue-600 dark:text-blue-400">
+                      {{ getCurrentItem?.currentBalance }}
+                    </span>
+                  </div>
+
+                  <div
+                    (click)="onClose()"
+                    class="flex flex-col sm:items-end ml-6 cursor-pointer" pTooltip="Fechar" tooltipPosition="bottom">
+                    <i class="pi pi-times"></i>
+                  </div>
+
+                </div>
+              </div>
+
+              @if (truckStockControl) {
+                <!-- BLOCO 1: CONTROLE DE ESTOQUE -->
+                <div
+                  *ngIf="rawFilteredMaterials.length > 0"
+                  class="flex items-center justify-between px-4 py-3 flex-wrap bg-slate-50 dark:bg-slate-900/30 rounded-lg mb-4 border border-slate-100 dark:border-slate-800">
+
+
+                  <div class="flex item-center gap-2 text-sm select-none">
+                    <p-inputSwitch inputId="showOnlyInStock" [(ngModel)]="showOnlyInStock" (click)="applyFilters()"/>
+                    <label for="showOnlyInStock" class="mt-[3px]">Apenas com estoque</label>
+                  </div>
+
+                  <div [pTooltip]="getTooltipBrand" tooltipPosition="top">
+                    <p-dropdown
+                      [options]="availableBrands"
+                      [(ngModel)]="selectedBrand"
+                      placeholder="Filtrar por marca"
+                      [showClear]="true"
+                      (onChange)="applyFilters()"
+                      (onClear)="applyFilters()"
+                      [disabled]="availableBrands.length <= 1"
+                      optionLabel="label"
+                      optionValue="value"
+                      [style]="{ minWidth: '180px' }"
+                    />
+                  </div>
+
+                </div>
+
+                <p-table #table_collapse [value]="filteredMaterials" editMode="row" selectionMode="single"
+                         [(selection)]="selectedMaterial" dataKey="materialStockId" styleClass="p-datatable-sm">
+                  <ng-template
+                    pTemplate="header">
+                    <tr
+                      *ngIf="filteredMaterials.length > 0">
+                      <th>Descrição</th>
+                      <th>Estoque</th>
+                      <th>Almoxarifado</th>
+                      <th>Quantidade</th>
+                      <th class="w-24"></th>
+                    </tr>
+                  </ng-template>
+
+                  <ng-template pTemplate="body" let-material>
+                    <tr #rowElement [pEditableRow]="material" [pSelectableRow]="material"
+                        (click)="onRowClick($event, material)">
+                      <td class="font-medium">{{ material.materialName }}</td>
+                      <td>
+                        <p-tag
+                          [value]="material.stockAvailable <= 0 ? 'Sem Estoque' : material.stockAvailable + ' ' + material.requestUnit"
+                          [severity]="material.stockAvailable ? 'success' : 'danger'"></p-tag>
+                      </td>
+                      <td>
+                        <p-tag #tag
+                               [value]="material.isTruck ? 'CAMINHÃO PLACA - ' + material.plateVehicle : material.depositName"
+                               [severity]="material.isTruck ? 'info' : 'warn'"/>
+                      </td>
+                      <td>
+                        <p-cellEditor>
+                          <ng-template pTemplate="output">{{ getQuantity(material) ?? 0 }}</ng-template>
+                          <ng-template pTemplate="input">
+                            <input pInputText #qtyInput
+                                   (keydown.enter)="Confirm(material, rowElement)"
+                                   (keydown.escape)="Cancel(material,rowElement)"
+                                   (input)="utils.formatFloatNumber($event)"
+                                   placeholder="Qtd" [(ngModel)]="quantity"
+                                   class="w-full max-w-[120px]"/>
+                          </ng-template>
+                        </p-cellEditor>
+                      </td>
+                      <td>
+                        <div class="flex item-center justify-center space-x-2">
+                          <p-button *ngIf="currentMaterialStockId === material.materialStockId"
+                                    [icon]="existsMaterial(material) ? 'pi pi-trash' : 'pi pi-times'"
+                                    size="small" variant="text"
+                                    severity="danger" (click)="Cancel(material, rowElement)"/>
+                          <p-button icon="pi pi-check" size="small" [raised]="true"
+                                    *ngIf="currentMaterialStockId === material.materialStockId"
+                                    (click)="Confirm(material, rowElement)"/>
+                        </div>
+                      </td>
+                    </tr>
+                  </ng-template>
+
+                  <ng-template pTemplate="emptymessage">
+                    <tr>
+                      <td colspan="5" class="py-12">
+                        <div class="flex flex-col items-center gap-3 text-center">
+                          <i class="pi pi-box text-4xl text-blue-300 dark:text-blue-600"></i>
+                          <p class="text-sm font-semibold text-slate-700 dark:text-slate-300">Nenhum material
+                            encontrado</p>
+                          <p class="text-sm text-slate-500 dark:text-slate-400 max-w-md leading-relaxed">
+                            @if(rawFilteredMaterials.length === 0) {
+
+                              Nenhum material foi encontrado para este item contratual.
+                                Para continuar, vincule um material ao item contratual de referência.
+
+
+                            } @else {
+
+                              Existem materiais vinculados, mas nenhum possui saldo disponível em estoque.
+                                Revise os filtros ou Faça uma movimentação para liberar o estoque.
+
+                            }
+                          </p>
+                          <p-button
+                            [label]="rawFilteredMaterials.length === 0 ? 'Vincular Material' : 'Movimentar Estoque'"
+                            [icon]="rawFilteredMaterials.length === 0 ? 'pi pi-link' : 'pi pi-arrow-right-arrow-left'"
+                            severity="info"
+                            [rounded]="true"
+                            class="mt-2"
+                            [routerLink]="rawFilteredMaterials.length === 0 ? '/contratos/itens-contratuais/vinculos' : '/estoque/movimentar-estoque'"
+                            [queryParams]="{ operation: 'material' }">
+                          </p-button>
+                        </div>
+                      </td>
+                    </tr>
+                  </ng-template>
+                </p-table>
+
+              } @else if (showWhatsApp) {
+                <!-- BLOCO 2: WHATSAPP (Centralizado e Reduzido) -->
+                <div class="flex justify-center w-full py-4">
+                  <form [formGroup]="formWhatsapp" (ngSubmit)="onSubmit()"
+                        class="flex flex-col gap-5 w-full max-w-lg bg-slate-50 dark:bg-slate-900/30 p-6 rounded-xl border border-slate-100 dark:border-slate-800">
+
+                    <div class="text-center mb-2">
+                      <i class="pi pi-whatsapp text-3xl text-green-500 mb-2"></i>
+                      <h3 class="font-semibold text-slate-700 dark:text-slate-300">Contato via WhatsApp</h3>
+                    </div>
+
+                    <div>
+                      <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Telefone da
+                        Equipe</label>
+                      <div class="p-inputgroup">
+                        <span class="p-inputgroup-addon"><i class="pi pi-phone"></i></span>
+                        <input pInputText formControlName="phone" placeholder="(00) 00000-0000" maxlength="15"
+                               class="w-full" (input)="utils.formatNumber($event)"/>
+                      </div>
+                      @if (isInvalid('phone')) {
+                        <p-message severity="error" size="small" variant="simple" class="mt-1">Telefone obrigatório (DDD
+                          + número)
+                        </p-message>
+                      }
+                    </div>
+
+                    <div>
+                      <label
+                        class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Mensagem</label>
+                      <!-- Reduzido de rows="13" para rows="5" para não quebrar a rolagem da tabela -->
+                      <textarea rows="5" pTextarea formControlName="text" placeholder="Digite sua mensagem aqui..."
+                                class="w-full resize-y"></textarea>
+                      @if (isInvalid('text')) {
+                        <p-message severity="error" size="small" variant="simple" class="mt-1">Mensagem obrigatória
+                        </p-message>
+                      }
+                    </div>
+
+                    <button pButton type="submit" icon="pi pi-send" label="Enviar via WhatsApp"
+                            class="w-full p-button-success mt-2"></button>
+                  </form>
+                </div>
+
+              } @else {
+                <!-- BLOCO 3: HISTÓRICO E AÇÕES (Tudo agrupado em uma view) -->
+                <div class="space-y-6">
+
+                  <!-- Tabela de Histórico -->
+                  <div>
+                    <div class="flex items-center justify-between mb-3">
+                      <div>
+                        <h4 class="text-sm font-semibold text-slate-800 dark:text-slate-200">Movimentações do
+                          Material</h4>
+                        <p class="text-xs text-slate-500">Registros de requisições atendidas vinculados a equipes.</p>
+                      </div>
+                      <p-tag value="Histórico Operacional" severity="info"></p-tag>
+                    </div>
+
+                    <p-table [value]="filteredMaterialHistory" dataKey="orderCode" responsiveLayout="scroll"
+                             styleClass="p-datatable-sm border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+                      <ng-template pTemplate="header">
+                        <tr class="bg-slate-50 dark:bg-slate-900/50">
+                          <th>OS / Req.</th>
+                          <th>Material</th>
+                          <th>Equipe</th>
+                          <th>Qtd</th>
+                          <th>Status</th>
+                          <th>Data</th>
+                        </tr>
+                      </ng-template>
+                      <ng-template pTemplate="body" let-item>
+                        <tr>
+                          <td class="font-medium">{{ item.orderCode }}</td>
+                          <td>{{ item.materialName }}</td>
+                          <td>
+                            <p-tag [value]="item.teamName" severity="info" class="text-xs"></p-tag>
+                          </td>
+                          <td class="font-medium">{{ item.quantityReleased }}</td>
+                          <td>
+                            <p-tag value="COLETADO" severity="success"></p-tag>
+                          </td>
+                          <td>{{ item.createdAt | date:'dd/MM/yyyy' }}</td>
+                        </tr>
+                      </ng-template>
+                      <ng-template pTemplate="emptymessage">
+                        <tr>
+                          <td colspan="6" class="py-10">
+                            <div class="flex flex-col items-center gap-2 text-center">
+                              <i class="pi pi-exclamation-triangle text-3xl text-amber-400 mb-2"></i>
+                              <p class="text-sm font-semibold text-slate-700 dark:text-slate-300">Nenhuma movimentação
+                                registrada</p>
+                              <p class="text-xs text-slate-500 max-w-md">Confirme com a equipe se há material disponível
+                                em campo para evitar divergências.</p>
+                            </div>
+                          </td>
+                        </tr>
+                      </ng-template>
+                    </p-table>
+                  </div>
+
+                  <!-- Card de Dica -->
+                  <div
+                    class="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-900/60 dark:bg-amber-950/30">
+                    <i class="pi pi-lightbulb mt-0.5 text-amber-500 dark:text-amber-400"></i>
+                    <div class="text-sm leading-relaxed text-amber-800 dark:text-amber-200">
+                      <p class="font-semibold mb-1">O que fazer quando não há movimentação?</p>
+                      <ul class="list-disc list-inside space-y-0.5 text-amber-700 dark:text-amber-300 opacity-90">
+                        <li><strong>Possui estoque no caminhão</strong> — confirme presencialmente.</li>
+                        <li><strong>Notificar Equipe</strong> — envie notificação via aplicativo.</li>
+                        <li><strong>WhatsApp</strong> — contate a equipe diretamente.</li>
+                      </ul>
+                    </div>
+                  </div>
+
+                  <!-- Botões de Ação -->
+                  <div class="flex flex-wrap gap-3 justify-end pt-2 border-t border-slate-100 dark:border-slate-700">
+                    <button pButton label="Possui estoque no caminhão" icon="pi pi-check"
+                            class="p-button-secondary p-button-outlined" (click)="ignore(true)"
+                            pTooltip="Confirma que a equipe possui este material em estoque."
+                            tooltipPosition="top"></button>
+                    <button pButton label="Notificar Equipe" icon="pi pi-bell" class="p-button-contrast"
+                            (click)="notifyTeam()" pTooltip="Envia notificação no app da equipe."
+                            tooltipPosition="top"></button>
+                    <button pButton label="WhatsApp" icon="pi pi-whatsapp" class="p-button-success"
+                            (click)="openWhatsApp()" pTooltip="Solicitar verificação via WhatsApp."
+                            tooltipPosition="top"></button>
+                  </div>
+
+                </div>
+              }
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+
+    <!--        finish buttons-->
+    <div class="w-full flex justify-center py-7 gap-4" *ngIf="Object.keys(this.expandedRows).length === 0">
+      <!--      <p-skeleton *ngIf="streetId === 0" width="20" height="100px" class="mr-2"></p-skeleton>-->
+      <button class="w-1/5" *ngIf="preMeasurementId === null && directExecutionId === null">
+        <p-skeleton height="2.5rem"/>
+      </button>
+
+      <button class="w-1/5" *ngIf="preMeasurementId === null && directExecutionId === null">
+        <p-skeleton height="2.5rem"/>
+      </button>
+
+      <button class="w-1/5" *ngIf="preMeasurementId === null && directExecutionId === null">
+        <p-skeleton height="2.5rem"/>
+      </button>
+
+      <p-button type="button" label="Exibir comentários" [loading]="loading" (click)="showComment()" rounded
+                severity="secondary"
+                *ngIf="preMeasurementId !== null || directExecutionId !== null">
+      </p-button>
+
+      <p-button type="button" label="Voltar para solicitações" [loading]="loading"
+                routerLink="/requisicoes/instalacoes/gerenciamento-estoque" rounded severity="secondary"
+                *ngIf="preMeasurementId !== null || directExecutionId !== null">
+      </p-button>
+
+      <p-button type="button" label="Salvar tudo" [loading]="loading" (click)="sendData()" rounded
+                severity="contrast"
+                *ngIf="preMeasurementId !== null || directExecutionId !== null">
+      </p-button>
+    </div>
+  </div>
+
+  <p-dialog [header]="'Equipe ' + reserve.teamName" [modal]="true" [(visible)]="showModalTeam" position="bottom"
+            [style]="{ width: '25rem', padding: '1rem' }" [dismissableMask]="true">
+    <ng-container *ngIf="loading">
+      <div class="flex h-40 w-full justify-center items-center">
+        <app-loading></app-loading>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="!loading && filteredUsers.length > 0">
+      <div *ngFor="let user of filteredUsers; index as i;" class="mb-4 border-b pb-3">
+        <div class="flex items-center gap-3">
+          <i class="pi pi-phone"></i>
+          <div class="flex flex-col">
+            <span class="font-semibold text-gray-800 dark:text-neutral-100">{{
+                user.name + ' ' + user.last_name
+              }}</span>
+            <div class="flex items-center gap-2 group" *ngIf="user.phone_number">
+
+              <!-- LIGAR -->
+              <a
+                class="text-sm font-medium">
+                {{ user.phone_number | mask: '(00) 00000-0000' }}
+              </a>
+
+              <!-- COPIAR -->
+              <button
+                type="button"
+                (click)="copyPhone(user.phone_number)"
+                class="relative flex items-center justify-center
+                                    w-7 h-7 rounded-md
+                                    text-gray-500 hover:text-gray-800
+                                    hover:bg-gray-100 transition">
+
+                <i class="pi pi-copy text-sm"></i>
+                <!-- TOOLTIP -->
+                <span
+                  class="pointer-events-none absolute bottom-full mb-2
+                                            opacity-0 group-hover:opacity-100
+                                            transition text-xs
+                                            bg-gray-900 text-white px-2 py-1 rounded">
+                                            Copiar número
+                                    </span>
+              </button>
+            </div>
+            <p *ngIf="!user.phone_number">
+              Telefone não cadastrado
+            </p>
+
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="!loading && filteredUsers.length === 0">
+      <div class="flex h-32 w-full justify-center items-center">
+        <p>Cadastro não encontrado para essa equipe</p>
+      </div>
+    </ng-container>
+
+  </p-dialog>
+
+  <p-toast/>
+
+  <p-toast [position]="'bottom-center'" key="quantityAlert">
+    <ng-template let-message pTemplate="message">
+      <div class="flex flex-col w-full">
+        <div class="flex items-center mb-4 justify-center">
+          <i class="pi pi-exclamation-triangle mr-2" style="font-size: 2rem"></i>
+          <h2>{{ message.summary }}</h2>
+        </div>
+
+        <p class="mb-4 text-center">
+          {{ message.detail }}
+        </p>
+
+        <div class="flex justify-end gap-2">
+          <p-button size="small" icon="pi pi-ban" label="Não mostrar novamente" severity="secondary" rounded
+                    (click)="utils.clearToast('quantityAlert'); allowMeasuredMessage = false">
+          </p-button>
+
+          <p-button size="small" icon="pi pi-check" label="Ok" severity="contrast" rounded
+                    (click)="utils.clearToast('quantityAlert')">
+          </p-button>
+        </div>
+      </div>
+    </ng-template>
+  </p-toast>
+
+  <p-toast [position]="'bottom-center'" key="comment"/>
+
+
+</div>

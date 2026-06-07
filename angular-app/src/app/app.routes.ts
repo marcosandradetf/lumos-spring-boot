@@ -1,16 +1,16 @@
 // app/app.routes.ts
 import {Routes} from '@angular/router';
 import {AuthGuard} from './core/auth/auth.guard';
-import {ServiceRequestMapComponent} from './maintenance/request/service-request-map.component';
+import {ServiceRequestMapComponent} from './features/maintenance/request/service-request-map.component';
 import {
     ContractReferenceItemFormComponent
-} from './contract/contract-reference-item-form/contract-reference-item-form.component';
+} from './features/contract/contract-reference-item-form/contract-reference-item-form.component';
 import {
     ContractReferenceItemLinksComponent
-} from './contract/contract-reference-item-links/contract-reference-item-links.component';
-import {MaterialFormComponent} from './stock/material-form/material-form.component';
-import {ServerErrorComponent} from './server-error/server-error.component';
-import {StockistsComponent} from './stock/stockists/stockists.component';
+} from './features/contract/contract-reference-item-links/contract-reference-item-links.component';
+import {MaterialFormComponent} from './features/stock/material-form/material-form.component';
+import {ServerErrorComponent} from './shared/components/server-error/server-error.component';
+import {StockistsComponent} from './features/stock/stockists/stockists.component';
 
 
 export const routes: Routes = [
@@ -42,13 +42,13 @@ export const routes: Routes = [
     // start billing paths
     {
         path: 'cobranca',
-        loadComponent: () => import('./billing/billing.component').then(m => m.BillingComponent),
+        loadComponent: () => import('./features/billing/billing.component').then(m => m.BillingComponent),
         canActivate: [AuthGuard],
         data: {role: ['ADMIN'], path: 'cobranca'},
     },
     {
         path: 'acesso-indisponivel',
-        loadComponent: () => import('./billing/unavailable-access.component').then(m => m.UnavailableAccessComponent),
+        loadComponent: () => import('./features/billing/unavailable-access.component').then(m => m.UnavailableAccessComponent),
         canActivate: [AuthGuard],
         data: {role: [], path: 'acesso-indisponivel'},
     },
@@ -57,7 +57,7 @@ export const routes: Routes = [
     // start paths stock
     {
         path: 'estoque/cadastrar-material',
-        loadComponent: () => import('./stock/material-form/material-form.component').then(m => m.MaterialFormComponent),
+        loadComponent: () => import('./features/stock/material-form/material-form.component').then(m => m.MaterialFormComponent),
         canActivate: [AuthGuard],
         data: {
             role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE', 'ANALISTA', 'RESPONSAVEL_TECNICO'],
@@ -69,7 +69,7 @@ export const routes: Routes = [
     },
     {
         path: 'estoque/editar-material',
-        loadComponent: () => import('./stock/material-form/material-form.component').then(m => m.MaterialFormComponent),
+        loadComponent: () => import('./features/stock/material-form/material-form.component').then(m => m.MaterialFormComponent),
         canActivate: [AuthGuard],
         data: {
             role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'estoque'
@@ -77,7 +77,7 @@ export const routes: Routes = [
     },
     {
         path: 'estoque/catalogo-materiais',
-        loadComponent: () => import('./stock/material/material-page.component').then(m => m.MaterialPageComponent),
+        loadComponent: () => import('./features/stock/material/material-page.component').then(m => m.MaterialPageComponent),
         canActivate: [AuthGuard],
         data: {
             title: 'Catálogo de Materiais',
@@ -87,19 +87,19 @@ export const routes: Routes = [
     },
     {
         path: 'estoque/grupos',
-        loadComponent: () => import('./stock/groups/groups.component').then(m => m.GroupsComponent),
+        loadComponent: () => import('./features/stock/groups/groups.component').then(m => m.GroupsComponent),
         canActivate: [AuthGuard],
         data: {role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque'},
     },
     {
         path: 'estoque/tipos',
-        loadComponent: () => import('./stock/types/types.component').then(m => m.TypesComponent),
+        loadComponent: () => import('./features/stock/types/types.component').then(m => m.TypesComponent),
         canActivate: [AuthGuard],
         data: {role: ['ADMIN'], path: 'estoque'},
     },
     {
         path: 'estoque/movimentar-estoque',
-        loadComponent: () => import('./stock/stock-movement/stock-movement.component').then(m => m.StockMovementComponent),
+        loadComponent: () => import('./features/stock/stock-movement/stock-movement.component').then(m => m.StockMovementComponent),
         canActivate: [AuthGuard],
         data: {
             title: 'Movimentar Estoque',
@@ -109,7 +109,7 @@ export const routes: Routes = [
     },
     {
         path: 'estoque/movimentar-estoque-pendente',
-        loadComponent: () => import('./stock/stock-movement-pending/stock-movement-pending.component').then(m => m.StockMovementPendingComponent),
+        loadComponent: () => import('./features/stock/stock-movement-pending/stock-movement-pending.component').then(m => m.StockMovementPendingComponent),
         canActivate: [AuthGuard],
         data: {
             title: 'Movimentações de Estoque Pendentes',
@@ -119,7 +119,7 @@ export const routes: Routes = [
     },
     {
         path: 'estoque/movimentar-estoque-aprovado',
-        loadComponent: () => import('./stock/stock-movement-approvated/stock-movement-approvated.component').then(m => m.StockMovementApprovatedComponent),
+        loadComponent: () => import('./features/stock/stock-movement-approvated/stock-movement-approvated.component').then(m => m.StockMovementApprovatedComponent),
         canActivate: [AuthGuard],
         data: {
             role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque'
@@ -127,7 +127,7 @@ export const routes: Routes = [
     },
     {
         path: 'estoque/almoxarifados',
-        loadComponent: () => import('./stock/deposits/deposits.component').then(m => m.DepositsComponent),
+        loadComponent: () => import('./features/stock/deposits/deposits.component').then(m => m.DepositsComponent),
         canActivate: [AuthGuard],
         data: {
             title: 'Almoxarifados',
@@ -138,7 +138,7 @@ export const routes: Routes = [
 
     {
         path: 'estoque/caminhoes',
-        loadComponent: () => import('./stock/truck-deposits/deposits.component').then(d => d.TruckDepositComponent),
+        loadComponent: () => import('./features/stock/truck-deposits/deposits.component').then(d => d.TruckDepositComponent),
         canActivate: [AuthGuard],
         data: {
             title: 'Caminhões / Veículos',
@@ -148,7 +148,7 @@ export const routes: Routes = [
     },
     {
         path: 'configuracoes/importar-planilha',
-        loadComponent: () => import('./stock/import-materials/import-materials.component').then(m => m.ImportMaterialsComponent),
+        loadComponent: () => import('./features/stock/import-materials/import-materials.component').then(m => m.ImportMaterialsComponent),
         canActivate: [AuthGuard],
         data: {role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'estoque'},
     },
@@ -161,7 +161,7 @@ export const routes: Routes = [
     {path: 'contratos', redirectTo: 'contratos/dashboard'},
     {
         path: 'contratos/dashboard',
-        loadComponent: () => import('./contract/pages/dashboard/dashboard.component').then(m => m.DashboardComponent),
+        loadComponent: () => import('./features/contract/pages/dashboard/dashboard.component').then(m => m.DashboardComponent),
         canActivate: [AuthGuard],
         data: {role: ['ADMIN', 'ANALISTA'], path: 'contratos'},
     },
@@ -178,22 +178,28 @@ export const routes: Routes = [
     {
         path: 'contratos/itens-contratuais/vinculos',
         component: ContractReferenceItemLinksComponent,
-        children: [
-            {
-                path: 'material-create',
-                component: MaterialFormComponent
-            }
-        ],
         canActivate: [AuthGuard],
         data: {
             title: 'Vincular Itens Contratuais',
             icon: 'pi pi-link text-cyan-500',
+            query: {operation: 'item'},
+            role: ['ADMIN', 'ANALISTA'], path: 'contratos'
+        },
+    },
+    {
+        path: 'contratos/itens-contratuais/vinculos',
+        component: ContractReferenceItemLinksComponent,
+        canActivate: [AuthGuard],
+        data: {
+            title: 'Vincular Materiais aos Itens Contratuais',
+            icon: 'pi pi-link text-cyan-500',
+            query: {operation: 'material'},
             role: ['ADMIN', 'ANALISTA'], path: 'contratos'
         },
     },
     {
         path: 'contratos/criar',
-        loadComponent: () => import('./contract/pages/create/create.component').then(m => m.CreateComponent),
+        loadComponent: () => import('./features/contract/pages/create/create.component').then(m => m.CreateComponent),
         canActivate: [AuthGuard],
         data: {
             title: 'Novo Contrato',
@@ -203,13 +209,13 @@ export const routes: Routes = [
     },
     {
         path: 'contratos/editar',
-        loadComponent: () => import('./contract/pages/create/create.component').then(m => m.CreateComponent),
+        loadComponent: () => import('./features/contract/pages/create/create.component').then(m => m.CreateComponent),
         canActivate: [AuthGuard],
         data: {role: ['ADMIN', 'ANALISTA'], path: 'contratos'},
     },
     {
         path: 'contratos/listar',
-        loadComponent: () => import('./contract/pages/list/contract-list/contract-list.component').then(c => c.ContractListComponent),
+        loadComponent: () => import('./features/contract/pages/list/contract-list/contract-list.component').then(c => c.ContractListComponent),
         canActivate: [AuthGuard],
         data: {
             title: 'Listar Contratos',
@@ -220,7 +226,7 @@ export const routes: Routes = [
 
     {
         path: 'contratos/listar',
-        loadComponent: () => import('./contract/pages/list/contract-list/contract-list.component').then(c => c.ContractListComponent),
+        loadComponent: () => import('./features/contract/pages/list/contract-list/contract-list.component').then(c => c.ContractListComponent),
         canActivate: [AuthGuard],
         data: {
             title: 'Nova Ordem de Serviço Sem Pré-medição',
@@ -233,7 +239,7 @@ export const routes: Routes = [
 
     {
         path: 'contratos/instalacoes-pendentes',
-        loadComponent: () => import('./contract/pending-executions/pending-executions.component').then(e => e.PendingExecutionsComponent),
+        loadComponent: () => import('./features/contract/pending-executions/pending-executions.component').then(e => e.PendingExecutionsComponent),
         canActivate: [AuthGuard],
         data: {
             title: 'Vincular Instalações',
@@ -243,7 +249,7 @@ export const routes: Routes = [
     },
     {
         path: 'contratos/validar-execucao/:id',
-        loadComponent: () => import('./contract/validate-execution/execution-no-work-service.component').then(e => e.ExecutionNoWorkServiceComponent),
+        loadComponent: () => import('./features/contract/validate-execution/execution-no-work-service.component').then(e => e.ExecutionNoWorkServiceComponent),
         canActivate: [AuthGuard],
         data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
     },
@@ -252,15 +258,15 @@ export const routes: Routes = [
     // start settings path
     {
         path: 'configuracoes/onboarding',
-        loadComponent: () => import('./manage/settings/settings.component').then(s => s.SettingsComponent),
+        loadComponent: () => import('./features/manage/settings/settings.component').then(s => s.SettingsComponent),
         children: [
             {
                 path: 'usuarios',
-                loadComponent: () => import('./manage/user/user.component').then(m => m.UserComponent),
+                loadComponent: () => import('./features/manage/user/user.component').then(m => m.UserComponent),
             },
             {
                 path: 'equipes',
-                loadComponent: () => import('./manage/team/team.component').then(m => m.TeamComponent),
+                loadComponent: () => import('./features/manage/team/team.component').then(m => m.TeamComponent),
             },
             {
                 path: 'estoquistas',
@@ -268,15 +274,15 @@ export const routes: Routes = [
             },
             {
                 path: 'almoxarifados',
-                loadComponent: () => import('./stock/deposits/deposits.component').then(m => m.DepositsComponent),
+                loadComponent: () => import('./features/stock/deposits/deposits.component').then(m => m.DepositsComponent),
             },
             {
                 path: 'caminhoes',
-                loadComponent: () => import('./stock/truck-deposits/deposits.component').then(d => d.TruckDepositComponent),
+                loadComponent: () => import('./features/stock/truck-deposits/deposits.component').then(d => d.TruckDepositComponent),
             },
             {
                 path: 'cadastrar-material',
-                loadComponent: () => import('./stock/material-form/material-form.component').then(m => m.MaterialFormComponent),
+                loadComponent: () => import('./features/stock/material-form/material-form.component').then(m => m.MaterialFormComponent),
             },
             {
                 path: 'itens-contratuais',
@@ -294,7 +300,7 @@ export const routes: Routes = [
             },
             {
                 path: 'criar-contrato',
-                loadComponent: () => import('./contract/pages/create/create.component').then(m => m.CreateComponent),
+                loadComponent: () => import('./features/contract/pages/create/create.component').then(m => m.CreateComponent),
             }
         ],
         canActivate: [AuthGuard],
@@ -302,7 +308,7 @@ export const routes: Routes = [
     },
     {
         path: 'configuracoes/usuarios',
-        loadComponent: () => import('./manage/user/user.component').then(m => m.UserComponent),
+        loadComponent: () => import('./features/manage/user/user.component').then(m => m.UserComponent),
         canActivate: [AuthGuard],
         data: {
             title: 'Usuários',
@@ -312,7 +318,7 @@ export const routes: Routes = [
     },
     {
         path: 'configuracoes/equipes',
-        loadComponent: () => import('./manage/team/team.component').then(m => m.TeamComponent),
+        loadComponent: () => import('./features/manage/team/team.component').then(m => m.TeamComponent),
         canActivate: [AuthGuard],
         data: {
             title: 'Equipes Operacionais',
@@ -332,13 +338,13 @@ export const routes: Routes = [
     },
     {
         path: 'configuracoes/empresa',
-        loadComponent: () => import('./manage/team/team.component').then(m => m.TeamComponent),
+        loadComponent: () => import('./features/manage/team/team.component').then(m => m.TeamComponent),
         canActivate: [AuthGuard],
         data: {role: ['ADMIN'], path: 'configuracoes'},
     },
     {
         path: 'configuracoes/conta',
-        loadComponent: () => import('./manage/account/account.component').then(a => a.AccountComponent),
+        loadComponent: () => import('./features/manage/account/account.component').then(a => a.AccountComponent),
         canActivate: [AuthGuard],
         data: {
             title: 'Minha Conta',
@@ -351,7 +357,7 @@ export const routes: Routes = [
     // start executions/pre-measurements path
     {
         path: 'pre-medicao/:status',
-        loadComponent: () => import('./pre-measurement/pre-measurement-home/pre-measurement.component').then(p => p.PreMeasurementComponent),
+        loadComponent: () => import('./features/pre-measurement/pre-measurement-home/pre-measurement.component').then(p => p.PreMeasurementComponent),
         canActivate: [AuthGuard],
         data: {
             title: 'Pré-medições para Análise',
@@ -363,7 +369,7 @@ export const routes: Routes = [
 
     {
         path: 'pre-medicao/:status',
-        loadComponent: () => import('./pre-measurement/pre-measurement-home/pre-measurement.component').then(p => p.PreMeasurementComponent),
+        loadComponent: () => import('./features/pre-measurement/pre-measurement-home/pre-measurement.component').then(p => p.PreMeasurementComponent),
         canActivate: [AuthGuard],
         data: {
             title: 'Nova Ordem de Serviço Com Pré-medição',
@@ -374,25 +380,25 @@ export const routes: Routes = [
     },
     {
         path: 'pre-medicao/relatorio/:id/:step',
-        loadComponent: () => import('./pre-measurement/pre-measurement-report/pre-measurement-report.component').then(p => p.PreMeasurementReportComponent),
+        loadComponent: () => import('./features/pre-measurement/pre-measurement-report/pre-measurement-report.component').then(p => p.PreMeasurementReportComponent),
         canActivate: [AuthGuard],
         data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
     },
     {
         path: 'pre_medicao/editar',
-        loadComponent: () => import('./pre-measurement/pre-measurement-edit/pre-measurement-edit.component').then(p => p.PreMeasurementEditComponent),
+        loadComponent: () => import('./features/pre-measurement/pre-measurement-edit/pre-measurement-edit.component').then(p => p.PreMeasurementEditComponent),
         canActivate: [AuthGuard],
         data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
     },
     {
         path: 'pre-medicao/importar/contrato/:id',
-        loadComponent: () => import('./pre-measurement/import-pre-measurements/import-pre-measurements.component').then(p => p.ImportPreMeasurementsComponent),
+        loadComponent: () => import('./features/pre-measurement/import-pre-measurements/import-pre-measurements.component').then(p => p.ImportPreMeasurementsComponent),
         canActivate: [AuthGuard],
         data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
     },
     {
         path: 'pre_medicao/visualizar',
-        loadComponent: () => import('./pre-measurement/pre-measurement-view/pre-measurement-view.component').then(p => p.PreMeasurementViewComponent),
+        loadComponent: () => import('./features/pre-measurement/pre-measurement-view/pre-measurement-view.component').then(p => p.PreMeasurementViewComponent),
         canActivate: [AuthGuard],
         data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
     },
@@ -401,14 +407,14 @@ export const routes: Routes = [
     // start executions/executions path
     {
         path: 'execucao/pre-medicao/:id',
-        loadComponent: () => import('./executions/pre-measurement-available/measurement-details.component').then(m => m.MeasurementDetailsComponent),
+        loadComponent: () => import('./features/executions/pre-measurement-available/measurement-details.component').then(m => m.MeasurementDetailsComponent),
         canActivate: [AuthGuard],
         data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
     },
 
     {
         path: 'ordens-de-servico/nova',
-        loadComponent: () => import('./executions/execution-no-pre-measurement/execution-no-pre-measurement.component').then(e => e.ExecutionNoPreMeasurementComponent),
+        loadComponent: () => import('./features/executions/execution-no-pre-measurement/execution-no-pre-measurement.component').then(e => e.ExecutionNoPreMeasurementComponent),
         canActivate: [AuthGuard],
         data: {
             role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'
@@ -417,7 +423,7 @@ export const routes: Routes = [
 
     {
         path: 'execucoes/:status',
-        loadComponent: () => import('./executions/execution-progress/execution-progress.component').then(e => e.ExecutionProgressComponent),
+        loadComponent: () => import('./features/executions/execution-progress/execution-progress.component').then(e => e.ExecutionProgressComponent),
         canActivate: [AuthGuard],
         data: {role: ['ADMIN', 'ANALISTA', 'RESPONSAVEL_TECNICO'], path: 'execucoes'},
     },
@@ -426,7 +432,7 @@ export const routes: Routes = [
     // start request path
     {
         path: 'requisicoes/instalacoes/gerenciamento-estoque',
-        loadComponent: () => import('./requests/reservation-management/reservation-management.component').then(r => r.ReservationManagementComponent),
+        loadComponent: () => import('./features/requests/reservation-management/reservation-management.component').then(r => r.ReservationManagementComponent),
         canActivate: [AuthGuard],
         data: {
             title: 'Gerenciar Ordens de Serviço',
@@ -436,13 +442,13 @@ export const routes: Routes = [
     },
     {
         path: 'requisicoes/gerenciamento/execucao',
-        loadComponent: () => import('./requests/reservation-management-select/reservation-management-select.component').then(r => r.ReservationManagementSelectComponent),
+        loadComponent: () => import('./features/requests/reservation-management-select/reservation-management-select.component').then(r => r.ReservationManagementSelectComponent),
         canActivate: [AuthGuard],
         data: {role: ['ADMIN', 'ESTOQUISTA', 'ESTOQUISTA_CHEFE'], path: 'gerenciamento-reservas'},
     },
     {
         path: 'requisicoes',
-        loadComponent: () => import('./requests/reservation-pending/reservation-pending.component').then(r => r.ReservationPendingComponent),
+        loadComponent: () => import('./features/requests/reservation-pending/reservation-pending.component').then(r => r.ReservationPendingComponent),
         canActivate: [AuthGuard],
         data: {
             title: 'Requisições Pendentes de Aprovação',
@@ -453,7 +459,7 @@ export const routes: Routes = [
     },
     {
         path: 'requisicoes',
-        loadComponent: () => import('./requests/reservation-pending/reservation-pending.component').then(r => r.ReservationPendingComponent),
+        loadComponent: () => import('./features/requests/reservation-pending/reservation-pending.component').then(r => r.ReservationPendingComponent),
         canActivate: [AuthGuard],
         data: {
             title: 'Requisições Disponíveis para Coleta',
@@ -467,7 +473,7 @@ export const routes: Routes = [
     //reports
     {
         path: 'relatorios/gerenciamento',
-        loadComponent: () => import('./reports/execution/manage/report-manage.component').then(r => r.ReportManageComponent),
+        loadComponent: () => import('./features/reports/execution/manage/report-manage.component').then(r => r.ReportManageComponent),
         canActivate: [AuthGuard],
         data: {
             role: ['ADMIN', 'RESPONSAVEL_TECNICO', 'ANALISTA',],
@@ -476,7 +482,7 @@ export const routes: Routes = [
     },
     {
         path: 'relatorios/manutencoes',
-        loadComponent: () => import('./reports/execution/maintenance/maintenance.component').then(r => r.MaintenanceComponent),
+        loadComponent: () => import('./features/reports/execution/maintenance/maintenance.component').then(r => r.MaintenanceComponent),
         canActivate: [AuthGuard],
         data: {
             title: 'Relatórios de Manutenções',
@@ -487,7 +493,7 @@ export const routes: Routes = [
     },
     {
         path: 'relatorios/instalacoes',
-        loadComponent: () => import('./reports/execution/installation/installation.component').then(r => r.InstallationComponent),
+        loadComponent: () => import('./features/reports/execution/installation/installation.component').then(r => r.InstallationComponent),
         canActivate: [AuthGuard],
         data: {
             title: 'Relatórios de Instalacoes',
@@ -497,7 +503,7 @@ export const routes: Routes = [
     },
     {
         path: 'relatorios/estoque/saida-saldo-instalacao',
-        loadComponent: () => import('./reports/material-reservation/material-reservation.component').then(r => r.MaterialReservationComponent),
+        loadComponent: () => import('./features/reports/material-reservation/material-reservation.component').then(r => r.MaterialReservationComponent),
         canActivate: [AuthGuard],
         data: {
             title: 'Relatório de Saída/Saldo por Instalação',
@@ -508,7 +514,7 @@ export const routes: Routes = [
     },
     {
         path: 'relatorios/execucoes/analitico-de-operacoes',
-        loadComponent: () => import('./reports/execution/operation/operation.component').then(r => r.OperationComponent),
+        loadComponent: () => import('./features/reports/execution/operation/operation.component').then(r => r.OperationComponent),
         canActivate: [AuthGuard],
         data: {
             title: 'Relatório Analítico de Operações',
@@ -528,7 +534,7 @@ export const routes: Routes = [
     //dashboards
     {
         path: 'dashboard',
-        loadComponent: () => import('./dashboard/home/dashboard.component').then(d => d.DashboardComponent),
+        loadComponent: () => import('./features/dashboard/home/dashboard.component').then(d => d.DashboardComponent),
         canActivate: [AuthGuard],
         data: {
             title: 'Dashboard',
@@ -539,7 +545,7 @@ export const routes: Routes = [
 
     {
         path: 'dashboard/mapa-execucoes',
-        loadComponent: () => import('./dashboard/map/map.component').then(d => d.MapComponent),
+        loadComponent: () => import('./features/dashboard/map/map.component').then(d => d.MapComponent),
         canActivate: [AuthGuard],
         data: {
             title: 'Mapa de Execuções',
@@ -549,7 +555,7 @@ export const routes: Routes = [
     },
     {
         path: 'dashboard/visao-executiva',
-        loadComponent: () => import('./dashboard/executive/executive.component').then(d => d.ExecutiveComponent),
+        loadComponent: () => import('./features/dashboard/executive/executive.component').then(d => d.ExecutiveComponent),
         canActivate: [AuthGuard],
         data: {
             title: 'Dashboard de Visão Executiva',
@@ -559,7 +565,7 @@ export const routes: Routes = [
     },
     {
         path: 'dashboard/produtividade-equipe',
-        loadComponent: () => import('./dashboard/team/team-operational-dashboard.component').then(d => d.TeamOperationalDashboardComponent),
+        loadComponent: () => import('./features/dashboard/team/team-operational-dashboard.component').then(d => d.TeamOperationalDashboardComponent),
         canActivate: [AuthGuard],
         data: {
             title: 'Dashboard de Produtividade da Equipe',

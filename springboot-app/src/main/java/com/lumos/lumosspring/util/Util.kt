@@ -197,6 +197,7 @@ object ContractType {
 
 object ExecutionStatus {
     const val PENDING = "PENDING"
+    const val CANCELLED = "CANCELLED"
     const val WAITING_CONTRACTOR = "WAITING_CONTRACTOR"
     const val AVAILABLE = "AVAILABLE"
     const val WAITING_STOCKIST = "WAITING_STOCKIST"

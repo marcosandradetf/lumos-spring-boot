@@ -97,7 +97,7 @@ public class StockMovementService {
     }
 
     @Transactional
-    public ResponseEntity<String> approveStockMovement(long movementId, String refreshToken) {
+    public ResponseEntity<String> approveStockMovement(long movementId) {
         var movement = stockMovementRepository.findById(movementId).orElse(null);
         if (movement == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -108,7 +108,7 @@ public class StockMovementService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Não é possível aprovar pois Movimento já foi aprovado.");
         }
         movement.setStatus("APPROVED");
-        movement.setAppUserFinishedId(Objects.requireNonNull(util.getUserFromRToken(refreshToken)));
+        movement.setAppUserFinishedId(Utils.getCurrentUserId());
 
         var materialStock = materialStockRegisterRepository.findById(movement.getMaterialStockId()).orElseThrow();
 
@@ -123,7 +123,7 @@ public class StockMovementService {
         return ResponseEntity.status(HttpStatus.OK).body("Movimento aprovado com sucesso.");
     }
 
-    public ResponseEntity<String> rejectStockMovement(long movementId, String refreshToken) {
+    public ResponseEntity<String> rejectStockMovement(long movementId) {
         var movement = stockMovementRepository.findById(movementId).orElse(null);
         if (movement == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -133,7 +133,7 @@ public class StockMovementService {
         }
 
         movement.setStatus("REJECTED");
-        movement.setAppUserFinishedId(Objects.requireNonNull(util.getUserFromRToken(refreshToken)));
+        movement.setAppUserFinishedId(Utils.getCurrentUserId());
         stockMovementRepository.save(movement);
 
 

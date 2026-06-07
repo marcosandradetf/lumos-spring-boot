@@ -3,6 +3,7 @@ package com.lumos.lumosspring.installation.repository.view
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonRawValue
 import com.lumos.lumosspring.installation.view.InstallationView
+import com.lumos.lumosspring.util.ExecutionStatus
 import org.springframework.data.jdbc.repository.query.Query
 import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
@@ -134,13 +135,23 @@ interface InstallationViewRepository : CrudRepository<InstallationView, Long> {
         val status: String,
     )
 
-//    @Query("""
-//        select exists(
-//            select 1
-//            from installation_street_item_view isiv
-//            join contract_item ci on ci.contract_item_id = isiv.contract_item_id
-//            where ci.contract_item_reference_id = :contractReferenceItemId
-//        )
-//    """)
-//    fun hasInstallationByContractReferenceId(contractReferenceItemId: Long): Boolean
+    @Query("""
+        select exists(
+            select 1
+            from installation_view iv
+            join installation_street_view isv on isv.installation_id = iv.installation_id
+                and isv.installation_type = iv.installation_type
+            join installation_street_item_view isiv on isiv.installation_street_id = isv.installation_street_id
+                and isiv.installation_type = isv.installation_type
+            join contract_item ci on ci.contract_item_id = isiv.contract_item_id
+            where ci.contract_item_reference_id = :contractReferenceItemId
+                and iv.status <> :status
+        )
+    """)
+    fun hasInstallationByContractReferenceId(
+        contractReferenceItemId: Long,
+        status: String = ExecutionStatus.CANCELLED
+    ): Boolean
+
+
 }

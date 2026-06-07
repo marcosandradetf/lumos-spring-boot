@@ -30,6 +30,16 @@ export class FcmService {
     private tenant = localStorage.getItem('tenant') ?? '';
 
     constructor() {
+        const userAgent = window.navigator.userAgent.toLowerCase();
+
+        const isIosWebView = !('Notification' in window);
+        const isAndroidWebView = userAgent.includes('wv');
+
+        if (isIosWebView || isAndroidWebView) {
+            console.warn('API de Notificações não suportada neste navegador.');
+            return;
+        }
+
         switch (Notification.permission) {
             case 'granted':
                 this.notificationStatus.next('granted');
@@ -177,6 +187,16 @@ export class FcmService {
 
     // No FcmService.ts
     initListen() {
+        const userAgent = window.navigator.userAgent.toLowerCase();
+
+        const isIosWebView = !('Notification' in window);
+        const isAndroidWebView = userAgent.includes('wv');
+
+        if (isIosWebView || isAndroidWebView) {
+            console.warn('API de Notificações não suportada neste navegador.');
+            return;
+        }
+
         onMessage(this.messaging, (payload) => {
             const data = payload.data;
             const tenant = data?.['tenant'];
@@ -255,6 +275,16 @@ export class FcmService {
     }
 
     async getPermission(roles: string[]) {
+        const userAgent = window.navigator.userAgent.toLowerCase();
+
+        const isIosWebView = !('Notification' in window);
+        const isAndroidWebView = userAgent.includes('wv');
+
+        if (isIosWebView || isAndroidWebView) {
+            console.warn('API de Notificações não suportada neste navegador.');
+            return;
+        }
+
         switch (this.notificationStatus.getValue()) {
             case 'granted':
                 await this.subscribeFCMToken(roles);
@@ -288,6 +318,16 @@ export class FcmService {
     }
 
     async revokePermission(roles: string[]): Promise<void> {
+        const userAgent = window.navigator.userAgent.toLowerCase();
+
+        const isIosWebView = !('Notification' in window);
+        const isAndroidWebView = userAgent.includes('wv');
+
+        if (isIosWebView || isAndroidWebView) {
+            console.warn('API de Notificações não suportada neste navegador.');
+            return;
+        }
+
         if (Notification.permission === 'granted') {
             try {
                 const token = await getToken(this.messaging, {
@@ -375,6 +415,15 @@ export class FcmService {
 
 
     async getBanner(type: string) {
+        const userAgent = window.navigator.userAgent.toLowerCase();
+
+        const isIosWebView = !('Notification' in window);
+        const isAndroidWebView = userAgent.includes('wv');
+
+        if (isIosWebView || isAndroidWebView) {
+            console.warn('API de Notificações não suportada neste navegador.');
+            return;
+        }
 
         const db = await openDB('lumos_db', version, {
             upgrade(db, oldVersion, newVersion, transaction) {

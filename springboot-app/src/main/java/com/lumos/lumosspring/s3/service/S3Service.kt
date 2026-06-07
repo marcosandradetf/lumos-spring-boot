@@ -1,5 +1,6 @@
 package com.lumos.lumosspring.s3.service
 
+import com.lumos.lumosspring.util.Utils
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
@@ -34,6 +35,16 @@ class S3Service(
             ?.substringAfterLast('.', "")
             ?.takeIf { it.isNotBlank() }
             ?: ""
+
+        val limit = when (extension.lowercase()) {
+            "pdf" -> 25
+            "zip" -> 100
+            else -> 10
+        }
+
+        if((file.size / (1024 * 1024)) > limit) {
+            throw Utils.BusinessException("O arquivo não pode ser maior que ${limit}MB")
+        }
 
         val objectName =
             "tenants/$tenantId/$folder/${fileName}_file_${System.currentTimeMillis()}.$extension"

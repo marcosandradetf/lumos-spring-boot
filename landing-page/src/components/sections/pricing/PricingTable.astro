@@ -103,15 +103,15 @@ function formatPrice(price: number): string {
     {
       hasHeading && (
         <div class="text-center max-w-3xl mx-auto mb-12">
-          {title && <h2 class="text-3xl sm:text-4xl font-bold text-text">{title}</h2>}
-          {subtitle && <p class="mt-4 text-lg text-text-muted">{subtitle}</p>}
+          {title && <h2 class="text-3xl sm:text-4xl font-bold text-text leading-tight">{title}</h2>}
+          {subtitle && <p class="mt-4 text-lg text-text-muted leading-relaxed">{subtitle}</p>}
         </div>
       )
     }
 
     <!-- Billing Toggle -->
     <div class="flex justify-center mb-12">
-      <div class="inline-flex items-center gap-3 p-1.5 bg-surface border border-border rounded-lg">
+      <div class="inline-flex items-center gap-3 p-1.5 bg-surface border border-border rounded-lg shadow-sm">
         <button
           type="button"
           data-period="monthly"
@@ -167,10 +167,10 @@ function formatPrice(price: number): string {
           return (
             <div
               class:list={[
-                'pricing-card relative p-8 rounded-lg border transition-all',
+                'pricing-card relative p-8 rounded-lg border shadow-sm transition-all duration-300',
                 plan.highlighted
-                  ? 'bg-primary/5 border-primary shadow-lg scale-[1.02]'
-                  : 'bg-surface border-border hover:border-primary/50 hover:shadow-md',
+                  ? 'bg-primary/5 border-primary shadow-xl scale-[1.02]'
+                  : 'bg-surface border-border hover:-translate-y-1 hover:border-primary/50 hover:shadow-lg',
               ]}
               data-monthly-price={hasNumericPrice ? monthlyPrice : ''}
               data-annual-price={hasNumericPrice ? annualPrice : ''}
@@ -178,7 +178,7 @@ function formatPrice(price: number): string {
             >
               {badgeText && (
                 <div class="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span class="inline-block px-3 py-1 text-xs font-semibold text-white bg-primary rounded-full whitespace-nowrap">
+                  <span class="inline-block px-3 py-1 text-xs font-semibold text-white bg-primary rounded-full whitespace-nowrap shadow-sm">
                     {badgeText}
                   </span>
                 </div>
@@ -255,7 +255,7 @@ function formatPrice(price: number): string {
                   class:list={[
                     'block w-full text-center px-6 py-3 rounded-md font-medium transition-colors',
                     plan.highlighted
-                      ? 'bg-primary text-white hover:bg-primary-dark'
+                      ? 'bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary-dark'
                       : 'bg-surface border border-border text-text hover:bg-background hover:border-primary/50',
                   ]}
                 >

@@ -1,7 +1,7 @@
 import {Component, ElementRef, HostListener, OnInit, ViewChild} from '@angular/core';
 import {AsyncPipe, NgClass, NgForOf, NgIf, NgOptimizedImage} from '@angular/common';
 import {AuthService} from '../../../core/auth/auth.service';
-import {User} from '../../../models/user.model';
+import {User} from '../../models/user.model';
 import {Menubar} from 'primeng/menubar';
 import {Avatar} from 'primeng/avatar';
 import {MenuItem, MessageService} from 'primeng/api';
@@ -45,6 +45,7 @@ export class HeaderComponent implements OnInit {
     options: MenuItem[] | undefined;
     notificationStatus = 'default';
     notificationCount = 0;
+    isApple = false;
 
     constructor(protected authService: AuthService,
                 protected router: Router,
@@ -60,6 +61,9 @@ export class HeaderComponent implements OnInit {
             if (storedUser) {
                 this.user = JSON.parse(storedUser); // Converte de volta para o objeto `User`
             }
+
+            const ua = navigator.userAgent;
+            this.isApple = /iPhone|iPad|iPod|Macintosh/i.test(ua);
         }
 
         this.router.events.pipe(

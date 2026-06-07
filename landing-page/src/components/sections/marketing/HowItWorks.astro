@@ -70,9 +70,11 @@ const hasHeading = title || subtitle;
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     {
       hasHeading && (
-        <div class="text-center mb-16">
-          {title && <h2 class="text-3xl sm:text-4xl font-bold text-text">{title}</h2>}
-          {subtitle && <p class="mt-4 text-lg text-text-muted max-w-2xl mx-auto">{subtitle}</p>}
+        <div class="text-center mb-16 max-w-3xl mx-auto">
+          {title && <h2 class="text-3xl sm:text-4xl font-bold text-text leading-tight">{title}</h2>}
+          {subtitle && (
+            <p class="mt-4 text-lg text-text-muted max-w-3xl mx-auto leading-relaxed">{subtitle}</p>
+          )}
         </div>
       )
     }
@@ -87,11 +89,11 @@ const hasHeading = title || subtitle;
             style="left: calc(16.666% + 48px); right: calc(16.666% + 48px);"
           />
 
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-12">
             {steps.map((step, index) => (
               <div class="relative text-center">
                 {/* Step number or icon */}
-                <div class="relative z-10 mx-auto w-24 h-24 flex items-center justify-center rounded-full bg-primary text-white text-2xl font-bold mb-6">
+                <div class="relative z-10 mx-auto w-24 h-24 flex items-center justify-center rounded-full bg-primary text-white text-2xl font-bold mb-6 shadow-lg shadow-primary/20">
                   {step.icon ? (
                     <Icon name={step.icon} class="w-10 h-10" />
                   ) : showNumbers ? (

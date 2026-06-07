@@ -32,7 +32,11 @@ public interface ContractRepository extends CrudRepository<Contract, Long> {
                     c.status as contract_status,
                     SUM(ci.total_price) AS contract_value,
                     c.company_id,
-                    updated.name || ' ' || updated.last_name as last_updated_by
+                    updated.name || ' ' || updated.last_name as last_updated_by,
+                    c.ibge_code,
+                    c.creation_date as contraction_date,
+                    c.due_date,
+                    c.contract_type
                 from contract c
                 join contract_item ci on ci.contract_contract_id = c.contract_id
                 join app_user creator on c.created_by_id_user = creator.user_id
@@ -46,7 +50,7 @@ public interface ContractRepository extends CrudRepository<Contract, Long> {
                             :contractor IS NULL AND c.tenant_id = :tenantId AND c.creation_date >= :start AND c.creation_date < :end AND (:status IS NULL OR c.status = :status)
                         )
                     )
-                group by c.contract_id, c.contractor, creator.name, creator.last_name, updated.name, updated.last_name
+                group by c.contract_id, c.contractor, creator.name, creator.last_name, updated.name, updated.last_name, c.ibge_code, c.creation_date, c.due_date, c.contract_type   
                 order by c.contractor
             """)
     List<ContractResponseDTO> findAllByTenantIdAndStatus(
@@ -76,7 +80,11 @@ public interface ContractRepository extends CrudRepository<Contract, Long> {
             String contractStatus,
             BigDecimal contractValue,
             long companyId,
-            String lastUpdatedBy
+            String lastUpdatedBy,
+            String ibgeCode,
+            Instant contractionDate,
+            Instant dueDate,
+            String contractType
     ){}
 
     @Query("""

@@ -1,0 +1,261 @@
+/* Google-like visual language for map widgets */
+.lumos-map-shell {
+  --gm-surface: rgba(255, 255, 255, 0.94);
+  --gm-surface-dark: rgba(15, 23, 42, 0.94);
+  --gm-border: rgba(148, 163, 184, 0.35);
+  --gm-shadow: 0 12px 26px rgba(15, 23, 42, 0.12);
+}
+
+.lumos-map-shell .leaflet-container {
+  font-family: 'Inter', 'Google Sans', 'Segoe UI', sans-serif;
+  background: #dbeafe;
+}
+
+.lumos-map-shell .leaflet-tile {
+  image-rendering: auto;
+  -webkit-image-rendering: auto;
+}
+
+.lumos-map-shell .leaflet-tile-loaded {
+  filter: contrast(1.03) saturate(1.04);
+}
+
+.dark .lumos-map-shell .leaflet-container {
+  background: #0b1220;
+}
+
+.lumos-map-shell .leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.86);
+  border-radius: 10px;
+  padding: 2px 8px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  color: #334155;
+}
+
+.dark .lumos-map-shell .leaflet-control-attribution {
+  background: rgba(15, 23, 42, 0.85);
+  border-color: rgba(71, 85, 105, 0.55);
+  color: #cbd5e1;
+}
+
+/* Cluster + Point icon visuals */
+.lumos-cluster-wrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 2px solid #fff;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.28);
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.01em;
+}
+
+.lumos-cluster-wrap::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.34);
+}
+
+.lumos-point-wrap {
+  position: relative;
+  border-radius: 999px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.28);
+}
+
+.lumos-point-wrap.installation {
+  border-radius: 7px;
+}
+
+.lumos-point-wrap.is-selected {
+  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.45), 0 6px 18px rgba(15, 23, 42, 0.28);
+}
+
+.lumos-point-wrap.in-progress::after {
+  content: '';
+  position: absolute;
+  inset: -7px;
+  border-radius: inherit;
+  border: 2px solid rgba(14, 165, 233, 0.34);
+  animation: lumosPointPulse 1.9s ease-out infinite;
+}
+
+@keyframes lumosPointPulse {
+  0% { transform: scale(0.8); opacity: 0.7; }
+  100% { transform: scale(1.22); opacity: 0; }
+}
+
+/* Popup style closer to Google Maps cards */
+.lumos-custom-popup .leaflet-popup-content-wrapper {
+  border-radius: 16px;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow: var(--gm-shadow);
+  padding: 0;
+}
+
+.lumos-custom-popup .leaflet-popup-content {
+  margin: 0;
+  min-width: 270px;
+}
+
+.lumos-custom-popup .leaflet-popup-tip {
+  box-shadow: var(--gm-shadow);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+}
+
+.dark .lumos-custom-popup .leaflet-popup-content-wrapper,
+.dark .lumos-custom-popup .leaflet-popup-tip {
+  background: #0f172a;
+  border-color: rgba(71, 85, 105, 0.55);
+}
+
+.dark .lumos-custom-popup .leaflet-popup-content {
+  color: #e2e8f0;
+}
+
+.lumos-popup-card {
+  min-width: 250px;
+  max-width: 290px;
+  padding: 10px;
+}
+
+.lumos-popup-head {
+  border-bottom: 1px solid rgba(226, 232, 240, 0.95);
+  padding-bottom: 8px;
+}
+
+.dark .lumos-popup-head {
+  border-bottom-color: rgba(51, 65, 85, 0.9);
+}
+
+.lumos-popup-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.lumos-popup-type {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #94a3b8;
+}
+
+.lumos-popup-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.dark .lumos-popup-status {
+  background: rgba(30, 41, 59, 0.95);
+  color: #cbd5e1;
+}
+
+.lumos-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+
+.lumos-status-dot.is-in-progress { background: #3b82f6; }
+.lumos-status-dot.is-finished { background: #10b981; }
+.lumos-status-dot.is-blocked { background: #f43f5e; }
+
+.lumos-popup-title {
+  margin-top: 6px;
+  display: block;
+  font-size: 14px;
+  line-height: 1.2;
+  color: #0f172a;
+}
+
+.dark .lumos-popup-title {
+  color: #f1f5f9;
+}
+
+.lumos-popup-body {
+  margin-top: 8px;
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+  color: #334155;
+}
+
+.lumos-popup-body strong {
+  color: #0f172a;
+}
+
+.dark .lumos-popup-body {
+  color: #cbd5e1;
+}
+
+.dark .lumos-popup-body strong {
+  color: #f1f5f9;
+}
+
+.lumos-popup-photo {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.lumos-popup-photo-img {
+  width: 100%;
+  height: auto;
+  max-height: 176px;
+  cursor: pointer;
+  border-radius: 10px;
+  border: 1px solid rgba(203, 213, 225, 0.95);
+  object-fit: contain;
+}
+
+.dark .lumos-popup-photo-img {
+  border-color: rgba(71, 85, 105, 0.7);
+}
+
+.lumos-popup-photo-error {
+  font-size: 12px;
+  color: #ef4444;
+}
+
+/* Floating controls card */
+.gm-control-shell {
+  background: var(--gm-surface);
+  border: 1px solid var(--gm-border);
+  box-shadow: var(--gm-shadow);
+  backdrop-filter: blur(10px);
+}
+
+.dark .gm-control-shell {
+  background: var(--gm-surface-dark);
+  border-color: rgba(71, 85, 105, 0.55);
+}
+
+/* Side list scrollbar */
+.lumos-map-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.lumos-map-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.lumos-map-list::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.38);
+  border-radius: 999px;
+}
+
+.dark .lumos-map-list::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.28);
+}

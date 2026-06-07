@@ -194,6 +194,28 @@ body {
   font-size: 14.5px;
   line-height: 1.35;
   font-family: "Inter", sans-serif;
+
+  /* --- Ajustes para Mobile Nativo --- */
+  user-select: none;
+  -webkit-touch-callout: none;
+  overscroll-behavior-y: none;
+
+  /* Melhora a nitidez da fonte Inter em telas Retina/AMOLED */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Remove o destaque cinza ao clicar em botões no Android/iOS */
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app-layout {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+
+  height: 100vh;
+  height: 100dvh;
 }
 
 h1 {
