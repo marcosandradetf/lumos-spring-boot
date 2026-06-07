@@ -78,7 +78,8 @@ class ContractController(
         val contractor: String?,
         val startDate: Instant?,
         val endDate: Instant?,
-        val status: String?
+        val status: String?,
+        val contractType: String?,    
     )
 
     @GetMapping("/contracts/get-contract-items/{contractId}")

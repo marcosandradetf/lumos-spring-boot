@@ -439,7 +439,8 @@ class ContractService(
             filters.status,
             filters.startDate,
             endPlusOneDay,
-            if (contractor == "") null else contractor?.lowercase()
+            if (contractor == "") null else contractor?.lowercase(),
+            filters.contractType
         )
 
         return ResponseEntity.ok()

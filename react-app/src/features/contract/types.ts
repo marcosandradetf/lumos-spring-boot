@@ -15,6 +15,7 @@ export interface ContractResponse {
   additiveFile: string | null;
   companyId: number;
   lastUpdatedBy: string | null;
+  
   ibgeCode: string | null;
   contractionDate: Date | null;
   dueDate: Date | null;

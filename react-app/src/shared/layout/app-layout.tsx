@@ -71,10 +71,7 @@ export function AppLayout() {
       const currentStatus = useNotificationStore.getState().status;
 
       if (currentStatus === 'granted' && !localStorage.getItem('fcmToken')) {
-        const permission = await requestPermission(user.roles ?? []);
-        if (permission === 'granted') {
-          notify('Notificações ativadas com sucesso.', 'success');
-        }
+        await requestPermission(user.roles ?? []);
         return;
       }
 

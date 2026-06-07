@@ -44,10 +44,10 @@ public interface ContractRepository extends CrudRepository<Contract, Long> {
                 where
                     (
                         (
-                            :contractor IS NOT NULL AND c.tenant_id = :tenantId AND (lower(c.contractor) like '%' || :contractor || '%' OR c.contract_number = :contractor )
+                            :contractor IS NOT NULL AND c.contract_type = :contractType AND c.tenant_id = :tenantId AND (lower(c.contractor) like '%' || :contractor || '%' OR c.contract_number = :contractor )
                         ) OR
                         (
-                            :contractor IS NULL AND c.tenant_id = :tenantId AND c.creation_date >= :start AND c.creation_date < :end AND (:status IS NULL OR c.status = :status)
+                            :contractor IS NULL AND c.contract_type = :contractType AND c.tenant_id = :tenantId AND c.creation_date >= :start AND c.creation_date < :end AND (:status IS NULL OR c.status = :status)
                         )
                     )
                 group by c.contract_id, c.contractor, creator.name, creator.last_name, updated.name, updated.last_name, c.ibge_code, c.creation_date, c.due_date, c.contract_type   
@@ -58,7 +58,8 @@ public interface ContractRepository extends CrudRepository<Contract, Long> {
             @Param("status") String status,
             @Param("start") Instant start,
             @Param("end") Instant end,
-            @Param("contractor") String contractor
+            @Param("contractor") String contractor,
+            @Param("contractType") String contractType
     );
 
     Optional<Contract> findContractByIbgeCodeAndContractTypeInAndDueDateAfter(String ibgeCode, Collection<String> contractTypes, Instant dueDateAfter);
