@@ -199,7 +199,7 @@ export function AppNumberInput({
           onChange(clamp(Number(parsePtValue(editable).toFixed(maxFractionDigits)), min, max));
         }}
         className={[
-          'w-full rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1 text-sm text-right outline-none focus:border-indigo-400',
+          'w-full rounded-full border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1 text-sm text-right outline-none focus:border-indigo-400',
           'disabled:opacity-60 disabled:cursor-not-allowed',
           mode === 'currency' ? 'font-semibold tabular-nums bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800 focus:border-emerald-500' : '',
           showButtons || onKeyDown ? 'pr-7' : '',

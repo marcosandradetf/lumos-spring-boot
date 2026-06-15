@@ -1,5 +1,13 @@
 export type UserActivationStatus = 'PENDING_ACTIVATION' | 'ACTIVE' | 'BLOCKED';
 
+export interface RoleOption {
+  selected?: boolean;
+  roleId: string;
+  roleName: string;
+  label: string;
+  description: string;
+}
+
 export interface ManagedUser {
   userId: string;
   username: string;
@@ -7,16 +15,37 @@ export interface ManagedUser {
   lastname: string;
   email: string;
   cpfCnpj: string;
-  role: Array<{ roleId: string; label: string, roleName: string, description: string }>;
+  dateOfBirth?: string;
+  year?: string;
+  month?: string;
+  day?: string;
+  role: RoleOption[];
   status: UserActivationStatus;
   mustChangePassword?: boolean;
   activationExpiresAt?: string | null;
+  sel?: boolean;
+  show?: boolean;
 }
 
 export interface ActivationCodeResponse {
   activationCode: string;
   expiresAt: string;
   message: string;
+}
+
+export interface UserUpdatePayload {
+  userId: string;
+  username: string;
+  name: string;
+  lastname: string;
+  email: string;
+  cpfCnpj: string;
+  year: string | number;
+  month: string | number;
+  day: string | number;
+  role: string[];
+  status: UserActivationStatus;
+  sel: boolean;
 }
 
 export interface TeamModel {

@@ -21,7 +21,7 @@ export function PdfPreviewModal({
           <iframe
             src={url}
             title={title}
-            className="h-full w-full rounded-xl border border-slate-200 bg-white dark:border-zinc-800"
+            className="h-full w-full rounded-2xl border border-slate-200 bg-white dark:border-zinc-800"
           />
         ) : (
           <div className="flex h-full items-center justify-center text-sm text-slate-500 dark:text-zinc-400">

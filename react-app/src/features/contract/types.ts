@@ -10,7 +10,7 @@ export interface ContractResponse {
   createdBy: string;
   createdAt: string;
   itemQuantity: number;
-  contractStatus: 'ACTIVE' | 'ARCHIVED';
+  contractStatus: 'ACTIVE' | 'ARCHIVED' | 'PENDING';
   contractValue: string;
   additiveFile: string | null;
   companyId: number;
@@ -19,7 +19,7 @@ export interface ContractResponse {
   ibgeCode: string | null;
   contractionDate: Date | null;
   dueDate: Date | null;
-  contractType: string | null;
+  contractType: 'ALL' | 'MAINTENANCE' | 'INSTALLATION' | null;
 
 
 }
@@ -128,5 +128,7 @@ export interface ContractFilters {
   contractor: string | null;
   startDate: Date | null;
   endDate: Date | null;
-  status: 'ACTIVE' | 'ARCHIVED' | null;
+  status: 'ACTIVE' | 'ARCHIVED' | 'PENDING' | null;
+  contractType: string[];
 }
+

@@ -21,6 +21,7 @@ import type {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
 import { CellEdit } from '@/shared/components/ui/cell-edit';
 import { HoverCard, HoverCardTrigger, HoverCardContent } from '@/shared/components/ui/hover-card';
+import { GlassMultiSelect } from '@/shared/components/glass-multi-select';
 
 const fmtCurrency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 const fmtDate = (value: string) => new Date(value).toLocaleDateString('pt-BR');
@@ -34,6 +35,7 @@ function defaultFilters(): ContractFilters {
     startDate,
     endDate,
     status: 'ACTIVE',
+    contractType: ['ALL', 'MAINTENANCE', 'INSTALLATION'],
   };
 }
 
@@ -100,6 +102,14 @@ function normalizeExecutedQuantities(items: ContractItemsResponseWithExecutionsS
 const STATUS_BADGE: Record<ContractResponse['contractStatus'], string> = {
   ACTIVE: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
   ARCHIVED: 'bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400',
+  PENDING: 'bg-orange-100 text-slate-600 dark:bg-orange-600 dark:text-zinc-200',
+};
+
+type ContractTypeBadgeKey = NonNullable<ContractResponse['contractType']> | 'ALL';
+const TYPE_BADGE: Record<ContractTypeBadgeKey, string> = {
+  ALL: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-emerald-300',
+  INSTALLATION: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-800 dark:text-indigo-400',
+  MAINTENANCE: 'bg-slate-100 text-slate-600 dark:bg-slate-600 dark:text-slate-200',
 };
 
 export default function ContractList() {
@@ -173,7 +183,7 @@ export default function ContractList() {
     [contractItems],
   );
 
-  const inputClass = 'rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-slate-800 dark:text-zinc-100 outline-none focus:border-indigo-400 transition-colors';
+  const inputClass = 'rounded-full border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-slate-800 dark:text-zinc-100 outline-none focus:border-indigo-400 transition-colors';
 
   const loadItems = async (contract: ContractResponse, shouldShow = true) => {
     if (contract.contractId === 0) {
@@ -359,7 +369,7 @@ export default function ContractList() {
           <button
             type="button"
             onClick={() => navigate('/contratos/criar')}
-            className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors"
+            className="flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors"
           >
             <i className="pi pi-plus text-sm" /> Novo Contrato
           </button>
@@ -368,80 +378,134 @@ export default function ContractList() {
 
       {showContractsList && (
         <>
-          <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 flex flex-wrap gap-3 items-end">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-slate-500 dark:text-zinc-400">Data início</label>
-              <AppDatePicker
-                value={filters.startDate}
-                onChange={(value) => setFilters((previous) => ({ ...previous, startDate: value }))}
-                maxDate={filters.endDate ?? undefined}
-                placeholder="Selecione a data"
-              />
+          <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 flex flex-col lg:flex-row gap-3 items-end">
+
+            <div className='flex w-full gap-2 item-center'>
+              <div className="flex flex-col gap-1 w-[50%]">
+                <label className="text-xs font-medium text-slate-500 dark:text-zinc-400">Data início</label>
+                <AppDatePicker
+                  value={filters.startDate}
+                  onChange={(value) => setFilters((previous) => ({ ...previous, startDate: value }))}
+                  maxDate={filters.endDate ?? undefined}
+                  placeholder="Selecione a data"
+                />
+              </div>
+              <div className="flex flex-col gap-1 w-[50%]">
+                <label className="text-xs font-medium text-slate-500 dark:text-zinc-400">Data fim</label>
+                <AppDatePicker
+                  value={filters.endDate}
+                  onChange={(value) => setFilters((previous) => ({ ...previous, endDate: value }))}
+                  minDate={filters.startDate ?? undefined}
+                  maxDate={new Date()}
+                  placeholder="Selecione a data"
+                />
+              </div>
+
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-slate-500 dark:text-zinc-400">Data fim</label>
-              <AppDatePicker
-                value={filters.endDate}
-                onChange={(value) => setFilters((previous) => ({ ...previous, endDate: value }))}
-                minDate={filters.startDate ?? undefined}
-                maxDate={new Date()}
-                placeholder="Selecione a data"
-              />
+
+            {/* status */}
+            <div className='flex item-center w-full gap-2 md:flex-row flex-col'>
+              <div className="flex flex-col gap-1 w-full">
+                <label className="text-xs font-medium text-slate-500 dark:text-zinc-400">Status</label>
+                <GlassListbox
+                  className="w-full lg:w-32"
+                  value={filters.status}
+                  onChange={(value) => setFilters((previous) => ({
+                    ...previous,
+                    status: (value ?? null) as ContractFilters['status'],
+                  }))}
+                  placeholder="Todos"
+                  options={[
+                    { value: 'ACTIVE', label: 'Ativo' },
+                    { value: 'ARCHIVED', label: 'Arquivado' },
+                    { value: 'PENDING', label: 'Pendente' },
+                  ]}
+                />
+              </div>
+
+
+              <div className="flex flex-col gap-1 w-full">
+                <label className="text-xs font-medium text-slate-500 dark:text-zinc-400">Tipo de Serviço</label>
+                <GlassMultiSelect
+                  className='lg:w-80 w-full'
+                  disabled={['execution', 'premeasurement'].includes(reason)}
+                  value={['execution', 'premeasurement'].includes(reason) ? ['INSTALLATION', 'ALL'] : filters.contractType}
+                  onChange={(value) => setFilters((previous) => ({
+                    ...previous,
+                    contractType: (value ?? null) as ContractFilters['contractType'],
+                  }))}
+                  options={[
+                    { value: 'INSTALLATION', label: 'Somente Instalação/Modernização' },
+                    { value: 'MAINTENANCE', label: 'Somente Manutenção' },
+                    { value: 'ALL', label: 'Instalação/Modernização e Manutenção' },
+                  ]}
+
+                />
+              </div>
+
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-slate-500 dark:text-zinc-400">Status</label>
-              <GlassListbox
-                className="w-40"
-                value={filters.status}
-                onChange={(value) => setFilters((previous) => ({
-                  ...previous,
-                  status: (value ?? null) as ContractFilters['status'],
-                }))}
-                placeholder="Todos"
-                options={[
-                  { value: null, label: 'Todos' },
-                  { value: 'ACTIVE', label: 'Ativo' },
-                  { value: 'ARCHIVED', label: 'Arquivado' },
-                ]}
-              />
+
+            <div className='flex item-center gap-2 w-full justify-between'>
+              <div className="flex flex-col gap-1 w-full">
+                <label className="text-xs font-medium text-slate-500 dark:text-zinc-400">Contratante ou Nº contrato</label>
+                <input
+                  type="text"
+                  className={inputClass}
+                  placeholder="Filtrar por contratante"
+                  value={filters.contractor ?? ''}
+                  onChange={(event) => setFilters((previous) => ({ ...previous, contractor: event.target.value || null }))}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setAppliedFilters({ ...filters })}
+                className="rounded-full bg-indigo-600 w-10 h-10 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors mt-4"
+              >
+                <i className="pi pi-search text-xs" />
+              </button>
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-slate-500 dark:text-zinc-400">Contratante ou Nº contrato</label>
-              <input
-                type="text"
-                className={inputClass}
-                placeholder="Filtrar por contratante"
-                value={filters.contractor ?? ''}
-                onChange={(event) => setFilters((previous) => ({ ...previous, contractor: event.target.value || null }))}
-              />
-            </div>
-            <button
-              type="button"
-              onClick={() => setAppliedFilters({ ...filters })}
-              className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors"
-            >
-              <i className="pi pi-search mr-1.5 text-xs" /> Buscar
-            </button>
+
+
           </div>
 
           {isLoading ? (
             <SkeletonTable columns={5} />
           ) : contracts.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+            <div className="p-2 flex flex-col items-center justify-center py-16 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
               <i className="pi pi-file text-4xl text-slate-300 dark:text-zinc-600 mb-3" />
-              <h3 className="text-base font-semibold text-slate-600 dark:text-zinc-300">Nenhum contrato encontrado</h3>
-              <button
+              <h3 className="text-base font-semibold text-slate-600 dark:text-zinc-300 text-center">Nenhum contrato encontrado utilizando os filtros atuais</h3>
+              <p className="mt-2 text-xs font-semibold text-slate-600 dark:text-zinc-300 text-center">Contrato não encontrado? Tente modificar os filtros.</p>
+
+              {/* <button
                 type="button"
                 onClick={() => navigate('/contratos/criar')}
-                className="mt-4 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors"
+                className="mt-4 rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors"
               >
                 Cadastrar contrato
-              </button>
+              </button> */}
             </div>
           ) : (
             <div className="space-y-2">
               {contracts.map((contract) => {
                 const isSelected = selectedContract?.contractId === contract.contractId;
+
+                const getStatus = () => {
+                  if (contract.contractStatus === 'ARCHIVED') return 'Arquivado';
+                  if (contract.contractStatus === 'PENDING') return 'Pendente/Em revisão';
+
+                  return 'Ativo';
+                }
+                const contractStatus = getStatus();
+
+                const getContractType = () => {
+                  if (contract.contractType === 'INSTALLATION') return 'Instalação/Modernização'
+                  if (contract.contractType === 'MAINTENANCE') return 'Manutenção'
+
+                  return 'Instalação/Modernização e Manutenção'
+                }
+                const contractType = getContractType();
+
+                const hasItens = ['ALL', 'INSTALLATION', null].includes(contract.contractType);
 
                 return (
                   <div
@@ -460,19 +524,27 @@ export default function ContractList() {
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-semibold text-sm text-slate-800 dark:text-zinc-100">{contract.contractor}</span>
                             <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${STATUS_BADGE[contract.contractStatus]}`}>
-                              {contract.contractStatus === 'ACTIVE' ? 'Ativo' : 'Arquivado'}
+                              {contractStatus}
+                            </span>
+                            <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${TYPE_BADGE[contract.contractType ?? 'ALL']}`}>
+                              {contractType}
                             </span>
                           </div>
-                          <div className="flex gap-3 flex-wrap text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+                          <div className="flex gap-3 flex-wrap text-xs text-slate-500 dark:text-zinc-400 mt-2 md:mt-0.5">
                             <span>Nº {contract.number}</span>
-                            <span>{fmtDate(contract.createdAt)}</span>
-                            <span>{contract.itemQuantity} {contract.itemQuantity === 1 ? 'item' : 'itens'}</span>
+                            <div>
+                              {contract.contractionDate && (<span>Vigência: {fmtDate(contract.contractionDate.toString())}</span>)}
+                              {contract.dueDate && (<span> a {fmtDate(contract.dueDate.toString())}</span>)}
+                            </div>
+                            {hasItens && (
+                              <span>{contract.itemQuantity} {contract.itemQuantity === 1 ? 'item' : 'itens'}</span>
+                            )}
                           </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-3 flex-shrink-0">
                         <span className="font-semibold text-sm text-slate-700 dark:text-zinc-200 hidden md:block">
-                          {contract.contractValue ? fmtCurrency.format(Number(contract.contractValue)) : '—'}
+                          {contract.contractValue ? fmtCurrency.format(Number(contract.contractValue)) : ''}
                         </span>
                         <i className={`pi ${isSelected ? 'pi-chevron-up' : 'pi-chevron-down'} text-slate-400 dark:text-zinc-500 text-xs`} />
                       </div>
@@ -480,13 +552,17 @@ export default function ContractList() {
 
                     {isSelected && reason === 'view' && (
                       <div className="border-t border-slate-100 dark:border-zinc-800 px-4 py-3 flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => void loadItems(contract, true)}
-                          className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-zinc-700 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
-                        >
-                          <i className="pi pi-list text-xs" /> Exibir Itens
-                        </button>
+
+                        {hasItens && (
+                          <button
+                            type="button"
+                            onClick={() => void loadItems(contract, true)}
+                            className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-zinc-700 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
+                          >
+                            <i className="pi pi-list text-xs" /> Exibir Itens
+                          </button>
+                        )}
+
                         <button
                           type="button"
                           onClick={() => void handleEditContract(contract)}
@@ -494,30 +570,37 @@ export default function ContractList() {
                         >
                           <i className="pi pi-pencil text-xs" /> Editar Contrato
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => archiveMutation.mutate(contract.contractId, {
-                            onSuccess: () => {
-                              notify('Contrato arquivado/reativado.', 'success');
-                              setSelectedContract(null);
-                              setShowItems(false);
-                            },
-                            onError: (error: unknown) => {
-                              const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
-                              notify(message ?? 'Erro ao arquivar contrato.', 'error');
-                            },
-                          })}
-                          className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-zinc-700 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
-                        >
-                          <i className={`pi ${contract.contractStatus === 'ACTIVE' ? 'pi-folder-open' : 'pi-inbox'} text-xs`} />
-                          {contract.contractStatus === 'ACTIVE' ? 'Arquivar' : 'Reativar'}
-                        </button>
+
+                        {contract.contractStatus !== 'PENDING' && (
+                          <button
+                            type="button"
+                            onClick={() => archiveMutation.mutate(contract.contractId, {
+                              onSuccess: () => {
+                                notify('Contrato arquivado/reativado.', 'success');
+                                setSelectedContract(null);
+                                setShowItems(false);
+                              },
+                              onError: (error: unknown) => {
+                                const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+                                notify(message ?? 'Erro ao arquivar contrato.', 'error');
+                              },
+                            })}
+                            className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-zinc-700 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
+                          >
+                            <i className={`pi ${contract.contractStatus === 'ACTIVE' ? 'pi-folder-open' : 'pi-inbox'} text-xs`} />
+                            {contract.contractStatus === 'ACTIVE' ? 'Arquivar' : 'Reativar'}
+                          </button>
+                        )}
+
                         <button
                           type="button"
                           onClick={() => setDeleteId(contract.contractId)}
                           className="flex items-center gap-1.5 rounded-xl border border-red-200 dark:border-red-900/40 px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                         >
-                          <i className="pi pi-trash text-xs" /> Excluir
+                          <i
+                            className={`pi text-xs ${contract.contractStatus === 'PENDING' ? 'pi-times' : 'pi-trash'}`}
+                          />
+                          {contract.contractStatus === 'PENDING' ? 'Cancelar cadastro' : 'Excluir'}
                         </button>
                       </div>
                     )}
@@ -724,23 +807,23 @@ export default function ContractList() {
                                 {item.totalExecuted}
                               </span>
                             </HoverCardTrigger>
-                            
+
                             {/* Customização direta para o Tailwind v4 garantir o fundo sólido e bordas finas */}
-                            <HoverCardContent 
-                              side="bottom" 
-                              align="center" 
+                            <HoverCardContent
+                              side="bottom"
+                              align="center"
                               className="z-50 flex w-64 flex-col gap-1 rounded-xl border border-slate-200 bg-white p-3 shadow-lg outline-none dark:border-zinc-800 dark:bg-zinc-950 text-left text-xs"
                             >
                               <div className="flex flex-col gap-2 min-w-[180px] text-sm text-slate-800 dark:text-zinc-100">
-                                
+
                                 {!item.executedQuantity || item.executedQuantity.length === 0 ? (
                                   <span className="text-slate-400 dark:text-zinc-500 py-1 italic block text-center">
                                     Nenhuma execução registrada
                                   </span>
                                 ) : (
                                   item.executedQuantity.map((step, index) => (
-                                    <div 
-                                      key={`${item.contractItemId}-step-${index}`} 
+                                    <div
+                                      key={`${item.contractItemId}-step-${index}`}
                                       className="flex justify-between items-center py-0.5 border-b border-slate-50 last:border-0 dark:border-zinc-900"
                                     >
                                       <span className="text-slate-500 dark:text-zinc-400 text-xs">
@@ -750,7 +833,7 @@ export default function ContractList() {
                                         {step.quantity}
                                       </span>
                                     </div>
-                                  )) 
+                                  ))
                                 )}
                               </div>
                             </HoverCardContent>
@@ -761,26 +844,26 @@ export default function ContractList() {
                             {/* asChild faz o Radix usar o nosso span como o nó oficial do DOM */}
                             <HoverCardTrigger asChild>
                               <span className="cursor-pointer font-medium text-slate-700 hover:text-blue-600 transition-colors dark:text-zinc-200 dark:hover:text-blue-400">
-                              {reserved}
+                                {reserved}
                               </span>
                             </HoverCardTrigger>
-                            
+
                             {/* Customização direta para o Tailwind v4 garantir o fundo sólido e bordas finas */}
-                            <HoverCardContent 
-                              side="bottom" 
-                              align="center" 
+                            <HoverCardContent
+                              side="bottom"
+                              align="center"
                               className="z-50 flex w-64 flex-col gap-1 rounded-xl border border-slate-200 bg-white p-3 shadow-lg outline-none dark:border-zinc-800 dark:bg-zinc-950 text-left text-xs"
                             >
                               <div className="flex flex-col gap-2 min-w-[180px] text-sm text-slate-800 dark:text-zinc-100">
-                                
+
                                 {!item.reservedQuantity || item.reservedQuantity.length === 0 ? (
                                   <span className="text-slate-400 dark:text-zinc-500 py-1 italic block text-center">
                                     Nenhuma reserva registrada
                                   </span>
                                 ) : (
                                   item.reservedQuantity.map((step, index) => (
-                                    <div 
-                                      key={`${item.contractItemId}-step-${index}`} 
+                                    <div
+                                      key={`${item.contractItemId}-step-${index}`}
                                       className="flex justify-between items-center py-0.5 border-b border-slate-50 last:border-0 dark:border-zinc-900"
                                     >
                                       <span className="text-slate-500 dark:text-zinc-400 text-xs">
@@ -790,7 +873,7 @@ export default function ContractList() {
                                         {step.quantity}
                                       </span>
                                     </div>
-                                  )) 
+                                  ))
                                 )}
                               </div>
                             </HoverCardContent>

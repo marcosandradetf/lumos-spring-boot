@@ -88,8 +88,8 @@ function DataTable<T>({
             {rows.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} className="px-4 py-10 text-center text-sm text-slate-500 dark:text-zinc-400">
-                  <i className="pi pi-inbox text-3xl block mb-2 opacity-40" />
-                  {emptyMessage}
+                  <i className="pi pi-inbox text-3xl block opacity-40" />
+                  <p>{emptyMessage}</p>
                 </td>
               </tr>
             ) : (

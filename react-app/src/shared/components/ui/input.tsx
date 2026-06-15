@@ -23,11 +23,11 @@ function Input(
       type={type}
       data-slot="input"
       // className={cn(
-      //   "w-full rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2.5 text-sm text-slate-800 dark:text-zinc-100 placeholder:text-slate-400 outline-none focus:border-indigo-400 transition-colors",
+      //   "w-full rounded-full border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2.5 text-sm text-slate-800 dark:text-zinc-100 placeholder:text-slate-400 outline-none focus:border-indigo-400 transition-colors",
       //   className
       // )}
       className={[
-          'flex w-full items-center justify-between gap-3 rounded-2xl border px-3 py-2 text-sm transition',
+          'flex w-full items-center justify-between gap-3 rounded-full border px-3 py-2 text-sm transition',
           'border-slate-200 bg-white text-slate-800',
           'dark:border-white/20 dark:bg-zinc-900 dark:text-neutral-100',
           'placeholder:text-slate-400 outline-none focus:border-indigo-400 transition-colors',

@@ -58,12 +58,12 @@ class ContractController(
         return contractReferenceItemManagementService.saveReferenceItemLinks(items, Utils.getCurrentTenantId())
     }
 
-    @PostMapping("/contracts/delete-by-id")
-    fun deleteById(@RequestBody contractId: Long): ResponseEntity<Any> =
+    @DeleteMapping("/contracts/delete-by-id/{contractId}")
+    fun deleteById(@PathVariable contractId: Long): ResponseEntity<Any> =
         contractService.deleteById(contractId)
 
-    @PostMapping("/contracts/archive-by-id")
-    fun archiveById(@RequestBody contractId: Long): ResponseEntity<Any> =
+    @PutMapping("/contracts/archive-by-id/{contractId}")
+    fun archiveById(@PathVariable contractId: Long): ResponseEntity<Any> =
         contractService.archiveById(contractId)
 
     @GetMapping("/contracts/get-contract/{contractId}")
@@ -71,15 +71,15 @@ class ContractController(
         contractService.getContract(contractId)
 
     @PostMapping("/contracts/get-AllContracts")
-    fun getAllActiveContracts(@RequestBody filters: FilterRequest): ResponseEntity<Any> =
-        contractService.getAllActiveContracts(filters)
+    fun getContractsByFilters(@RequestBody filters: FilterRequest): ResponseEntity<Any> =
+        contractService.getContractsByFilters(filters)
 
     data class FilterRequest(
         val contractor: String?,
         val startDate: Instant?,
         val endDate: Instant?,
         val status: String?,
-        val contractType: String?,    
+        val contractType: List<String>,
     )
 
     @GetMapping("/contracts/get-contract-items/{contractId}")
@@ -91,8 +91,8 @@ class ContractController(
         contractService.getContractItemsWithExecutionsSteps(contractId)
 
     @GetMapping("/mobile/contracts/get-contracts")
-    fun getContractsForPreMeasurement(): ResponseEntity<Any> {
-        return contractService.getContractsForPreMeasurement()
+    fun getContractsForMobile(): ResponseEntity<Any> {
+        return contractService.getContractsForMobile()
     }
 
     @GetMapping("/mobile/contracts/get-reference-items")

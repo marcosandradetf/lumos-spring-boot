@@ -26,11 +26,11 @@ export const contractsApi = {
   },
 
   async deleteById(contractId: number) {
-    await api.post(`${BASE}/delete-by-id`, contractId);
+    await api.delete(`${BASE}/delete-by-id/${contractId}`);
   },
 
   async archiveById(contractId: number) {
-    await api.post(`${BASE}/archive-by-id`, contractId);
+    await api.put(`${BASE}/archive-by-id/${contractId}`);
   },
 
   async getContractItems(contractId: number) {

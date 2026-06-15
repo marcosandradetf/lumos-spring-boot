@@ -114,7 +114,7 @@ export function EmbeddedDocPanel({
               <button
                 type="button"
                 onClick={() => void handleShare()}
-                className="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800 sm:w-auto"
+                className="w-full rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800 sm:w-auto"
               >
                 <i className="pi pi-share-alt mr-1 text-xs" />
                 Compartilhar
@@ -124,7 +124,7 @@ export function EmbeddedDocPanel({
             <button
               type="button"
               onClick={onClose}
-              className="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800 sm:w-auto"
+              className="w-full rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800 sm:w-auto"
             >
               Fechar
             </button>
@@ -156,7 +156,7 @@ export function EmbeddedDocPanel({
               <button
                 type="button"
                 onClick={() => setShareModalOpen(false)}
-                className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
               >
                 <i className="pi pi-times text-sm" />
               </button>
@@ -170,7 +170,7 @@ export function EmbeddedDocPanel({
               <button
                 type="button"
                 onClick={() => void copyMessage()}
-                className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                className="rounded-full border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
               >
                 <i className="pi pi-copy mr-1 text-xs" />
                 Copiar mensagem
@@ -178,7 +178,7 @@ export function EmbeddedDocPanel({
               <button
                 type="button"
                 onClick={shareWhatsApp}
-                className="rounded-xl bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-500"
+                className="rounded-full bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-500"
               >
                 <i className="pi pi-whatsapp mr-1 text-xs" />
                 WhatsApp
@@ -186,7 +186,7 @@ export function EmbeddedDocPanel({
               <button
                 type="button"
                 onClick={shareEmail}
-                className="rounded-xl bg-slate-700 px-3 py-2 text-sm font-medium text-white hover:bg-slate-600 dark:bg-zinc-700 dark:hover:bg-zinc-600"
+                className="rounded-full bg-slate-700 px-3 py-2 text-sm font-medium text-white hover:bg-slate-600 dark:bg-zinc-700 dark:hover:bg-zinc-600"
               >
                 <i className="pi pi-envelope mr-1 text-xs" />
                 E-mail

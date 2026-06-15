@@ -6,7 +6,7 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
     <div
       data-slot="table-container"
       /* Container Premium: Borda ultrafina, sombra suave e fundo com leve transparência (se o pai tiver cor) */
-      className="relative w-full overflow-x-auto rounded-xl border border-neutral-200/80 bg-white shadow-[0_2px_8px_-3px_rgba(0,0,0,0.05),0_8px_24px_-12px_rgba(0,0,0,0.05)] dark:border-zinc-800/80 dark:bg-zinc-950/40 dark:backdrop-blur-md"
+      className="relative w-full overflow-x-auto rounded-2xl border border-neutral-200/80 bg-white shadow-[0_2px_8px_-3px_rgba(0,0,0,0.05),0_8px_24px_-12px_rgba(0,0,0,0.05)] dark:border-zinc-800/80 dark:bg-zinc-950/40 dark:backdrop-blur-md"
     >
       <table
         data-slot="table"

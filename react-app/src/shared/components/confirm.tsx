@@ -62,7 +62,7 @@ export function Confirm({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="rounded-lg p-1.5 text-slate-400 transition hover:bg-white/10 hover:text-slate-200"
+                  className="rounded-full p-1.5 text-slate-400 transition hover:bg-white/10 hover:text-slate-200"
                   aria-label="Fechar"
                 >
                   <i className="pi pi-times text-xs text-foreground" />
@@ -77,7 +77,7 @@ export function Confirm({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="rounded-2xl border border-zinc-200 px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-zinc-300 dark:border-zinc-700 dark:hover:bg-zinc-700/50"
+                  className="rounded-full border border-zinc-200 px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-zinc-300 dark:border-zinc-700 dark:hover:bg-zinc-700/50"
                 >
                   {cancelLabel}
                 </button>
@@ -86,7 +86,7 @@ export function Confirm({
                   disabled={loading}
                   onClick={onConfirm}
                   className={[
-                    'rounded-2xl px-4 py-2 text-sm font-semibold text-white transition disabled:opacity-50',
+                    'rounded-full px-4 py-2 text-sm font-semibold text-white transition disabled:opacity-50',
                     danger
                       ? 'bg-red-600 hover:bg-red-500'
                       : 'bg-gradient-to-r from-blue-600 to-cyan-500 hover:brightness-110',

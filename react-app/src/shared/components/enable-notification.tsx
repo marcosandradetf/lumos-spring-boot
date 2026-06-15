@@ -15,9 +15,9 @@ const EnableNotification = (
     { statusMeta, clickAction, className, detail }: EnableNotificationProps
 ) => {
     return (
-        <div className={`rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 ${className || ''}`}>
+        <div className={`rounded-full border border-slate-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 ${className || ''}`}>
             <div className="flex items-center justify-center">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 dark:bg-zinc-800">
+                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-slate-100 dark:bg-zinc-800">
                     <i className={`${statusMeta.icon} text-base`} />
                 </div>
             </div>

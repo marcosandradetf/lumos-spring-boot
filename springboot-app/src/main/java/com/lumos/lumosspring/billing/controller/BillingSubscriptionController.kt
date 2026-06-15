@@ -54,7 +54,7 @@ data class SubscriptionMutationResponse(
  * para permitir renovação/upgrade com JWT mesmo quando o acesso ao restante da API está bloqueado.
  */
 @RestController
-@RequestMapping("/api/billing")
+@RequestMapping(path = ["/api/billing", "/api/mobile/billing"])
 class BillingSubscriptionController(
     private val subscriptionRepository: SubscriptionRepository,
     private val tenantBillingAccessService: TenantBillingAccessService,

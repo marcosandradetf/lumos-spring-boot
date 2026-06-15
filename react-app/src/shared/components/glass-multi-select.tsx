@@ -5,7 +5,7 @@ import {
   ListboxOptions,
   Transition,
 } from '@headlessui/react';
-import { Fragment, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 
 import type { GlassListboxOption } from './glass-list-box';
 
@@ -29,6 +29,8 @@ interface GlassMultiSelectProps<T extends Primitive> {
   search?: boolean;
   searchPlaceholder?: string;
   initialSearch?: string;
+  inlineOptions?: boolean;
+  autoScrollOnOpen?: boolean;
 }
 
 function normalize(value: string): string {
@@ -37,6 +39,40 @@ function normalize(value: string): string {
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .trim();
+}
+
+function AutoScrollOnOpen({
+  open,
+  enabled,
+  targetRef,
+}: {
+  open: boolean;
+  enabled: boolean;
+  targetRef: RefObject<HTMLElement | null>;
+}) {
+  useEffect(() => {
+    if (!open || !enabled) {
+      return;
+    }
+
+    const scroll = () => {
+      targetRef.current?.scrollIntoView({
+        block: 'nearest',
+        inline: 'nearest',
+        behavior: 'smooth',
+      });
+    };
+
+    const frame = requestAnimationFrame(scroll);
+    const timer = window.setTimeout(scroll, 160);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearTimeout(timer);
+    };
+  }, [enabled, open, targetRef]);
+
+  return null;
 }
 
 export function GlassMultiSelect<T extends Primitive>({
@@ -55,8 +91,12 @@ export function GlassMultiSelect<T extends Primitive>({
   search = false,
   searchPlaceholder = 'Pesquisar...',
   initialSearch = '',
+  inlineOptions = false,
+  autoScrollOnOpen = true,
 }: GlassMultiSelectProps<T>) {
   const [query, setQuery] = useState(initialSearch);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const optionsRef = useRef<HTMLDivElement>(null);
 
   const selectedOptions = useMemo(
     () => options.filter((option) => value.some((selectedValue) => Object.is(selectedValue, option.value))),
@@ -105,11 +145,17 @@ export function GlassMultiSelect<T extends Primitive>({
   return (
     <Listbox value={value} onChange={onChange} multiple disabled={disabled}>
       {({ open }) => (
-        <div className={`relative ${className}`}>
+        <div
+          ref={containerRef}
+          className={`relative ${className}`}
+          onPointerDown={(event) => event.stopPropagation()}
+          onWheel={(event) => event.stopPropagation()}
+        >
+          <AutoScrollOnOpen open={open} enabled={autoScrollOnOpen} targetRef={optionsRef} />
           <ListboxButton
             aria-label={ariaLabel}
             className={[
-              'w-full rounded-2xl border border-neutral-200 dark:border-white/10 dark:bg-black/20 bg-neutral-100 px-3 py-2 text-left text-sm text-slate-900 backdrop-blur-xl transition',
+              'w-full rounded-full border border-neutral-200 dark:border-white/20 px-3 py-2 text-left text-sm text-slate-900 backdrop-blur-xl transition',
               'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/70',
               'disabled:cursor-not-allowed disabled:opacity-60',
               'dark:text-zinc-100',
@@ -117,7 +163,7 @@ export function GlassMultiSelect<T extends Primitive>({
             ].join(' ')}
           >
             {summaryMode !== 'count' && selectedOptions.length > 0 && selectedOptions.length <= maxChips ? (
-              <span className="flex flex-wrap items-center gap-1.5 pr-7">
+              <span className="flex truncate items-center gap-1.5 pr-28">
                 {selectedOptions.map((option) => (
                   <span
                     key={`${String(option.value)}-${option.label}`}
@@ -145,54 +191,66 @@ export function GlassMultiSelect<T extends Primitive>({
             leaveTo="opacity-0"
           >
             <ListboxOptions
-              anchor="bottom start"
+              ref={optionsRef}
+              anchor={inlineOptions ? undefined : 'bottom start'}
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => event.stopPropagation()}
+              onWheel={(event) => event.stopPropagation()}
               className={[
-                // Trava o tamanho máximo físico (max-h-52 = 208px, cabe cerca de 5 a 6 itens antes do scroll).
-                // Usamos o !important (prefixo !) no max-h se o Headless UI estiver tentando recalcular a altura dinamicamente.
-                'z-[9999] mt-1 h-fit !max-h-52 w-[var(--button-width)] overflow-auto rounded-lg border bg-neutral-100 border-neutral-200 dark:border-white/10 dark:bg-black/20 p-1 backdrop-blur-2xl shadow-xl',
+                inlineOptions
+                  ? 'absolute left-0 right-0 top-full z-[9999] mt-1 w-full'
+                  : 'z-[9999] mt-1 w-[var(--button-width)]',
+                'overflow-hidden rounded-2xl border border-neutral-200 bg-white/50',
+                'backdrop-blur-2xl shadow-xl dark:border-white/20 dark:bg-black/50',
                 'focus:outline-none',
                 optionsClassName,
               ].join(' ')}
             >
               {search && (
-                <div className="sticky top-0 z-10 rounded-xl bg-neutral-100/95 dark:bg-zinc-900/95 px-2 py-1.5 backdrop-blur">
+                <div className="px-2 py-2 backdrop-blur">
                   <div className="relative">
-                    <i className="pi pi-search pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
                     <input
                       type="text"
                       value={query}
+                      onKeyDown={(event) => {
+                        event.stopPropagation();
+                      }}
                       onChange={(event) => setQuery(event.target.value)}
                       placeholder={searchPlaceholder}
-                      className="py-2 w-full rounded-lg border border-neutral-200 bg-white pl-7 pr-2 py-1.5 text-xs text-slate-700 outline-none focus:border-blue-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+                      className="w-full rounded-2xl border border-neutral-200 bg-transparent px-2 py-1.5 pr-8 text-sm text-slate-800 placeholder:text-slate-500 focus:outline-none dark:border-white/10 dark:text-zinc-100 dark:placeholder:text-zinc-400"
                     />
+                    <i className="pi pi-search absolute right-0 top-1/2 mr-4 -translate-y-1/2 text-xs text-blue-500 dark:text-blue-400" />
                   </div>
                 </div>
               )}
 
-              {filteredOptions.length === 0 ? (
-                <div className="px-3 py-2 text-sm text-slate-500 dark:text-zinc-400">{emptyText}</div>
-              ) : (
-                filteredOptions.map((option) => (
-                  <ListboxOption
-                    key={`${String(option.value)}-${option.label}`}
-                    value={option.value}
-                    disabled={option.disabled}
-                    className={[
-                      'group relative flex cursor-default select-none items-center justify-between rounded-lg px-3 py-2 text-sm text-slate-800 transition',
-                      'data-[focus]:bg-neutral-300 data-[focus]:text-slate-900',
-                      'dark:data-[focus]:bg-white/20 dark:data-[focus]:text-slate-900 data-[disabled]:opacity-40',
-                      'dark:text-zinc-100 dark:data-[focus]:text-zinc-100',
-                    ].join(' ')}
-                  >
-                    {({ selected: isSelected }) => (
-                      <>
-                        <span className={isSelected ? 'font-semibold' : ''}>{option.label}</span>
-                        <i className={`pi ${isSelected ? 'pi-check-square' : 'pi-square'} text-xs ${isSelected ? 'text-blue-600 dark:text-blue-300' : 'text-slate-400 dark:text-zinc-500'}`} />
-                      </>
-                    )}
-                  </ListboxOption>
-                ))
-              )}
+              <div className="max-h-52 overflow-y-auto p-1" onWheel={(event) => event.stopPropagation()}>
+                {filteredOptions.length === 0 ? (
+                  <div className="px-3 py-2 text-sm text-slate-500 dark:text-zinc-400">{emptyText}</div>
+                ) : (
+                  filteredOptions.map((option) => (
+                    <ListboxOption
+                      key={`${String(option.value)}-${option.label}`}
+                      value={option.value}
+                      disabled={option.disabled}
+                      className={[
+                        'group relative flex cursor-default select-none items-center justify-between rounded-2xl px-3 py-2 text-sm text-slate-800 transition ',
+                        'data-[focus]:bg-black/10 data-[focus]:text-slate-900 ',
+                        'dark:data-[focus]:bg-white/20 dark:data-[focus]:text-slate-900 data-[disabled]:opacity-40 ',
+                        'dark:text-zinc-100 dark:data-[focus]:text-zinc-100 ',
+                        ''
+                      ].join(' ')}
+                    >
+                      {({ selected: isSelected }) => (
+                        <>
+                          <span className={isSelected ? 'font-semibold' : ''}>{option.label}</span>
+                          <i className={`pi ${isSelected ? 'pi-check-square' : 'pi-square'} text-xs ${isSelected ? 'text-blue-600 dark:text-blue-300' : 'text-slate-400 dark:text-zinc-500'}`} />
+                        </>
+                      )}
+                    </ListboxOption>
+                  ))
+                )}
+              </div>
             </ListboxOptions>
           </Transition>
         </div>

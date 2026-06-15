@@ -105,11 +105,10 @@ public class UserService {
                                        + digits.substring(2, 5)
                                        + ".***/"
                                        + digits.substring(8, 12)
-                                       + "-**" : "**."
-                                                 + cpfCnpj.substring(2, 5)
+                                       + "-**" : "***."
+                                                 + cpfCnpj.substring(3, 6)
                                                  + "."
-                                                 + cpfCnpj.substring(6, 8)
-                                                 + "/" + cpfCnpj.substring(6, 10)
+                                                 + cpfCnpj.substring(6, 9)
                                                  + "-**";
     }
 
@@ -119,17 +118,15 @@ public class UserService {
     )
     public ResponseEntity<UserResponse> find(String uuid) {
         var user = userRepository.findByUserId(UUID.fromString(uuid));
-        if (user.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+        return user.map(appUser -> ResponseEntity.status(HttpStatus.OK).body(toUserResponse(appUser, false))).orElseGet(() -> ResponseEntity.notFound().build());
 
-        return ResponseEntity.status(HttpStatus.OK).body(toUserResponse(user.get(), false));
     }
 
     public Optional<AppUser> findUserByUsernameOrCpf(String username) {
         return userRepository.findByUsernameOrCpfCnpjIgnoreCase(username, username);
     }
 
+    @CacheEvict(value = "getAllUsers", key = "T(com.lumos.lumosspring.util.Utils).getCurrentTenantId()")
     public ResponseEntity<?> generateActivationCode(String userId) {
         var user = userRepository.findByUserId(UUID.fromString(userId));
         if (user.isEmpty()) {
@@ -140,6 +137,7 @@ public class UserService {
         return ResponseEntity.ok(response);
     }
 
+    @CacheEvict(value = "getAllUsers", key = "T(com.lumos.lumosspring.util.Utils).getCurrentTenantId()")
     public ResponseEntity<?> resetActivation(String userId) {
         var user = userRepository.findByUserId(UUID.fromString(userId));
         if (user.isEmpty()) {
@@ -232,7 +230,7 @@ public class UserService {
             throw new Utils.BusinessException("CPF " + userDto.cpf() + " já existente no sistema, utilize outro CPF.");
         }
 
-        Set<Role> userRoles = new HashSet<>(userDto.role());
+        Set<Role> userRoles = roleRepository.findRolesByRoleNameIn(userDto.role());
         var user = new AppUser();
         var date = LocalDate.of(userDto.year(), userDto.month(), userDto.day());
 
@@ -252,13 +250,10 @@ public class UserService {
         user = userRepository.save(user);
 
         for (Role role : userRoles) {
-            var params = new MapSqlParameterSource()
-                    .addValue("userId", user.getId())
-                    .addValue("roleId", role.getRoleId());
             namedParameterJdbcTemplate.update("""
                         INSERT INTO user_role (id_user, id_role)
                         VALUES (:userId, :roleId)
-                    """, params);
+                    """, Map.of("userId", user.getId(), "roleId", role.getRoleId()));
         }
 
         refreshActivationCode(user, "Usuário criado com ativação pendente.");
@@ -283,6 +278,7 @@ public class UserService {
     }
 
     @Transactional
+    @CacheEvict(value = "getAllUsers", key = "T(com.lumos.lumosspring.util.Utils).getCurrentTenantId()")
     public ResponseEntity<?> activateUser(String cpf, String activationCode, String newPassword) {
         var normalizedCpf = cpf == null ? "" : cpf.replaceAll("\\D", "");
         if (!isValidCPF(normalizedCpf)) {
@@ -353,7 +349,7 @@ public class UserService {
             return false;
         }
 
-        if (cpf.startsWith("***") && cpf.endsWith("**")) {
+        if ((cpf.startsWith("***") && cpf.endsWith("**")) || (cpf.startsWith("**") && cpf.endsWith("**"))) {
             return true;
         }
 
@@ -409,11 +405,7 @@ public class UserService {
 
         var date = LocalDate.of(userDto.year(), userDto.month(), userDto.day());
         Set<Role> currentUserRoles = new HashSet<>(roleRepository.findRolesByUserId(user.getUserId()));
-        Set<Role> newRoles = new HashSet<>(userDto.role());
-
-        if (userDto.status() != UserStatus.ACTIVE || !currentUserRoles.equals(newRoles)) {
-            revokeUserSessions(user.getUserId());
-        }
+        Set<Role> newRoles = roleRepository.findRolesByRoleNameIn(userDto.role());
 
         user.setUsername(userDto.username());
         user.setName(userDto.name());
@@ -429,21 +421,28 @@ public class UserService {
             user.setActivationCodeExpiresAt(null);
         }
 
-        namedParameterJdbcTemplate.update("""
-                    delete from user_role where id_user = :userId
-                """, Map.of("userId", UUID.fromString(userDto.userId())));
-        for (Role role : newRoles) {
-            var params = new MapSqlParameterSource()
-                    .addValue("userId", UUID.fromString(userDto.userId()))
-                    .addValue("roleId", role.getRoleId());
-
-            namedParameterJdbcTemplate.update("""
-                        INSERT INTO user_role (id_user, id_role)
-                        VALUES (:userId, :roleId)
-                    """, params);
-        }
-
         userRepository.save(user);
+
+        if (userDto.status() != UserStatus.ACTIVE || !currentUserRoles.equals(newRoles))
+            revokeUserSessions(user.getUserId());
+
+        if (!currentUserRoles.equals(newRoles)) {
+            namedParameterJdbcTemplate.update(
+                    "delete from user_role where id_user = :userId",
+                    Map.of("userId", UUID.fromString(userDto.userId()))
+            );
+
+            for (Role role : newRoles) {
+                var params = new MapSqlParameterSource()
+                        .addValue("userId", UUID.fromString(userDto.userId()))
+                        .addValue("roleId", role.getRoleId());
+
+                namedParameterJdbcTemplate.update("""
+                            INSERT INTO user_role (id_user, id_role)
+                            VALUES (:userId, :roleId)
+                        """, params);
+            }
+        }
     }
 
     private void validateUserPayload(UpdateUserDto userDto, boolean existingUser) {

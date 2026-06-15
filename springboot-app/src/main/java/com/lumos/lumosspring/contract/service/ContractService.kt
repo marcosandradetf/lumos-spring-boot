@@ -108,6 +108,7 @@ class ContractService(
         contract.dueDate = contractDTO.dueDate
         contract.validationScore = scoreResult.score
         contract.validationReasons = scoreResult.reasons.joinToString(" | ")
+        contract.companyId = contractDTO.companyId
 
         if ((contractDTO.contractFile?.length ?: 0) > 0) {
             val filesToDelete = buildSet {
@@ -135,7 +136,6 @@ class ContractService(
             }
         }
 
-        contract.companyId = contractDTO.companyId
         contractRepository.save(contract)
 
         changeItems(
@@ -144,7 +144,7 @@ class ContractService(
             items = contractDTO.items
         )
 
-        if(contract.status == ContractStatus.PENDING) {
+        if (contract.status == ContractStatus.PENDING) {
             fcmService.sendNotificationForTopic(
                 title = "Novo contrato pendente para Validação",
                 body = "Colaboradora ${user.name} atualizou o contrato de ${contract.contractor}",
@@ -213,12 +213,14 @@ class ContractService(
                     "Erro ao excluir itens: ${ex.message}"
                 )
             }
+
         }
 
-        val reservedQuantityByItem = contractItemsQuantitativeRepository
-            .getReservedQuantity(
-                items.map { it.contractItemId }
-            )
+        val itemsIds = items.map { it.contractItemId }
+        val reservedQuantityByItem =
+            if (itemsIds.isNotEmpty())
+                contractItemsQuantitativeRepository.getReservedQuantity(itemsIds)
+            else emptyList()
 
         items.forEach { item ->
             val ci = if (item.contractItemId != null) {
@@ -315,6 +317,7 @@ class ContractService(
         val score: Int,
         val reasons: List<String>
     )
+
     private fun calculateContractScore(
         contractDTO: ContractDTO,
         roles: List<String>
@@ -430,7 +433,7 @@ class ContractService(
         )
     }
 
-    fun getAllActiveContracts(filters: ContractController.FilterRequest): ResponseEntity<Any> {
+    fun getContractsByFilters(filters: ContractController.FilterRequest): ResponseEntity<Any> {
         val endPlusOneDay = filters.endDate?.plus(1, ChronoUnit.DAYS)
         val contractor = filters.contractor
 
@@ -502,7 +505,7 @@ class ContractService(
         value = ["GetContractsForPreMeasurement"],
         key = "T(com.lumos.lumosspring.util.Utils).getCurrentTenantId()"
     )
-    fun getContractsForPreMeasurement(): ResponseEntity<Any> {
+    fun getContractsForMobile(): ResponseEntity<Any> {
         data class ContractForPreMeasurementDTO(
             val contractId: Long,
             val contractor: String,
@@ -511,7 +514,8 @@ class ContractService(
             val createdAt: String,
             val status: String,
             val itemsIds: String? = null,
-            val hasMaintenance: Boolean
+            val hasMaintenance: Boolean,
+            val contractType: String
         )
 
         val contractList = namedJdbc.query(
@@ -522,13 +526,14 @@ class ContractService(
                     c.contract_file, 
                     u.name || ' ' || u.last_name AS created_by,
                     c.creation_date,
-                    c.status
+                    c.status,
+                    c.contract_type
                 FROM contract c
                 JOIN app_user u ON u.user_id = c.created_by_id_user
                 WHERE c.status = 'ACTIVE'
                     AND c.tenant_id = :tenantId
             """.trimIndent(),
-            mapOf("tenantId" to Utils.getCurrentTenantId()) // Nenhum parâmetro necessário aqui
+            mapOf("tenantId" to Utils.getCurrentTenantId())
         ) { rs, _ ->
             var hasMaintenance = false
 
@@ -555,7 +560,8 @@ class ContractService(
                 createdAt = rs.getString("creation_date"),
                 status = rs.getString("status"),
                 itemsIds = itemsIds,
-                hasMaintenance = hasMaintenance
+                hasMaintenance = hasMaintenance,
+                contractType = rs.getString("contract_type")
             )
         }
 

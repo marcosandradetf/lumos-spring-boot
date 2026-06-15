@@ -143,6 +143,7 @@ function defaultEditFilters(): ContractFilters {
     startDate: new Date('2000-01-01T00:00:00'),
     endDate: new Date('2100-01-01T00:00:00'),
     status: null,
+    contractType: []
   };
 }
 
@@ -286,9 +287,9 @@ export default function ContractCreate() {
 
   const createContractMutation = useMutation({
     mutationFn: (payload: CreateContractDTO) => contractsApi.createContract(payload),
-    onSuccess: async (response: any) => {
+    onSuccess: async (response: { contractId: number }) => {
       await queryClient.invalidateQueries({ queryKey: contractKeys.all });
-      editId = response.contractId;
+      setCancelledId(response.contractId);
     },
   });
 
@@ -299,14 +300,20 @@ export default function ContractCreate() {
     },
   });
 
-  let editId = searchParams.get('contractId');
+  const editId = searchParams.get('contractId');
   const isEdit = !!editId;
+
+  const [cancelledId, setCancelledId] = useState<number | null>(null);
 
   const [cancelled, setCancelled] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [form, setForm] = useState<ContractForm>(EMPTY_FORM);
 
-  const [catalogDraftValues, setCatalogDraftValues] = useState<Record<number, { quantity: number; price: number; factor: number }>>({});
+  const [catalogDraftValues, setCatalogDraftValues] = useState<Record<number, {
+    quantity: number;
+    price: number;
+    factor: number
+  }>>({});
   const [contractItems, setContractItems] = useState<ContractItemRow[]>([]);
 
   const [loading, setLoading] = useState(false);
@@ -334,12 +341,15 @@ export default function ContractCreate() {
 
   useEffect(() => {
     setPageContext(['Contratos', isEdit ? 'Editar Contrato' : 'Novo Contrato'], isEdit ? 'Editar Contrato' : 'Novo Contrato');
+    if (!isEdit) setForm(EMPTY_FORM);
+
   }, [isEdit, setPageContext]);
 
   const { data: catalogItems = [] } = useQuery({
     queryKey: contractKeys.referenceItems(),
     queryFn: contractsApi.getContractReferenceItems,
   });
+  
   const { data: companies = [], isLoading: loadingCompanies } = useQuery({
     queryKey: ['companies', 'list'],
     queryFn: companiesApi.getCompanies,
@@ -348,7 +358,6 @@ export default function ContractCreate() {
   const {
     data: statesData,
     isLoading: isStatesLoading,
-    error: statesError,
   } = useQuery({
     queryKey: ['ibge-states'],
     queryFn: ibgeApi.getUfs,
@@ -357,7 +366,6 @@ export default function ContractCreate() {
   const {
     data: citiesData,
     isLoading: isCitiesLoading,
-    error: citiesError,
   } = useQuery({
     queryKey: ['ibge-cities', uf],
     queryFn: () => ibgeApi.getCities(uf),
@@ -415,8 +423,12 @@ export default function ContractCreate() {
         unifyServices: selectedItems.some((item) => Number(item.factor) !== 1),
         companyId: state.contract.companyId ?? null,
         ibgeCode: state.contract.ibgeCode ?? '',
-        contractionDate: state.contract.contractionDate ?? new Date(),
-        dueDate: state.contract.dueDate ?? new Date(),
+        contractionDate: state.contract.contractionDate
+          ? new Date(state.contract.contractionDate)
+          : null,
+        dueDate: state.contract.dueDate
+          ? new Date(state.contract.dueDate)
+          : null,
         contractType: state.contract.contractType ?? '',
       });
       setExistingContractFile(state.contract.contractFile ?? null);
@@ -675,6 +687,7 @@ export default function ContractCreate() {
     });
 
     if (!result.success) {
+      console.error(result.error);
       notify(result.error.issues[0]?.message ?? 'Preencha os campos obrigatórios do contrato antes de continuar.', 'warn');
       return false;
     }
@@ -764,15 +777,17 @@ export default function ContractCreate() {
     setLoading(true);
 
     try {
-      if (!editId) {
+      if (!cancelledId) {
         notify('Não foi possível cancelar o cadastro. Solicite apoio ao suporte.', 'error');
         return;
       }
 
-      await deleteContractMutation.mutateAsync(Number(editId));
+      await deleteContractMutation.mutateAsync(cancelledId);
       setCancelled(true);
     } catch (error: unknown) {
-      const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Erro ao salvar contrato.';
+      const message = (error as {
+        response?: { data?: { message?: string } }
+      })?.response?.data?.message ?? 'Erro ao salvar contrato.';
       notify(message, 'error');
     } finally {
       setLoading(false);
@@ -832,7 +847,9 @@ export default function ContractCreate() {
       setSelectedFiles([]);
 
     } catch (error: unknown) {
-      const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Erro ao salvar contrato.';
+      const message = (error as {
+        response?: { data?: { message?: string } }
+      })?.response?.data?.message ?? 'Erro ao salvar contrato.';
       notify(message, 'error');
 
     } finally {
@@ -881,14 +898,18 @@ export default function ContractCreate() {
   if (submitted) {
     return (
       <div className="flex min-h-[70vh] items-center justify-center px-4 py-8">
-        <div className="w-full max-w-2xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_24px_70px_-45px_rgba(15,23,42,0.55)] dark:border-zinc-800 dark:bg-zinc-950">
-          <div className="border-b border-slate-100 bg-slate-50/70 px-6 py-5 dark:border-zinc-800 dark:bg-zinc-900/60 sm:px-8">
+        <div
+          className="w-full max-w-2xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_24px_70px_-45px_rgba(15,23,42,0.55)] dark:border-zinc-800 dark:bg-zinc-950">
+          <div
+            className="border-b border-slate-100 bg-slate-50/70 px-6 py-5 dark:border-zinc-800 dark:bg-zinc-900/60 sm:px-8">
             <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 ring-8 ring-white dark:bg-emerald-900/30 dark:text-emerald-300 dark:ring-zinc-950">
+              <div
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 ring-8 ring-white dark:bg-emerald-900/30 dark:text-emerald-300 dark:ring-zinc-950">
                 <i className="pi pi-check text-lg" />
               </div>
               <div className="min-w-0 text-left">
-                <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                <span
+                  className="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
                   {spanDescription}
                 </span>
                 <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950 dark:text-zinc-50">
@@ -904,9 +925,11 @@ export default function ContractCreate() {
           {!isEdit && !cancelled && (
             <>
               <div className="px-6 py-6 sm:px-8">
-                <div className="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4 text-left dark:border-indigo-900/40 dark:bg-indigo-950/20">
+                <div
+                  className="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4 text-left dark:border-indigo-900/40 dark:bg-indigo-950/20">
                   <div className="flex items-start gap-3">
-                    <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-indigo-700 shadow-sm dark:bg-zinc-900 dark:text-indigo-300">
+                    <div
+                      className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-indigo-700 shadow-sm dark:bg-zinc-900 dark:text-indigo-300">
                       <i className="pi pi-clock text-sm" />
                     </div>
                     <div>
@@ -955,17 +978,20 @@ export default function ContractCreate() {
                   <div className="rounded-2xl border border-slate-200 p-4 dark:border-zinc-800">
                     <i className="pi pi-file-check text-sm text-slate-500 dark:text-zinc-400" />
                     <p className="mt-3 text-sm font-semibold text-slate-900 dark:text-zinc-100">Documentos</p>
-                    <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-zinc-400">Arquivos recebidos para conferência.</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-zinc-400">Arquivos recebidos para
+                      conferência.</p>
                   </div>
                   <div className="rounded-2xl border border-slate-200 p-4 dark:border-zinc-800">
                     <i className="pi pi-search text-sm text-slate-500 dark:text-zinc-400" />
                     <p className="mt-3 text-sm font-semibold text-slate-900 dark:text-zinc-100">Análise</p>
-                    <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-zinc-400">Nossa equipe valida dados e itens.</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-zinc-400">Nossa equipe valida dados e
+                      itens.</p>
                   </div>
                   <div className="rounded-2xl border border-slate-200 p-4 dark:border-zinc-800">
                     <i className="pi pi-bell text-sm text-slate-500 dark:text-zinc-400" />
                     <p className="mt-3 text-sm font-semibold text-slate-900 dark:text-zinc-100">Resposta</p>
-                    <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-zinc-400">Você será avisado assim que houver retorno.</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-zinc-400">Você será avisado assim que
+                      houver retorno.</p>
                   </div>
                 </div>
               </div>
@@ -975,7 +1001,8 @@ export default function ContractCreate() {
 
           )}
 
-          <div className="flex flex-col gap-2 border-t border-slate-100 bg-white px-6 py-5 dark:border-zinc-800 dark:bg-zinc-950 sm:px-8">
+          <div
+            className="flex flex-col gap-2 border-t border-slate-100 bg-white px-6 py-5 dark:border-zinc-800 dark:bg-zinc-950 sm:px-8">
             <Button
               className="h-11"
               onClick={() => navigate('/contratos/listar')}
@@ -1020,17 +1047,22 @@ export default function ContractCreate() {
   return (
     <section className="p-4 md:p-6">
       <div className="mx-auto max-w-6xl space-y-6">
-        <div className="hidden md:block rounded-2xl border border-slate-200/80 bg-linear-to-r from-white to-slate-50 px-4 py-3 dark:border-zinc-800/80 dark:from-zinc-900 dark:to-zinc-900/60">
+        <div
+          className="hidden md:block rounded-2xl border border-slate-200/80 bg-linear-to-r from-white to-slate-50 px-4 py-3 dark:border-zinc-800/80 dark:from-zinc-900 dark:to-zinc-900/60">
           <div className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-zinc-400">
             Fluxo de cadastro
           </div>
           <div className="flex items-center gap-3 overflow-x-auto pb-1">
             {([1, 2, 3] as const).map((currentStep) => (
               <div key={currentStep} className="flex items-center gap-2 min-w-max">
-                <div onClick={() => { setStep(currentStep); }} className={`cursor-pointer flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold transition-all ${step >= currentStep ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-500/30' : 'bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500'}`}>
+                <div onClick={() => {
+                  setStep(currentStep);
+                }}
+                  className={`cursor-pointer flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold transition-all ${step >= currentStep ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-500/30' : 'bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500'}`}>
                   {step > currentStep ? <i className="pi pi-check text-xs" /> : currentStep}
                 </div>
-                <span className={`text-sm font-semibold ${step === currentStep ? 'text-slate-800 dark:text-zinc-100' : 'text-slate-400 dark:text-zinc-500'}`}>
+                <span
+                  className={`text-sm font-semibold ${step === currentStep ? 'text-slate-800 dark:text-zinc-100' : 'text-slate-400 dark:text-zinc-500'}`}>
                   {currentStep === 1 ? 'Dados' : currentStep === 2 ? 'Selecionar Itens' : 'Revisão'}
                 </span>
                 {currentStep < 3 && <i className="pi pi-chevron-right text-xs text-slate-300 dark:text-zinc-600 ml-1" />}
@@ -1039,7 +1071,8 @@ export default function ContractCreate() {
           </div>
         </div>
 
-        <div className="relative sm:rounded-2xl sm:border border-slate-200 dark:border-zinc-800 sm:bg-white sm:dark:bg-zinc-900 sm:p-6 sm:shadow-[0_10px_30px_-20px_rgba(15,23,42,0.35)] space-y-5">
+        <div
+          className="relative sm:rounded-2xl sm:border border-slate-200 dark:border-zinc-800 sm:bg-white sm:dark:bg-zinc-900 sm:p-6 sm:shadow-[0_10px_30px_-20px_rgba(15,23,42,0.35)] space-y-5">
           <LoadingOverlay loading={loading || loadingEditData} />
 
           {step === 1 && (
@@ -1050,17 +1083,22 @@ export default function ContractCreate() {
               <div className="gap-4 flex flex-col">
                 <div className='flex gap-4 flex-wrap md:flex-nowrap'>
                   <div className='w-full md:w-[20%]'>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-zinc-200 mb-1">N.º Contrato*</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-zinc-200 mb-1">N.º
+                      Contrato*</label>
                     <input
                       type="text"
                       value={form.number}
-                      onChange={(event) => setForm((previous) => ({ ...previous, number: formatContractNumber(event.target.value) }))}
+                      onChange={(event) => setForm((previous) => ({
+                        ...previous,
+                        number: formatContractNumber(event.target.value)
+                      }))}
                       placeholder="Digite o número"
                       className={inputClass}
                     />
                   </div>
                   <div className='w-full md:w-[80%]'>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-zinc-200 mb-1">Contratante*</label>
+                    <label
+                      className="block text-sm font-medium text-slate-700 dark:text-zinc-200 mb-1">Contratante*</label>
                     <input
                       type="text"
                       value={form.contractor}
@@ -1073,7 +1111,8 @@ export default function ContractCreate() {
 
                 <div className='flex gap-4 flex-wrap md:flex-nowrap'>
                   <div className='w-full md:w-[25%]'>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-zinc-200 mb-1">Data de início do Contrato*</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-zinc-200 mb-1">Data de início
+                      do Contrato*</label>
                     <AppDatePicker
                       value={form.contractionDate}
                       onChange={(value) => setForm((previous) => ({ ...previous, contractionDate: value }))}
@@ -1081,7 +1120,8 @@ export default function ContractCreate() {
                   </div>
 
                   <div className='w-full md:w-[25%] md:flex-nowrap'>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-zinc-200 mb-1">Data de término do Contrato*</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-zinc-200 mb-1">Data de término
+                      do Contrato*</label>
                     <AppDatePicker
                       value={form.dueDate}
                       onChange={(value) => setForm((previous) => ({ ...previous, dueDate: value }))}
@@ -1089,7 +1129,7 @@ export default function ContractCreate() {
                   </div>
 
                   <div className='w-full md:w-[50%] md:flex-nowrap'>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-zinc-200 mb-1">Tipo de Contrato*</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-zinc-200 mb-1">Tipo de Serviço*</label>
                     <GlassListbox
                       value={form.contractType}
                       onChange={(value) => setForm((previous) => ({ ...previous, contractType: value }))}
@@ -1097,7 +1137,7 @@ export default function ContractCreate() {
                       options={[
                         { label: 'Somente Instalação/Modernização', value: 'INSTALLATION' },
                         { label: 'Somente Manutenção', value: 'MAINTENANCE' },
-                        { label: 'Instalação e Manutenção', value: 'ALL' },
+                        { label: 'Instalação/Modernização e Manutenção', value: 'ALL' },
                       ]}
                     />
                   </div>
@@ -1107,17 +1147,22 @@ export default function ContractCreate() {
                 <div className='flex gap-4 flex-wrap md:flex-nowrap'>
 
                   <div className='w-full md:w-[25%]'>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-zinc-200 mb-1">Telefone do Contratante*</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-zinc-200 mb-1">Telefone do
+                      Contratante*</label>
                     <input
                       type="text"
                       value={form.phone}
-                      onChange={(event) => setForm((previous) => ({ ...previous, phone: formatPhone(event.target.value) }))}
+                      onChange={(event) => setForm((previous) => ({
+                        ...previous,
+                        phone: formatPhone(event.target.value)
+                      }))}
                       placeholder="(31) 99999-9999"
                       className={inputClass}
                     />
                   </div>
                   <div className='w-full md:w-[25%]'>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-zinc-200 mb-1">CNPJ do Contratante*</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-zinc-200 mb-1">CNPJ do
+                      Contratante*</label>
                     <input
                       type="text"
                       value={form.cnpj}
@@ -1129,9 +1174,13 @@ export default function ContractCreate() {
 
 
                   <div className='w-full md:w-[25%]'>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-zinc-200 mb-1">Estado refente ao contrato*</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-zinc-200 mb-1">Estado refente
+                      ao contrato*</label>
                     <GlassListbox
-                      options={(statesData ?? []).map((state) => ({ label: `${state.nome} (${state.sigla})`, value: state.sigla }))}
+                      options={(statesData ?? []).map((state) => ({
+                        label: `${state.nome} (${state.sigla})`,
+                        value: state.sigla
+                      }))}
                       value={uf}
                       onChange={(value) => {
                         setUf(value);
@@ -1145,7 +1194,8 @@ export default function ContractCreate() {
                   </div>
 
                   <div className='w-full md:w-[25%] md:flex-nowrap'>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-zinc-200 mb-1">Cidade refente ao contrato*</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-zinc-200 mb-1">Cidade refente
+                      ao contrato*</label>
                     <GlassListbox
                       options={(citiesData ?? []).map((city) => ({ label: city.nome, value: city.nome }))}
                       value={cityName}
@@ -1153,7 +1203,11 @@ export default function ContractCreate() {
                         setCityName(value);
 
                         const ibgeCode = citiesData?.find((city) => city.nome === value)?.id;
-                        setForm((previous) => ({ ...previous, address: `${value} - ${uf}`, ibgeCode: String(ibgeCode ?? '-1') }));
+                        setForm((previous) => ({
+                          ...previous,
+                          address: `${value} - ${uf}`,
+                          ibgeCode: String(ibgeCode ?? '-1')
+                        }));
                       }}
                       placeholder="Cidade"
                       searchable
@@ -1188,7 +1242,8 @@ export default function ContractCreate() {
                 </div>
 
                 <div className='relative'>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-zinc-200 mb-1">Empresa contratada*</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-zinc-200 mb-1">Empresa
+                    contratada*</label>
                   <GlassListbox
                     disabled={companyModalOpen}
                     disabledTooltip={companyModalOpen ? 'Cadastrando nova empresa' : undefined}
@@ -1208,14 +1263,17 @@ export default function ContractCreate() {
 
                   {companyModalOpen && (
                     <div className="absolute left-0 top-full z-20 mt-3 w-full">
-                      <div className="w-full rounded-lg border border-slate-200 bg-linear-to-b from-white to-slate-50 p-5 text-slate-800 shadow-xl dark:border-zinc-700 dark:from-zinc-900 dark:to-zinc-900/80 dark:text-zinc-100">
-                        <div className="mb-4 flex items-center justify-between border-b border-slate-200 pb-3 dark:border-zinc-700">
+                      <div
+                        className="w-full rounded-lg border border-slate-200 bg-linear-to-b from-white to-slate-50 p-5 text-slate-800 shadow-xl dark:border-zinc-700 dark:from-zinc-900 dark:to-zinc-900/80 dark:text-zinc-100">
+                        <div
+                          className="mb-4 flex items-center justify-between border-b border-slate-200 pb-3 dark:border-zinc-700">
                           <div>
                             <h3 className="flex items-center gap-2 text-base font-semibold">
                               <i className="pi pi-building text-sm text-indigo-500" />
                               Cadastrar Empresa
                             </h3>
-                            <p className="text-xs text-slate-500 dark:text-zinc-400">Preencha as informações abaixo para criar e já vincular ao contrato.</p>
+                            <p className="text-xs text-slate-500 dark:text-zinc-400">Preencha as informações abaixo para
+                              criar e já vincular ao contrato.</p>
                           </div>
                           <button
                             type="button"
@@ -1230,15 +1288,46 @@ export default function ContractCreate() {
                         </div>
 
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                          <input className={inputClass} placeholder="Razão social*" value={companyForm.socialReason} onChange={(event) => setCompanyForm((previous) => ({ ...previous, socialReason: event.target.value.toUpperCase() }))} />
-                          <input className={inputClass} placeholder="Nome fantasia*" value={companyForm.fantasyName} onChange={(event) => setCompanyForm((previous) => ({ ...previous, fantasyName: event.target.value.toUpperCase() }))} />
-                          <input className={inputClass} placeholder="CNPJ*" value={companyForm.companyCnpj} onChange={(event) => setCompanyForm((previous) => ({ ...previous, companyCnpj: formatCnpj(event.target.value) }))} />
-                          <input className={inputClass} placeholder="Telefone*" value={companyForm.companyPhone} onChange={(event) => setCompanyForm((previous) => ({ ...previous, companyPhone: formatPhone(event.target.value) }))} />
-                          <input className={inputClass} placeholder="Contato*" value={companyForm.companyContact} onChange={(event) => setCompanyForm((previous) => ({ ...previous, companyContact: event.target.value }))} />
-                          <input className={inputClass} placeholder="E-mail*" value={companyForm.companyEmail} onChange={(event) => setCompanyForm((previous) => ({ ...previous, companyEmail: event.target.value }))} />
-                          <input className={`${inputClass} sm:col-span-2`} placeholder="Endereço*" value={companyForm.companyAddress} onChange={(event) => setCompanyForm((previous) => ({ ...previous, companyAddress: event.target.value }))} />
-                          <div className="sm:col-span-2 rounded-xl border border-slate-200 bg-white/70 p-3 dark:border-zinc-700 dark:bg-zinc-900/50">
-                            <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-zinc-400">Logo da empresa*</label>
+                          <input className={inputClass} placeholder="Razão social*" value={companyForm.socialReason}
+                            onChange={(event) => setCompanyForm((previous) => ({
+                              ...previous,
+                              socialReason: event.target.value.toUpperCase()
+                            }))} />
+                          <input className={inputClass} placeholder="Nome fantasia*" value={companyForm.fantasyName}
+                            onChange={(event) => setCompanyForm((previous) => ({
+                              ...previous,
+                              fantasyName: event.target.value.toUpperCase()
+                            }))} />
+                          <input className={inputClass} placeholder="CNPJ*" value={companyForm.companyCnpj}
+                            onChange={(event) => setCompanyForm((previous) => ({
+                              ...previous,
+                              companyCnpj: formatCnpj(event.target.value)
+                            }))} />
+                          <input className={inputClass} placeholder="Telefone*" value={companyForm.companyPhone}
+                            onChange={(event) => setCompanyForm((previous) => ({
+                              ...previous,
+                              companyPhone: formatPhone(event.target.value)
+                            }))} />
+                          <input className={inputClass} placeholder="Contato*" value={companyForm.companyContact}
+                            onChange={(event) => setCompanyForm((previous) => ({
+                              ...previous,
+                              companyContact: event.target.value
+                            }))} />
+                          <input className={inputClass} placeholder="E-mail*" value={companyForm.companyEmail}
+                            onChange={(event) => setCompanyForm((previous) => ({
+                              ...previous,
+                              companyEmail: event.target.value
+                            }))} />
+                          <input className={`${inputClass} sm:col-span-2`} placeholder="Endereço*"
+                            value={companyForm.companyAddress} onChange={(event) => setCompanyForm((previous) => ({
+                              ...previous,
+                              companyAddress: event.target.value
+                            }))} />
+                          <div
+                            className="sm:col-span-2 rounded-xl border border-slate-200 bg-white/70 p-3 dark:border-zinc-700 dark:bg-zinc-900/50">
+                            <label
+                              className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-zinc-400">Logo
+                              da empresa*</label>
                             <input
                               id="company-logo-input"
                               type="file"
@@ -1288,7 +1377,8 @@ export default function ContractCreate() {
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-zinc-200 mb-1">Arquivos do contrato</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-zinc-200 mb-1">Arquivos do
+                    contrato</label>
                   <input
                     ref={contractFileInputRef}
                     type="file"
@@ -1297,7 +1387,8 @@ export default function ContractCreate() {
                     multiple
                     className="hidden"
                   />
-                  <div className="rounded-xl border border-dashed border-slate-300 dark:border-zinc-700 bg-slate-50/60 dark:bg-zinc-900/50 p-3">
+                  <div
+                    className="rounded-xl border border-dashed border-slate-300 dark:border-zinc-700 bg-slate-50/60 dark:bg-zinc-900/50 p-3">
                     <button
                       type="button"
                       onClick={() => contractFileInputRef.current?.click()}
@@ -1322,7 +1413,8 @@ export default function ContractCreate() {
                   </div>
                 </div>
                 <div className="col-span-4">
-                  <label className="block text-sm font-medium text-slate-700 dark:text-zinc-200 mb-1">O Contrato utiliza fator US?</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-zinc-200 mb-1">O Contrato utiliza
+                    fator US?</label>
 
                   <Toggle
                     variant="outline"
@@ -1353,7 +1445,8 @@ export default function ContractCreate() {
                       {form.unifyServices ? 'Desativar Fator US' : 'Ativar Fator US'}
                     </span>
                   </Toggle>
-                  <p className="mt-1 text-xs text-slate-600 dark:text-zinc-300 border rounded-2xl p-2 border-green-500/20 bg-green-500/5">
+                  <p
+                    className="mt-1 text-xs text-slate-600 dark:text-zinc-300 border rounded-2xl p-2 border-green-500/20 bg-green-500/5">
                     {form.unifyServices ? (
                       <>
                         O valor de cada item será calculado como: <strong>valor unitário x (quantidade x fator)</strong>.
@@ -1376,7 +1469,7 @@ export default function ContractCreate() {
                     }
                     setStep(2);
                   }}
-                  className="rounded-2xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors"
+                  className="rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors"
                 >
                   Continuar <i className="pi pi-arrow-right ml-1.5 text-xs" />
                 </button>
@@ -1387,15 +1480,18 @@ export default function ContractCreate() {
           {step === 2 && (
             <>
               {form.unifyServices && (
-                <div className="rounded-3xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-200">
-                  O fator US está ativo. O total por item será calculado com: <strong>valor unitário x (quantidade x fator)</strong>.
+                <div
+                  className="rounded-3xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-200">
+                  O fator US está ativo. O total por item será calculado com: <strong>valor unitário x (quantidade x
+                    fator)</strong>.
                 </div>
               )}
               <div className="flex items-start justify-between gap-3">
                 {['INSTALLATION', 'ALL', ''].includes(form.contractType) && (
                   <div>
                     <h2 className="text-base font-semibold text-slate-800 dark:text-zinc-100">Selecionar Itens</h2>
-                    <p className="text-sm text-slate-500 dark:text-zinc-400">Preencha quantidade e valor unitário e adicione os itens ao contrato.</p>
+                    <p className="text-sm text-slate-500 dark:text-zinc-400">Preencha quantidade e valor unitário e
+                      adicione os itens ao contrato.</p>
                   </div>
                 )}
 
@@ -1419,7 +1515,8 @@ export default function ContractCreate() {
                     </TooltipContent>
                   </Tooltip> */}
 
-                  <div className="rounded-2xl border border-indigo-200 dark:border-indigo-900/40 px-3 py-1 text-xs font-semibold text-indigo-700 dark:text-indigo-300">
+                  <div
+                    className="rounded-2xl border border-indigo-200 dark:border-indigo-900/40 px-3 py-1 text-xs font-semibold text-indigo-700 dark:text-indigo-300">
                     {step2Count} selecionado(s)
                   </div>
 
@@ -1429,7 +1526,8 @@ export default function ContractCreate() {
               <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-zinc-700">
                 {['INSTALLATION', 'ALL', ''].includes(form.contractType) ? (
                   <table className="min-w-[900px] w-full text-sm">
-                    <thead className="bg-slate-50 dark:bg-zinc-800 text-xs uppercase tracking-wide text-slate-500 dark:text-zinc-400">
+                    <thead
+                      className="bg-slate-50 dark:bg-zinc-800 text-xs uppercase tracking-wide text-slate-500 dark:text-zinc-400">
                       <tr>
                         <th className="px-3 py-2 text-left">Descrição</th>
                         <th className="px-3 py-2 text-right">Quantidade</th>
@@ -1445,7 +1543,8 @@ export default function ContractCreate() {
                         const total = Number(row.price || 0) * (Number(row.quantity || 0) * effectiveFactor);
 
                         return (
-                          <tr key={row.contractReferenceItemId} className="hover:bg-emerald-50/40 dark:hover:bg-emerald-900/10 transition-colors">
+                          <tr key={row.contractReferenceItemId}
+                            className="hover:bg-emerald-50/40 dark:hover:bg-emerald-900/10 transition-colors">
                             <td className="px-3 py-2 text-slate-700 dark:text-zinc-200">{row.description}</td>
                             <td className="px-3 py-2 text-right">
                               <AppNumberInput
@@ -1549,7 +1648,8 @@ export default function ContractCreate() {
 
                       {catalogRows.length === 0 && (
                         <tr>
-                          <td colSpan={form.unifyServices ? 7 : 6} className="px-3 py-6 text-center text-sm text-slate-400 dark:text-zinc-500">
+                          <td colSpan={form.unifyServices ? 7 : 6}
+                            className="px-3 py-6 text-center text-sm text-slate-400 dark:text-zinc-500">
                             Todos os itens referenciais já foram adicionados ao contrato.
                           </td>
                         </tr>
@@ -1563,7 +1663,8 @@ export default function ContractCreate() {
                       Itens referenciais não necessários
                     </h4>
                     <p className='text-xs'>
-                      Este contrato é do tipo <strong>Somente Manutenção</strong>, portanto, não possui itens referenciais para adicionar.
+                      Este contrato é do tipo <strong>Somente Manutenção</strong>, portanto, não possui itens
+                      referenciais para adicionar.
                     </p>
                   </div>
                 )}
@@ -1573,7 +1674,7 @@ export default function ContractCreate() {
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className="rounded-2xl border border-slate-200 dark:border-zinc-700 px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
+                  className="rounded-full border border-slate-200 dark:border-zinc-700 px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
                 >
                   <i className="pi pi-arrow-left mr-1.5 text-xs" /> Voltar
                 </button>
@@ -1586,9 +1687,10 @@ export default function ContractCreate() {
                     }
                     setStep(3);
                   }}
-                  className="rounded-2xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors"
+                  className="rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors"
                 >
-                  Revisar {['ALL', '', 'INSTALLATION'].includes(form.contractType) ? 'Itens' : 'Contrato'} <i className="pi pi-arrow-right ml-1.5 text-xs" />
+                  Revisar {['ALL', '', 'INSTALLATION'].includes(form.contractType) ? 'Itens' : 'Contrato'} <i
+                    className="pi pi-arrow-right ml-1.5 text-xs" />
                 </button>
               </div>
             </>
@@ -1599,12 +1701,17 @@ export default function ContractCreate() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <h2 className="text-base font-semibold text-slate-800 dark:text-zinc-100">Revisão do Contrato</h2>
-                  <p className="text-sm text-slate-500 dark:text-zinc-400">Revise {['ALL', '', 'INSTALLATION'].includes(form.contractType) ? 'os itens adicionados' : 'o contrato'} antes de finalizar.</p>
+                  <p
+                    className="text-sm text-slate-500 dark:text-zinc-400">Revise {['ALL', '', 'INSTALLATION'].includes(form.contractType) ? 'os itens adicionados' : 'o contrato'} antes
+                    de finalizar.</p>
                 </div>
                 {['INSTALLATION', 'ALL', ''].includes(form.contractType) && (
-                  <div className="rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-900/40 px-3 py-2 text-right">
-                    <p className="text-[11px] uppercase tracking-wide text-indigo-600 dark:text-indigo-300">Valor total</p>
-                    <p className="text-lg font-extrabold text-indigo-700 dark:text-indigo-200">{fmtCurrency.format(totalValue)}</p>
+                  <div
+                    className="rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-900/40 px-3 py-2 text-right">
+                    <p className="text-[11px] uppercase tracking-wide text-indigo-600 dark:text-indigo-300">Valor
+                      total</p>
+                    <p
+                      className="text-lg font-extrabold text-indigo-700 dark:text-indigo-200">{fmtCurrency.format(totalValue)}</p>
                   </div>
                 )}
               </div>
@@ -1612,7 +1719,8 @@ export default function ContractCreate() {
               <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-zinc-700">
                 {['INSTALLATION', 'ALL', ''].includes(form.contractType) ? (
                   <table className="min-w-[980px] w-full text-sm">
-                    <thead className="bg-slate-50 dark:bg-zinc-800 text-xs uppercase tracking-wide text-slate-500 dark:text-zinc-400">
+                    <thead
+                      className="bg-slate-50 dark:bg-zinc-800 text-xs uppercase tracking-wide text-slate-500 dark:text-zinc-400">
                       <tr>
                         <th className="px-3 py-2 text-left">Descrição</th>
                         <th className="px-3 py-2 text-right">Qtde</th>
@@ -1695,7 +1803,8 @@ export default function ContractCreate() {
                                 inputClassName="w-28"
                               />
                             </td>
-                            <td className="px-3 py-2 text-right font-semibold text-slate-700 dark:text-zinc-200">{fmtCurrency.format(total)}</td>
+                            <td
+                              className="px-3 py-2 text-right font-semibold text-slate-700 dark:text-zinc-200">{fmtCurrency.format(total)}</td>
                             <td className="px-3 py-2 text-center">
                               <button
                                 type="button"
@@ -1718,7 +1827,8 @@ export default function ContractCreate() {
                       Revisão do contrato
                     </h4>
                     <p className='text-xs'>
-                      Este contrato é do tipo <strong>Somente Manutenção</strong>, portanto, não possui itens para revisar. Se necessário revise os dados do contrato e finalize o cadastro.
+                      Este contrato é do tipo <strong>Somente Manutenção</strong>, portanto, não possui itens para
+                      revisar. Se necessário revise os dados do contrato e finalize o cadastro.
                     </p>
                   </div>
                 )}
@@ -1729,7 +1839,7 @@ export default function ContractCreate() {
                 <button
                   type="button"
                   onClick={() => setStep(2)}
-                  className="rounded-xl border border-slate-200 dark:border-zinc-700 px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
+                  className="rounded-full border border-slate-200 dark:border-zinc-700 px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
                 >
                   <i className="pi pi-arrow-left mr-1.5 text-xs" /> Voltar
                 </button>
@@ -1742,7 +1852,7 @@ export default function ContractCreate() {
 
                     void submitContract();
                   }}
-                  className="rounded-2xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 transition-colors"
+                  className="rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 transition-colors"
                 >
                   {isEdit ? 'Salvar contrato' : 'Finalizar cadastro'}
                 </button>
@@ -1761,6 +1871,6 @@ export default function ContractCreate() {
         confirmLabel={isEdit ? 'Salvar' : 'Finalizar'}
         loading={loading}
       />
-    </section >
+    </section>
   );
 }
